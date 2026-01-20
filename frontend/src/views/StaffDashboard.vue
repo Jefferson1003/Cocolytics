@@ -1,7 +1,7 @@
 <template>
   <div class="dashboard-container">
     <div class="dashboard-header">
-      <h1>👔 Staff Dashboard</h1>
+      <h1>👔 Cocolumber Producer</h1>
       <p>Welcome, {{ user?.name }}! You have staff access.</p>
     </div>
 

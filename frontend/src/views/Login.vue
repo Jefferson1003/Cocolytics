@@ -21,13 +21,23 @@
 
         <div class="form-group">
           <label for="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            v-model="password"
-            placeholder="Enter your password"
-            required
-          />
+          <div class="password-field">
+            <input
+              :type="showPassword ? 'text' : 'password'"
+              id="password"
+              v-model="password"
+              placeholder="Enter your password"
+              required
+            />
+            <button
+              type="button"
+              @click="togglePassword"
+              class="toggle-password-btn"
+              :title="showPassword ? 'Hide password' : 'Show password'"
+            >
+              {{ showPassword ? '�' : '🔒' }}
+            </button>
+          </div>
         </div>
 
         <div class="error-message" v-if="error">
@@ -56,10 +66,14 @@ export default {
       email: '',
       password: '',
       error: '',
-      loading: false
+      loading: false,
+      showPassword: false
     }
   },
   methods: {
+    togglePassword() {
+      this.showPassword = !this.showPassword
+    },
     async handleLogin() {
       this.error = ''
       this.loading = true
@@ -170,6 +184,41 @@ export default {
 
 .form-group input::placeholder {
   color: #666;
+}
+
+.password-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-field input {
+  flex: 1;
+  padding-right: 45px;
+}
+
+.toggle-password-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  color: #888;
+}
+
+.toggle-password-btn:hover {
+  opacity: 1;
+  color: #4CAF50;
+}
+
+.toggle-password-btn:active {
+  transform: scale(0.95);
 }
 
 .error-message {
