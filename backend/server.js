@@ -64,15 +64,21 @@ app.get('/api/health', (req, res) => {
 
 // ==================== AUTH ROUTES ====================
 
+// Valid user roles
+const VALID_ROLES = ['user', 'staff', 'admin'];
+
 // Register
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
     // Validate input
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'All fields are required' });
     }
+
+    // Validate role (default to 'user' if not provided)
+    const userRole = role && VALID_ROLES.includes(role) ? role : 'user';
 
     // Check if user already exists
     const [existingUsers] = await pool.execute(
@@ -88,15 +94,15 @@ app.post('/api/auth/register', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Insert user into database
+    // Insert user into database with role
     const [result] = await pool.execute(
-      'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
-      [name, email, hashedPassword]
+      'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
+      [name, email, hashedPassword, userRole]
     );
 
     res.status(201).json({ 
       message: 'User registered successfully',
-      user: { id: result.insertId, name, email }
+      user: { id: result.insertId, name, email, role: userRole }
     });
   } catch (error) {
     console.error('Register error:', error);
@@ -132,9 +138,9 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // Generate JWT token
+    // Generate JWT token with role
     const token = jwt.sign(
-      { id: user.id, email: user.email, name: user.name },
+      { id: user.id, email: user.email, name: user.name, role: user.role || 'user' },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -142,7 +148,7 @@ app.post('/api/auth/login', async (req, res) => {
     res.json({
       message: 'Login successful',
       token,
-      user: { id: user.id, name: user.name, email: user.email }
+      user: { id: user.id, name: user.name, email: user.email, role: user.role || 'user' }
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -150,11 +156,21 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// Role-based authorization middleware
+const authorizeRoles = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.user || !allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ message: 'Access denied. Insufficient permissions.' });
+    }
+    next();
+  };
+};
+
 // Get current user (protected route)
 app.get('/api/auth/me', authenticateToken, async (req, res) => {
   try {
     const [users] = await pool.execute(
-      'SELECT id, name, email FROM users WHERE id = ?',
+      'SELECT id, name, email, role FROM users WHERE id = ?',
       [req.user.id]
     );
     
@@ -181,6 +197,101 @@ app.get('/api/data', authenticateToken, (req, res) => {
       { id: 3, name: 'Item 3', value: 300 }
     ]
   });
+});
+
+// ==================== ADMIN ROUTES ====================
+
+// Admin dashboard data (admin only)
+app.get('/api/admin/dashboard', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  try {
+    // Get user statistics
+    const [userStats] = await pool.execute(
+      'SELECT role, COUNT(*) as count FROM users GROUP BY role'
+    );
+    
+    const [totalUsers] = await pool.execute(
+      'SELECT COUNT(*) as total FROM users'
+    );
+
+    res.json({
+      success: true,
+      data: {
+        totalUsers: totalUsers[0].total,
+        usersByRole: userStats,
+        adminFeatures: [
+          'Manage Users',
+          'View Analytics',
+          'System Settings',
+          'Access Logs'
+        ]
+      }
+    });
+  } catch (error) {
+    console.error('Admin dashboard error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get all users (admin only)
+app.get('/api/admin/users', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const [users] = await pool.execute(
+      'SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC'
+    );
+    res.json({ success: true, users });
+  } catch (error) {
+    console.error('Get users error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update user role (admin only)
+app.put('/api/admin/users/:id/role', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    if (!VALID_ROLES.includes(role)) {
+      return res.status(400).json({ message: 'Invalid role' });
+    }
+
+    await pool.execute(
+      'UPDATE users SET role = ? WHERE id = ?',
+      [role, id]
+    );
+
+    res.json({ success: true, message: 'User role updated successfully' });
+  } catch (error) {
+    console.error('Update role error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ==================== STAFF ROUTES ====================
+
+// Staff dashboard data (staff and admin)
+app.get('/api/staff/dashboard', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
+  try {
+    const [recentUsers] = await pool.execute(
+      'SELECT id, name, email, created_at FROM users ORDER BY created_at DESC LIMIT 5'
+    );
+
+    res.json({
+      success: true,
+      data: {
+        recentUsers,
+        staffFeatures: [
+          'View Reports',
+          'Manage Content',
+          'Customer Support',
+          'Data Entry'
+        ]
+      }
+    });
+  } catch (error) {
+    console.error('Staff dashboard error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
 // Error handling middleware

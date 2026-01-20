@@ -7,6 +7,8 @@
       <div class="nav-links">
         <router-link to="/">Home</router-link>
         <router-link to="/about">About</router-link>
+        <router-link v-if="user && user.role === 'admin'" to="/admin">Admin Dashboard</router-link>
+        <router-link v-if="user && (user.role === 'staff' || user.role === 'admin')" to="/staff">Staff Dashboard</router-link>
       </div>
       <div class="nav-actions">
         <button v-if="deferredPrompt" @click="installApp" class="install-btn">

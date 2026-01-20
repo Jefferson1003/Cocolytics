@@ -74,8 +74,15 @@ export default {
         localStorage.setItem('token', response.data.token)
         localStorage.setItem('user', JSON.stringify(response.data.user))
 
-        // Redirect to home page
-        this.$router.push('/')
+        // Redirect based on user role
+        const role = response.data.user.role
+        if (role === 'admin') {
+          this.$router.push('/admin')
+        } else if (role === 'staff') {
+          this.$router.push('/staff')
+        } else {
+          this.$router.push('/')
+        }
       } catch (err) {
         this.error = err.response?.data?.message || 'Login failed. Please try again.'
       } finally {

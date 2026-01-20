@@ -8,6 +8,8 @@ import Home from './views/Home.vue'
 import About from './views/About.vue'
 import Login from './views/Login.vue'
 import Register from './views/Register.vue'
+import AdminDashboard from './views/AdminDashboard.vue'
+import StaffDashboard from './views/StaffDashboard.vue'
 
 // Define routes
 const routes = [
@@ -34,6 +36,18 @@ const routes = [
     name: 'Register', 
     component: Register,
     meta: { guest: true }
+  },
+  {
+    path: '/admin',
+    name: 'AdminDashboard',
+    component: AdminDashboard,
+    meta: { requiresAuth: true, roles: ['admin'] }
+  },
+  {
+    path: '/staff',
+    name: 'StaffDashboard',
+    component: StaffDashboard,
+    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
   }
 ]
 
@@ -46,7 +60,9 @@ const router = createRouter({
 // Navigation guard for authentication
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
+  const userData = localStorage.getItem('user')
   const isAuthenticated = !!token
+  const user = userData ? JSON.parse(userData) : null
 
   // If route requires auth and user is not authenticated
   if (to.meta.requiresAuth && !isAuthenticated) {
@@ -54,7 +70,29 @@ router.beforeEach((to, from, next) => {
   }
   // If route is for guests only and user is authenticated
   else if (to.meta.guest && isAuthenticated) {
-    next('/')
+    // Redirect based on role
+    if (user?.role === 'admin') {
+      next('/admin')
+    } else if (user?.role === 'staff') {
+      next('/staff')
+    } else {
+      next('/')
+    }
+  }
+  // Check role-based access
+  else if (to.meta.roles && isAuthenticated) {
+    if (user && to.meta.roles.includes(user.role)) {
+      next()
+    } else {
+      // Redirect to appropriate dashboard based on role
+      if (user?.role === 'admin') {
+        next('/admin')
+      } else if (user?.role === 'staff') {
+        next('/staff')
+      } else {
+        next('/')
+      }
+    }
   }
   else {
     next()
