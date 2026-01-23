@@ -1,11 +1,37 @@
 <template>
-  <div class="dashboard-container">
-    <div class="dashboard-header">
-      <h1>🛡️ Admin Dashboard</h1>
-      <p>Welcome, {{ user?.name }}! You have full administrative access.</p>
-    </div>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>🛡️ Admin</h2>
+        <button class="sidebar-toggle" @click="sidebarOpen = !sidebarOpen">
+          {{ sidebarOpen ? '✕' : '☰' }}
+        </button>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#overview" @click="activeSection = 'overview'" :class="{ active: activeSection === 'overview'}" class="nav-item">
+          📊 Overview
+        </a>
+        <a href="#users" @click="activeSection = 'users'" :class="{ active: activeSection === 'users'}" class="nav-item">
+          👥 User Management
+        </a>
+        <a href="#features" @click="activeSection = 'features'" :class="{ active: activeSection === 'features'}" class="nav-item">
+          🔧 Features
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <router-link to="/" class="nav-item">🏠 Back to Home</router-link>
+      </div>
+    </aside>
 
-    <div class="stats-grid" v-if="dashboardData">
+    <!-- Main Content -->
+    <div class="dashboard-container">
+      <div class="dashboard-header">
+        <h1>🛡️ Admin Dashboard</h1>
+        <p>Welcome, {{ user?.name }}! You have full administrative access.</p>
+      </div>
+
+      <div class="stats-grid" v-if="dashboardData">
       <div class="stat-card">
         <div class="stat-icon">👥</div>
         <div class="stat-info">
@@ -75,6 +101,7 @@
     </div>
 
     <div class="error-message" v-if="error">{{ error }}</div>
+    </div>
   </div>
 </template>
 
@@ -88,7 +115,9 @@ export default {
       user: null,
       dashboardData: null,
       users: [],
-      error: ''
+      error: '',
+      sidebarOpen: true,
+      activeSection: 'overview'
     }
   },
   created() {
@@ -137,10 +166,88 @@ export default {
 </script>
 
 <style scoped>
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+/* Sidebar Styles */
+.sidebar {
+  width: 250px;
+  background: #242442;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  z-index: 1000;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #4CAF50;
+}
+
+.sidebar-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 20px 0;
+  overflow-y: auto;
+}
+
+.nav-item {
+  display: block;
+  padding: 15px 20px;
+  color: #ccc;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border-left: 4px solid transparent;
+}
+
+.nav-item:hover {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4CAF50;
+  border-left-color: #4CAF50;
+}
+
+.nav-item.active {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+  border-left-color: #4CAF50;
+}
+
+.sidebar-footer {
+  padding: 20px 0;
+  border-top: 1px solid #333;
+}
+
 .dashboard-container {
+  flex: 1;
+  margin-left: 250px;
   padding: 30px;
-  max-width: 1200px;
-  margin: 0 auto;
+  overflow-y: auto;
 }
 
 .dashboard-header {
@@ -308,12 +415,34 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 200px;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-toggle {
+    display: block;
+  }
+
+  .dashboard-container {
+    margin-left: 0;
+    padding: 20px;
+  }
+  
   .dashboard-sections {
     grid-template-columns: 1fr;
   }
   
   .stats-grid {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.5rem;
   }
 }
 </style>
