@@ -1,13 +1,6 @@
 <template>
   <div class="user-layout">
-    <UserNavbar />
-    
     <div class="orders-container">
-      <div class="orders-header">
-        <h1>🛒 Order Cocolumbers</h1>
-        <p>Browse and order fresh cocolumber products</p>
-      </div>
-
       <!-- Available Products -->
       <div class="available-products">
         <h2>📦 Available Products</h2>
@@ -113,12 +106,9 @@
 </template>
 
 <script>
-import UserNavbar from '../components/UserNavbar.vue'
-
 export default {
   name: 'UserOrders',
   components: {
-    UserNavbar
   },
   data() {
     return {
@@ -287,26 +277,6 @@ export default {
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px;
-}
-
-.orders-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 30px;
-  border-radius: 15px;
-  margin-bottom: 40px;
-  text-align: center;
-}
-
-.orders-header h1 {
-  margin: 0;
-  font-size: 2.5em;
-}
-
-.orders-header p {
-  margin: 10px 0 0 0;
-  font-size: 1.1em;
-  opacity: 0.95;
 }
 
 /* Available Products Section */
