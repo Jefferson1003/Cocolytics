@@ -1,28 +1,6 @@
 <template>
   <div class="admin-layout">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <h2>🛡️ Admin</h2>
-        <button class="sidebar-toggle" @click="sidebarOpen = !sidebarOpen">
-          {{ sidebarOpen ? '✕' : '☰' }}
-        </button>
-      </div>
-      <nav class="sidebar-nav">
-        <a href="#overview" @click="activeSection = 'overview'" :class="{ active: activeSection === 'overview'}" class="nav-item">
-          📊 Overview
-        </a>
-        <a href="#users" @click="activeSection = 'users'" :class="{ active: activeSection === 'users'}" class="nav-item">
-          👥 User Management
-        </a>
-        <a href="#features" @click="activeSection = 'features'" :class="{ active: activeSection === 'features'}" class="nav-item">
-          🔧 Features
-        </a>
-      </nav>
-      <div class="sidebar-footer">
-        <router-link to="/" class="nav-item">🏠 Back to Home</router-link>
-      </div>
-    </aside>
+    <AdminSidebar />
 
     <!-- Main Content -->
     <div class="dashboard-container">
@@ -100,6 +78,23 @@
       </div>
     </div>
 
+    <!-- Logout Confirmation Modal -->
+    <div v-if="showLogoutModal" class="modal-overlay" @click="cancelLogout">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>Confirm Logout</h2>
+          <button class="modal-close" @click="cancelLogout">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to log out?</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="cancelLogout">Cancel</button>
+          <button class="btn-logout" @click="confirmLogout">Logout</button>
+        </div>
+      </div>
+    </div>
+
     <div class="error-message" v-if="error">{{ error }}</div>
     </div>
   </div>
@@ -107,17 +102,19 @@
 
 <script>
 import axios from 'axios'
+import AdminSidebar from '../components/AdminSidebar.vue'
 
 export default {
   name: 'AdminDashboard',
+  components: {
+    AdminSidebar
+  },
   data() {
     return {
       user: null,
       dashboardData: null,
       users: [],
-      error: '',
-      sidebarOpen: true,
-      activeSection: 'overview'
+      error: ''
     }
   },
   created() {
@@ -185,7 +182,11 @@ export default {
   top: 0;
   height: 100vh;
   z-index: 1000;
-  transition: transform 0.3s ease;
+  transition: width 0.3s ease;
+}
+
+.sidebar.collapsed {
+  width: 80px;
 }
 
 .sidebar-header {
@@ -194,21 +195,34 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 10px;
+}
+
+.sidebar.collapsed .sidebar-header {
+  padding: 15px 10px;
+  justify-content: center;
 }
 
 .sidebar-header h2 {
   margin: 0;
   font-size: 1.5rem;
   color: #4CAF50;
+  flex: 1;
 }
 
 .sidebar-toggle {
-  display: none;
+  display: block;
   background: none;
   border: none;
   color: #fff;
   font-size: 1.5rem;
   cursor: pointer;
+  padding: 5px;
+  transition: color 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+  color: #4CAF50;
 }
 
 .sidebar-nav {
@@ -218,7 +232,9 @@ export default {
 }
 
 .nav-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 15px;
   padding: 15px 20px;
   color: #ccc;
   text-decoration: none;
@@ -226,10 +242,33 @@ export default {
   border-left: 4px solid transparent;
 }
 
+.sidebar.collapsed .nav-item {
+  padding: 15px 10px;
+  justify-content: center;
+  gap: 0;
+}
+
+.nav-icon {
+  min-width: 24px;
+  font-size: 1.2rem;
+}
+
+.nav-label {
+  flex: 1;
+}
+
+.sidebar.collapsed .nav-label {
+  display: none;
+}
+
 .nav-item:hover {
   background: rgba(76, 175, 80, 0.1);
   color: #4CAF50;
   border-left-color: #4CAF50;
+}
+
+.sidebar.collapsed .nav-item:hover {
+  border-left-color: transparent;
 }
 
 .nav-item.active {
@@ -243,11 +282,61 @@ export default {
   border-top: 1px solid #333;
 }
 
+.sidebar.collapsed .sidebar-footer {
+  padding: 10px 0;
+}
+
+.logout-btn {
+  width: 90%;
+  margin: 10px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.sidebar.collapsed .logout-btn {
+  width: 60%;
+  padding: 10px;
+  gap: 0;
+}
+
+.logout-icon {
+  min-width: 20px;
+  font-size: 1rem;
+}
+
+.logout-label {
+  flex: 1;
+}
+
+.sidebar.collapsed .logout-label {
+  display: none;
+}
+
+.logout-btn:hover {
+  background: #d32f2f;
+  transform: translateY(-2px);
+}
+
 .dashboard-container {
   flex: 1;
   margin-left: 250px;
   padding: 30px;
   overflow-y: auto;
+  transition: margin-left 0.3s ease;
+}
+
+.admin-layout .sidebar.collapsed ~ .dashboard-container {
+  margin-left: 80px;
 }
 
 .dashboard-header {
@@ -412,6 +501,123 @@ export default {
   color: #888;
   text-align: center;
   padding: 20px;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width: 90%;
+  overflow: hidden;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  font-size: 1.3rem;
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.modal-close:hover {
+  transform: scale(1.2);
+}
+
+.modal-body {
+  padding: 2rem;
+  text-align: center;
+}
+
+.modal-body p {
+  font-size: 1rem;
+  color: #333;
+  margin: 0;
+}
+
+.modal-footer {
+  padding: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  background-color: #f9f9f9;
+  border-top: 1px solid #eee;
+}
+
+.btn-cancel, .btn-logout {
+  padding: 0.7rem 1.5rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+  font-size: 0.95rem;
+}
+
+.btn-cancel {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.btn-cancel:hover {
+  background-color: #d0d0d0;
+}
+
+.btn-logout {
+  background-color: #ff6b6b;
+  color: white;
+}
+
+.btn-logout:hover {
+  background-color: #ff5252;
+  transform: scale(1.05);
 }
 
 @media (max-width: 768px) {

@@ -47,6 +47,38 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `created_at`, `u
 (3, 'Staff User', 'staff@gmail.com', '$2a$10$Nlqid0N48er781AnPaF5w.piZ3fdQzM3gF1gpwBTikNZWsOwKpH2S', 'staff', '2026-01-20 14:26:05', '2026-01-20 14:26:05'),
 (4, 'Regular User', 'user@gmail.com', '$2a$10$Nlqid0N48er781AnPaF5w.Cu9T12zWFRK9RFoktQzTVEUkSpAGy3.', 'user', '2026-01-20 14:26:05', '2026-01-20 14:26:05');
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `cocolumber_logs`
+--
+
+CREATE TABLE `cocolumber_logs` (
+  `id` int NOT NULL,
+  `size` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `length` decimal(10,2) NOT NULL,
+  `stock` int NOT NULL DEFAULT '0',
+  `product_picture` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `orders`
+--
+
+CREATE TABLE `orders` (
+  `id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `cocolumber_id` int NOT NULL,
+  `quantity` int NOT NULL,
+  `status` enum('pending','completed','cancelled') COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 --
 -- Indexes for dumped tables
 --
@@ -59,6 +91,20 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `email` (`email`);
 
 --
+-- Indexes for table `cocolumber_logs`
+--
+ALTER TABLE `cocolumber_logs`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `orders`
+--
+ALTER TABLE `orders`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `cocolumber_id` (`cocolumber_id`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -67,6 +113,18 @@ ALTER TABLE `users`
 --
 ALTER TABLE `users`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `cocolumber_logs`
+--
+ALTER TABLE `cocolumber_logs`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `orders`
+--
+ALTER TABLE `orders`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
