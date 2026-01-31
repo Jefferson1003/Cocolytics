@@ -5,7 +5,7 @@
     <!-- Main Content -->
     <div class="dashboard-container">
       <div class="dashboard-header">
-        <h1>👔 Cocolumber Producer</h1>
+        <h1>👔 Coconut Producer</h1>
         <p>Welcome, {{ user?.name }}! You have staff access.</p>
       </div>
 
@@ -41,8 +41,8 @@
       <h2>⚡ Quick Actions</h2>
       <div class="actions-grid">
         <router-link to="/staff/add-cocolumber" class="action-card">
-          <span class="action-icon">🥒</span>
-          <h3>Add Cocolumber</h3>
+          <span class="action-icon">🥥</span>
+          <h3>Add Coconut</h3>
           <p>Insert new product to inventory</p>
         </router-link>
         <div class="action-card">

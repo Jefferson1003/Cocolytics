@@ -6,8 +6,8 @@
     <div class="dashboard-container">
       <div class="add-cocolumber-container">
         <div class="header">
-          <h1>🥒 Add Cocolumber Log</h1>
-          <p>Insert a new cocolumber product into the inventory</p>
+          <h1>🌴 Add Coconut Log</h1>
+          <p>Insert a new coconut product into the inventory</p>
         </div>
 
     <div class="form-wrapper">
@@ -80,7 +80,7 @@
 
         <!-- Submit Button -->
         <button type="submit" class="btn-submit" :disabled="isLoading">
-          <span v-if="!isLoading">✓ Add Cocolumber</span>
+          <span v-if="!isLoading">✓ Add Coconut</span>
           <span v-else>Loading...</span>
         </button>
       </form>
@@ -100,7 +100,7 @@
 
     <!-- Recent Products -->
     <div class="recent-products">
-      <h2>📋 Recent Cocolumber Logs</h2>
+      <h2>📋 Recent Coconut Logs</h2>
       <div v-if="!loadingProducts">
         <div v-if="recentProducts.length > 0" class="products-grid">
           <div v-for="product in recentProducts" :key="product.id" class="product-card">
@@ -120,7 +120,7 @@
             </div>
           </div>
         </div>
-        <p v-else class="no-products">No cocolumber logs found yet.</p>
+        <p v-else class="no-products">No coconut logs found yet.</p>
       </div>
       <div v-else class="loading">Loading products...</div>
     </div>
@@ -129,7 +129,7 @@
     <div v-if="editingProduct" class="modal-overlay" @click="cancelEdit">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h2>Edit Cocolumber Log</h2>
+          <h2>Edit Coconut Log</h2>
           <button class="modal-close" @click="cancelEdit">&times;</button>
         </div>
         <form @submit.prevent="submitEditForm" class="cocolumber-form">
@@ -275,10 +275,10 @@ export default {
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.message || 'Failed to add cocolumber log');
+          throw new Error(data.message || 'Failed to add coconut log');
         }
 
-        this.successMessage = 'Cocolumber log added successfully!';
+        this.successMessage = 'Coconut log added successfully!';
         this.resetForm();
         this.fetchRecentProducts();
         
@@ -287,7 +287,7 @@ export default {
           this.successMessage = '';
         }, 3000);
       } catch (error) {
-        this.errorMessage = error.message || 'Error adding cocolumber log';
+        this.errorMessage = error.message || 'Error adding coconut log';
         console.error('Error:', error);
       } finally {
         this.isLoading = false;
@@ -319,7 +319,7 @@ export default {
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.message || 'Failed to update cocolumber log');
+          throw new Error(data.message || 'Failed to update coconut log');
         }
 
         this.successMessage = 'Cocolumber log updated successfully!';
@@ -365,7 +365,7 @@ export default {
           throw new Error(data.message || 'Failed to delete cocolumber log');
         }
 
-        this.successMessage = 'Cocolumber log deleted successfully!';
+        this.successMessage = 'Coconut log deleted successfully!';
         this.fetchRecentProducts();
         
         setTimeout(() => {

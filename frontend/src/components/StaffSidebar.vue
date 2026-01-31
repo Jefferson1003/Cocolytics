@@ -19,7 +19,7 @@
         <span class="nav-icon">👥</span>
         <span class="nav-label" v-show="sidebarOpen">Recent Users</span>
       </a>
-      <router-link to="/staff/add-cocolumber" class="nav-item" :class="{ active: isActive('/staff/add-cocolumber') }" title="Add Product">
+      <router-link to="/staff/add-cocolumber" class="nav-item" :class="{ active: isActive('/staff/add-cocolumber') }" title="Add Coconut">
         <span class="nav-icon">🥒</span>
         <span class="nav-label" v-show="sidebarOpen">Add Product</span>
       </router-link>
