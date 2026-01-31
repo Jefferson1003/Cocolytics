@@ -264,7 +264,7 @@ export default {
           formDataObj.append('product_picture', this.formData.selectedFile);
         }
 
-        const response = await fetch('http://localhost:3000/api/staff/cocolumber', {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/staff/cocolumber`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${this.token}`
@@ -308,7 +308,7 @@ export default {
           formDataObj.append('product_picture', this.editingFile);
         }
 
-        const response = await fetch(`http://localhost:3000/api/staff/cocolumber/${this.editingProduct.id}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/staff/cocolumber/${this.editingProduct.id}`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${this.token}`
@@ -352,7 +352,7 @@ export default {
 
       this.loadingProducts = true;
       try {
-        const response = await fetch(`http://localhost:3000/api/staff/cocolumber/${id}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/staff/cocolumber/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${this.token}`
@@ -381,7 +381,7 @@ export default {
     async fetchRecentProducts() {
       this.loadingProducts = true;
       try {
-        const response = await fetch('http://localhost:3000/api/staff/cocolumber', {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/staff/cocolumber`, {
           headers: {
             'Authorization': `Bearer ${this.token}`
           }

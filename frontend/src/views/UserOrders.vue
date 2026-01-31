@@ -138,7 +138,7 @@ export default {
     async fetchAvailableProducts() {
       this.loadingProducts = true
       try {
-        const response = await fetch('http://localhost:3000/api/cocolumber/all', {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/cocolumber/all`, {
           headers: {
             'Authorization': `Bearer ${this.token}`
           }
@@ -156,7 +156,7 @@ export default {
     async fetchUserOrders() {
       this.loadingOrders = true
       try {
-        const response = await fetch('http://localhost:3000/api/orders/my-orders', {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders/my-orders`, {
           headers: {
             'Authorization': `Bearer ${this.token}`
           }
@@ -219,7 +219,7 @@ export default {
 
       this.isSubmitting = true
       try {
-        const response = await fetch('http://localhost:3000/api/orders/create', {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders/create`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -258,10 +258,10 @@ export default {
       }
       // If it starts with /, it's already a root path
       if (imagePath.startsWith('/')) {
-        return `http://localhost:3000${imagePath}`
+        return `${import.meta.env.VITE_API_BASE_URL}${imagePath}`
       }
       // Otherwise, assume it's in the uploads folder
-      return `http://localhost:3000/uploads/${imagePath}`
+      return `${import.meta.env.VITE_API_BASE_URL}/uploads/${imagePath}`
     }
   }
 }

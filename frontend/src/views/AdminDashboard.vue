@@ -127,7 +127,7 @@ export default {
     async fetchDashboardData() {
       try {
         const token = localStorage.getItem('token')
-        const response = await axios.get('http://localhost:3000/api/admin/dashboard', {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/admin/dashboard`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         this.dashboardData = response.data.data
@@ -138,7 +138,7 @@ export default {
     async fetchUsers() {
       try {
         const token = localStorage.getItem('token')
-        const response = await axios.get('http://localhost:3000/api/admin/users', {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/admin/users`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         this.users = response.data.users
@@ -149,7 +149,7 @@ export default {
     async updateUserRole(userId, newRole) {
       try {
         const token = localStorage.getItem('token')
-        await axios.put(`http://localhost:3000/api/admin/users/${userId}/role`, 
+        await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/admin/users/${userId}/role`, 
           { role: newRole },
           { headers: { Authorization: `Bearer ${token}` } }
         )

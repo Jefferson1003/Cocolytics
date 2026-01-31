@@ -151,7 +151,7 @@ export default {
     async fetchDashboardData() {
       try {
         const token = localStorage.getItem('token')
-        const response = await axios.get('http://localhost:3000/api/user/dashboard', {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/user/dashboard`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         this.dashboardData = response.data.data
