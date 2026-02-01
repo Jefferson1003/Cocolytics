@@ -105,7 +105,7 @@
         <div v-if="recentProducts.length > 0" class="products-grid">
           <div v-for="product in recentProducts" :key="product.id" class="product-card">
             <div class="product-image">
-              <img v-if="product.product_picture" :src="product.product_picture" :alt="product.size" />
+              <img v-if="product.product_picture" :src="getImageUrl(product.product_picture)" :alt="product.size" />
               <div v-else class="no-image">📷</div>
             </div>
             <div class="product-info">
@@ -417,6 +417,19 @@ export default {
     formatDate(dateString) {
       const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
       return new Date(dateString).toLocaleDateString('en-US', options);
+    },
+    getImageUrl(imagePath) {
+      if (!imagePath) return '';
+      // If it's already a full URL, return it
+      if (imagePath.startsWith('http')) {
+        return imagePath;
+      }
+      // If it starts with /, it's already a root path
+      if (imagePath.startsWith('/')) {
+        return `${import.meta.env.VITE_API_BASE_URL}${imagePath}`;
+      }
+      // Otherwise, assume it's in the uploads folder
+      return `${import.meta.env.VITE_API_BASE_URL}/uploads/${imagePath}`;
     }
   }
 };
@@ -457,6 +470,9 @@ export default {
   padding: 40px;
   margin-bottom: 40px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .cocolumber-form {

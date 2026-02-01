@@ -585,11 +585,11 @@ app.get('/api/orders/my-orders', authenticateToken, async (req, res) => {
   }
 });
 
-// Get all orders (admin only)
-app.get('/api/orders/all', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+// Get all orders (staff and admin)
+app.get('/api/orders/all', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
   try {
     const [orders] = await pool.execute(
-      `SELECT o.*, u.name as user_name, u.email, c.size, c.length
+      `SELECT o.*, u.name as user_name, u.email, c.size, c.length, c.product_picture
        FROM orders o
        JOIN users u ON o.user_id = u.id
        JOIN cocolumber_logs c ON o.cocolumber_id = c.id
@@ -603,8 +603,8 @@ app.get('/api/orders/all', authenticateToken, authorizeRoles('admin'), async (re
   }
 });
 
-// Update order status (admin only)
-app.put('/api/orders/:id/status', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+// Update order status (staff and admin)
+app.put('/api/orders/:id/status', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;

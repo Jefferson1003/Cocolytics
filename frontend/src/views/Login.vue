@@ -2,7 +2,7 @@
   <div class="auth-container">
     <div class="auth-card">
       <div class="auth-header">
-        <h1>🥥 Cocolytics</h1>
+        <h1>🌴 Cocolytics</h1>
         <h2>Welcome Back</h2>
         <p>Sign in to your account</p>
       </div>
@@ -35,7 +35,7 @@
               class="toggle-password-btn"
               :title="showPassword ? 'Hide password' : 'Show password'"
             >
-              {{ showPassword ? '�' : '🔒' }}
+              {{ showPassword ? '☑' : '☐' }}
             </button>
           </div>
         </div>

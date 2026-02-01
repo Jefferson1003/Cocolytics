@@ -12,6 +12,7 @@ import AdminDashboard from './views/AdminDashboard.vue'
 import StaffDashboard from './views/StaffDashboard.vue'
 import AddCocolumber from './views/AddCocolumber.vue'
 import UserOrders from './views/UserOrders.vue'
+import StaffOrders from './views/StaffOrders.vue'
 
 // Define routes
 const routes = [
@@ -55,6 +56,12 @@ const routes = [
     path: '/staff/add-cocolumber',
     name: 'AddCocolumber',
     component: AddCocolumber,
+    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
+  },
+  {
+    path: '/staff/orders',
+    name: 'StaffOrders',
+    component: StaffOrders,
     meta: { requiresAuth: true, roles: ['staff', 'admin'] }
   },
   {

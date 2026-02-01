@@ -45,6 +45,11 @@
           <h3>Add Coconut</h3>
           <p>Insert new product to inventory</p>
         </router-link>
+        <router-link to="/staff/orders" class="action-card">
+          <span class="action-icon">📋</span>
+          <h3>Manage Orders</h3>
+          <p>View and update order status</p>
+        </router-link>
         <div class="action-card">
           <span class="action-icon">📊</span>
           <h3>View Reports</h3>
