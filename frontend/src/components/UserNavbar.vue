@@ -83,14 +83,14 @@ export default {
 
 <style scoped>
 .navbar {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   color: white;
   padding: 0 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   height: 70px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   position: sticky;
   top: 0;
   z-index: 50;
@@ -150,6 +150,7 @@ export default {
 .user-name {
   font-weight: 500;
   white-space: nowrap;
+  color: #81C784;
 }
 
 .logout-btn {

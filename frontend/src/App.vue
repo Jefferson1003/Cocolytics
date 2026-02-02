@@ -1,15 +1,15 @@
 <template>
   <div id="app">
-    <UserNavbar 
+    <UserNavbar
       v-if="isAuthenticated && !isAdminRoute && !isStaffRoute"
       :deferredPrompt="deferredPrompt"
     />
-    
+
     <main class="main-content" :class="{ 'no-nav': !isAuthenticated }">
       <router-view />
     </main>
 
-    <footer class="footer" v-if="isAuthenticated">
+    <footer class="simple-footer" v-if="isAuthenticated">
       <p>&copy; 2026 Cocolytics. All rights reserved.</p>
     </footer>
   </div>
@@ -95,15 +95,17 @@ html, body {
   margin-top: 0;
 }
 
-.footer {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.simple-footer {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
   color: white;
   text-align: center;
   padding: 20px;
   margin-top: 40px;
+  border-top: 2px solid #4CAF50;
 }
 
-.footer p {
+.simple-footer p {
   margin: 0;
+  font-size: 0.9rem;
 }
 </style>

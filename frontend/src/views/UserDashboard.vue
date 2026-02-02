@@ -1,34 +1,14 @@
 <template>
   <div class="user-layout">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <h2>👤 User</h2>
-        <button class="sidebar-toggle" @click="sidebarOpen = !sidebarOpen">
-          {{ sidebarOpen ? '✕' : '☰' }}
-        </button>
-      </div>
-      <nav class="sidebar-nav">
-        <a href="#dashboard" @click="activeSection = 'dashboard'" :class="{ active: activeSection === 'dashboard'}" class="nav-item">
-          📊 Dashboard
-        </a>
-        <a href="#profile" @click="activeSection = 'profile'" :class="{ active: activeSection === 'profile'}" class="nav-item">
-          👤 My Profile
-        </a>
-        <a href="#activity" @click="activeSection = 'activity'" :class="{ active: activeSection === 'activity'}" class="nav-item">
-          📈 Activity
-        </a>
-      </nav>
-      <div class="sidebar-footer">
-        <router-link to="/" class="nav-item">🏠 Home</router-link>
-      </div>
-    </aside>
+    <UserNavbar />
+
+
 
     <!-- Main Content -->
     <div class="dashboard-container">
       <div class="dashboard-header">
-        <h1>👤 User Dashboard</h1>
-        <p>Welcome, {{ user?.name }}! Here's your personal overview.</p>
+        <h1>Welcome, {{ user?.name }}!</h1>
+        <p>Here's your personal overview.</p>
       </div>
 
       <div class="user-info-card" v-if="user">
@@ -97,6 +77,54 @@
         </div>
       </div>
 
+      <!-- Our Mission Section -->
+      <div class="mission-section">
+        <div class="mission-card">
+          <div class="mission-header">
+            <h2>🎯 Our Mission</h2>
+            <p class="mission-subtitle">Transforming Coconut Lumber Analytics</p>
+          </div>
+          <div class="mission-content">
+            <div class="mission-text">
+              <h3>What is Cocolytics?</h3>
+              <p>
+                Cocolytics is a comprehensive analytics platform designed specifically for coconut lumber operations.
+                We provide real-time tracking, inventory management, and predictive analytics to help businesses
+                optimize their coconut lumber production and supply chain processes.
+              </p>
+              <p>
+                Our platform integrates advanced data visualization tools with automated reporting systems,
+                enabling seamless monitoring of production efficiency, stock movement, demand patterns,
+                and material wastage. With role-based access control, we ensure secure and controlled
+                access for administrators, warehouse personnel, production supervisors, and sales staff.
+              </p>
+            </div>
+            <div class="mission-features">
+              <div class="feature-item">
+                <span class="feature-icon">📊</span>
+                <h4>Real-time Analytics</h4>
+                <p>Monitor production metrics and inventory levels in real-time</p>
+              </div>
+              <div class="feature-item">
+                <span class="feature-icon">🔄</span>
+                <h4>Automated Reporting</h4>
+                <p>Generate comprehensive reports automatically</p>
+              </div>
+              <div class="feature-item">
+                <span class="feature-icon">🎯</span>
+                <h4>Predictive Insights</h4>
+                <p>Forecast inventory needs and optimize operations</p>
+              </div>
+              <div class="feature-item">
+                <span class="feature-icon">🔒</span>
+                <h4>Secure Access</h4>
+                <p>Role-based permissions for different user types</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="quick-actions">
         <h2>⚡ Quick Actions</h2>
         <div class="actions-grid">
@@ -130,16 +158,18 @@
 
 <script>
 import axios from 'axios'
+import UserNavbar from '../components/UserNavbar.vue'
 
 export default {
   name: 'UserDashboard',
+  components: {
+    UserNavbar
+  },
   data() {
     return {
       user: null,
       dashboardData: null,
-      error: '',
-      sidebarOpen: true,
-      activeSection: 'dashboard'
+      error: ''
     }
   },
   created() {
@@ -191,84 +221,16 @@ export default {
 <style scoped>
 .user-layout {
   display: flex;
-  min-height: 100vh;
-  background: #f5f5f5;
-}
-
-/* Sidebar Styles */
-.sidebar {
-  width: 250px;
-  background: #242442;
-  color: #fff;
-  display: flex;
   flex-direction: column;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
-  position: fixed;
-  left: 0;
-  top: 0;
-  height: 100vh;
-  z-index: 1000;
-  transition: transform 0.3s ease;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
 }
 
-.sidebar-header {
-  padding: 20px;
-  border-bottom: 1px solid #333;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
 
-.sidebar-header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: #2196F3;
-}
-
-.sidebar-toggle {
-  display: none;
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 1.5rem;
-  cursor: pointer;
-}
-
-.sidebar-nav {
-  flex: 1;
-  padding: 20px 0;
-  overflow-y: auto;
-}
-
-.nav-item {
-  display: block;
-  padding: 15px 20px;
-  color: #ccc;
-  text-decoration: none;
-  transition: all 0.3s ease;
-  border-left: 4px solid transparent;
-}
-
-.nav-item:hover {
-  background: rgba(33, 150, 243, 0.1);
-  color: #2196F3;
-  border-left-color: #2196F3;
-}
-
-.nav-item.active {
-  background: rgba(33, 150, 243, 0.2);
-  color: #2196F3;
-  border-left-color: #2196F3;
-}
-
-.sidebar-footer {
-  padding: 20px 0;
-  border-top: 1px solid #333;
-}
 
 .dashboard-container {
   flex: 1;
-  margin-left: 250px;
+  margin-left: 0;
   padding: 30px;
   overflow-y: auto;
 }
@@ -279,7 +241,7 @@ export default {
 
 .dashboard-header h1 {
   font-size: 2rem;
-  color: #2196F3;
+  color: #81C784;
   margin-bottom: 10px;
 }
 
@@ -290,10 +252,10 @@ export default {
 
 .user-info-card {
   background: #242442;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 25px;
   margin-bottom: 30px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
@@ -312,14 +274,14 @@ export default {
 }
 
 .info-item .value {
-  color: #fff;
+  color: #81C784;
   font-weight: 500;
   font-size: 1.1rem;
 }
 
 .role-badge {
-  background: rgba(33, 150, 243, 0.2);
-  color: #2196F3;
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
   padding: 4px 12px;
   border-radius: 20px;
   display: inline-block;
@@ -335,12 +297,12 @@ export default {
 
 .stat-card {
   background: #242442;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 20px;
   display: flex;
   align-items: center;
   gap: 15px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 .stat-icon {
@@ -367,13 +329,13 @@ export default {
 
 .section {
   background: #242442;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 25px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 .section h2 {
-  color: #2196F3;
+  color: #4CAF50;
   margin-bottom: 20px;
   font-size: 1.3rem;
 }
@@ -411,9 +373,9 @@ export default {
   display: flex;
   gap: 15px;
   padding: 12px;
-  background: rgba(33, 150, 243, 0.1);
+  background: rgba(76, 175, 80, 0.1);
   border-radius: 8px;
-  border-left: 4px solid #2196F3;
+  border-left: 4px solid #4CAF50;
 }
 
 .activity-icon {
@@ -443,7 +405,7 @@ export default {
 }
 
 .quick-actions h2 {
-  color: #2196F3;
+  color: #4CAF50;
   margin-bottom: 20px;
   font-size: 1.3rem;
 }
@@ -456,16 +418,16 @@ export default {
 
 .action-card {
   background: #242442;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 20px;
   text-align: center;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
 }
 
 .action-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 6px 20px rgba(33, 150, 243, 0.3);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
 }
 
 .action-icon {
@@ -476,7 +438,7 @@ export default {
 
 .action-card h3 {
   margin: 10px 0 5px 0;
-  color: #2196F3;
+  color: #4CAF50;
 }
 
 .action-card p {
@@ -500,19 +462,6 @@ export default {
 }
 
 @media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
-    width: 200px;
-  }
-
-  .sidebar.open {
-    transform: translateX(0);
-  }
-
-  .sidebar-toggle {
-    display: block;
-  }
-
   .dashboard-container {
     margin-left: 0;
     padding: 20px;
@@ -527,6 +476,107 @@ export default {
   }
 
   .dashboard-header h1 {
+    font-size: 1.5rem;
+  }
+}
+
+/* Mission Section Styles */
+.mission-section {
+  margin-bottom: 30px;
+}
+
+.mission-card {
+  background: #242442;
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.mission-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.mission-header h2 {
+  color: #4CAF50;
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+}
+
+.mission-subtitle {
+  color: #81C784;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.mission-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+  align-items: start;
+}
+
+.mission-text h3 {
+  color: #81C784;
+  font-size: 1.3rem;
+  margin-bottom: 15px;
+}
+
+.mission-text p {
+  color: #ccc;
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+.mission-features {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.feature-item {
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  border-left: 4px solid #4CAF50;
+  transition: all 0.3s ease;
+}
+
+.feature-item:hover {
+  background: rgba(76, 175, 80, 0.15);
+  transform: translateX(5px);
+}
+
+.feature-icon {
+  font-size: 1.5rem;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.feature-item h4 {
+  color: #4CAF50;
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+}
+
+.feature-item p {
+  color: #ccc;
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .mission-content {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+
+  .mission-card {
+    padding: 20px;
+  }
+
+  .mission-header h2 {
     font-size: 1.5rem;
   }
 }

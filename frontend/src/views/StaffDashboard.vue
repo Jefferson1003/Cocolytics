@@ -127,7 +127,7 @@ export default {
 .staff-layout {
   display: flex;
   min-height: 100vh;
-  background: #f5f5f5;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
 }
 
 /* Sidebar Styles */

@@ -44,9 +44,10 @@
     <section class="features">
       <h2>Features</h2>
       <div class="grid">
-        <div class="card">
+        <div class="card analytics-card" @click="showHistoricalData = !showHistoricalData">
           <h3>📈 Real-time Analytics</h3>
-          <p>Track your metrics in real-time with beautiful visualizations.</p>
+          <p>Track your metrics in real-time with beautiful visualizations and access historical data for comprehensive insights.</p>
+          <button class="btn-analytics">View Historical Data</button>
         </div>
         <div class="card">
           <h3>🔒 Secure Data</h3>
@@ -58,19 +59,126 @@
         </div>
       </div>
     </section>
+
+    <section class="historical-data" v-if="showHistoricalData">
+      <h2>📊 Historical Data Analytics</h2>
+      <div class="chart-container">
+        <Line :data="chartData" :options="chartOptions" />
+      </div>
+      <div class="data-summary">
+        <div class="summary-card">
+          <h3>Key Metrics</h3>
+          <p>Total Production: 18,000 units</p>
+          <p>Total Sales: 15,000 units</p>
+          <p>Average Efficiency: 91%</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="shop-section">
+      <h2>🥥 Coconut Shops</h2>
+      <div class="shop-grid">
+        <div class="shop-card">
+          <div class="shop-icon">🏪</div>
+          <h3>Tropical Paradise Shop</h3>
+          <p>Fresh coconuts daily</p>
+          <button class="btn">Visit Traders</button>
+        </div>
+        <div class="shop-card">
+          <div class="shop-icon">🏪</div>
+          <h3>Island Market</h3>
+          <p>Premium coconut selection</p>
+          <button class="btn">Visit Traders</button>
+        </div>
+        <div class="shop-card">
+          <div class="shop-icon">🏪</div>
+          <h3>Beachside Store</h3>
+          <p>Locally sourced coconuts</p>
+          <button class="btn">Visit Traders</button>
+        </div>
+        <div class="shop-card">
+          <div class="shop-icon">🏪</div>
+          <h3>Palm Grove Emporium</h3>
+          <p>Wide variety of coconuts</p>
+          <button class="btn">Visit Traders</button>
+        </div>
+        <div class="shop-card">
+          <div class="shop-icon">🏪</div>
+          <h3>Coconut Haven</h3>
+          <p>Quality coconuts guaranteed</p>
+          <button class="btn">Visit Traders</button>
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js'
+
+import { Line } from 'vue-chartjs'
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+)
 
 export default {
   name: 'Home',
+  components: {
+    Line
+  },
   data() {
     return {
       apiData: [],
       healthStatus: null,
-      isInstalled: false
+      isInstalled: false,
+      showHistoricalData: false,
+      chartData: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        datasets: [
+          {
+            label: 'Production (units)',
+            backgroundColor: '#4CAF50',
+            borderColor: '#4CAF50',
+            data: [1200, 1350, 1100, 1400, 1600, 1500, 1700, 1800, 1650, 1900, 1750, 2000]
+          },
+          {
+            label: 'Sales (units)',
+            backgroundColor: '#2196F3',
+            borderColor: '#2196F3',
+            data: [1000, 1150, 950, 1200, 1350, 1300, 1450, 1550, 1400, 1650, 1500, 1750]
+          }
+        ]
+      },
+      chartOptions: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          title: {
+            display: true,
+            text: 'Monthly Production & Sales Analytics'
+          }
+        }
+      }
     }
   },
   mounted() {
@@ -107,14 +215,19 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 3rem;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #fff;
+  padding: 20px;
 }
 
 .hero {
   text-align: center;
   padding: 3rem 1rem;
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-  color: var(--white);
-  border-radius: 15px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 .hero h1 {
@@ -136,28 +249,32 @@ export default {
 }
 
 .hero .btn {
-  background: var(--white);
-  color: var(--primary-color);
+  background: #242442;
+  color: #4CAF50;
 }
 
 .hero .btn:hover {
-  background: #f0f0f0;
+  background: #333;
 }
 
 .hero .btn-outline {
   background: transparent;
-  border-color: var(--white);
-  color: var(--white);
+  border-color: #4CAF50;
+  color: #4CAF50;
 }
 
 .hero .btn-outline:hover {
-  background: var(--white);
-  color: var(--primary-color);
+  background: #4CAF50;
+  color: #fff;
 }
 
 .install-section .install-card {
   text-align: center;
-  background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+  background: #242442;
+  border-radius: 16px;
+  padding: 25px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  color: #fff;
 }
 
 .install-benefits {
@@ -172,18 +289,23 @@ export default {
 .data-section h2,
 .features h2 {
   margin-bottom: 1.5rem;
-  color: var(--primary-color);
+  color: #4CAF50;
 }
 
 .value {
   font-size: 2rem;
   font-weight: bold;
-  color: var(--primary-color);
+  color: #4CAF50;
 }
 
 .status-card {
   text-align: center;
   max-width: 300px;
+  background: #242442;
+  border-radius: 16px;
+  padding: 25px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  color: #fff;
 }
 
 .status {
@@ -193,12 +315,167 @@ export default {
 }
 
 .status-ok {
-  color: var(--primary-color);
+  color: #4CAF50;
 }
 
 .timestamp {
   font-size: 0.9rem;
-  color: #666;
+  color: #ccc;
   margin-top: 0.5rem;
+}
+
+.card {
+  background: #242442;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  color: #fff;
+}
+
+.analytics-card {
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.analytics-card:hover {
+  transform: translateY(-5px);
+}
+
+.btn-analytics {
+  background: #4CAF50;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.3s;
+}
+
+.btn-analytics:hover {
+  background: #388E3C;
+}
+
+.historical-data {
+  margin-top: 2rem;
+}
+
+.historical-data h2 {
+  color: #4CAF50;
+  margin-bottom: 1.5rem;
+}
+
+.data-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.data-card {
+  background: #242442;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  color: #fff;
+  text-align: center;
+}
+
+.data-card h3 {
+  color: #81C784;
+  margin-bottom: 1rem;
+}
+
+.data-card p {
+  margin: 0.5rem 0;
+  color: #ccc;
+}
+
+.shop-section h2 {
+  margin-bottom: 1.5rem;
+  color: #4CAF50;
+}
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.shop-card {
+  background: #242442;
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s;
+}
+
+.shop-card:hover {
+  transform: translateY(-5px);
+}
+
+.shop-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.shop-card h3 {
+  color: #81C784;
+  margin-bottom: 0.5rem;
+}
+
+.shop-card p {
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.shop-card .btn {
+  background: #4CAF50;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.shop-card .btn:hover {
+  background: #388E3C;
+}
+
+.chart-container {
+  height: 400px;
+  margin-bottom: 2rem;
+  background: #242442;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.data-summary {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.summary-card {
+  background: #242442;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.summary-card h3 {
+  color: #81C784;
+  margin-bottom: 1rem;
+}
+
+.summary-card p {
+  color: #fff;
+  margin: 0.5rem 0;
+  font-size: 1.1rem;
 }
 </style>

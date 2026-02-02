@@ -166,7 +166,7 @@ export default {
 .admin-layout {
   display: flex;
   min-height: 100vh;
-  background: #f5f5f5;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
 }
 
 /* Sidebar Styles */
@@ -466,8 +466,8 @@ export default {
 }
 
 .role-badge.staff {
-  background: rgba(33, 150, 243, 0.2);
-  color: #2196F3;
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
 }
 
 .role-badge.user {

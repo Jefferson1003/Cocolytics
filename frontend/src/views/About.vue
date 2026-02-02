@@ -9,9 +9,7 @@
       <div class="card">
         <h2>Our Mission</h2>
         <p>
-          Cocolytics is designed to provide powerful analytics tools that help 
-          businesses and individuals make data-driven decisions. Our platform 
-          combines ease of use with advanced features to deliver insights that matter.
+          Cocolytics aims to develop a centralized real-time platform for tracking coconut lumber production and inventory levels from raw materials to finished outputs, integrating advanced data analytics and visualization tools to provide insights on production efficiency, stock movement, demand patterns, and material wastage. The platform will automate reporting and documentation processes, including daily production logs, stock balances, and sales dispatches, to minimize human error and enhance transparency. A secure role-based access system will ensure controlled use for administrators, warehouse personnel, production supervisors, and sales staff. Additionally, predictive analytics models will forecast inventory needs, optimize schedules, and prevent shortages or excess materials, enabling comprehensive system evaluation and improvement.
         </p>
       </div>
 
@@ -37,15 +35,20 @@
       </div>
 
       <div class="card">
-        <h2>Features</h2>
-        <ul class="features-list">
-          <li>📊 Real-time data visualization</li>
-          <li>📥 Installable as a native app</li>
-          <li>🔄 Offline support</li>
-          <li>🔒 Secure data handling</li>
-          <li>📱 Mobile-responsive design</li>
-          <li>⚡ Fast and lightweight</li>
-        </ul>
+        <h2>Contact Us</h2>
+        <div class="contact-info">
+          <p><span class="contact-icon">📧</span> <strong>Email:</strong> support@cocolytics.com</p>
+          <p><span class="contact-icon">📞</span> <strong>Phone:</strong> +1 (123) 456-7890</p>
+          <p><span class="contact-icon">📍</span> <strong>Address:</strong> 123 Coconut Lane, Tropical City, TC 12345</p>
+          <p><span class="contact-icon">🕒</span> <strong>Business Hours:</strong> Monday - Friday, 9 AM - 5 PM</p>
+        </div>
+      </div>
+    </section>
+    
+    <section class="about-image">
+      <div class="image-card">
+        <img :src="imageSrc" alt="Stacked coconut lumber" class="product-image" />
+        <p class="image-caption">Stacked coconut lumber — example upload</p>
       </div>
     </section>
   </div>
@@ -53,7 +56,34 @@
 
 <script>
 export default {
-  name: 'About'
+  name: 'About',
+  data() {
+    return {
+      // Try the user image in /public/images first; if it's missing, fall back to a bundled public asset
+      imageSrc: '/images/cocolumber.jpg'
+    }
+  },
+  async mounted() {
+    try {
+      let res = await fetch(this.imageSrc, { method: 'GET' });
+      if (!res.ok) {
+        // try alternative location (public root filename added earlier)
+        res = await fetch('/cocolumber.jpg.jpg', { method: 'GET' });
+        if (res.ok) {
+          this.imageSrc = '/cocolumber.jpg.jpg';
+        } else {
+          this.imageSrc = '/pwa-512x512.png';
+        }
+      }
+    } catch (e) {
+      try {
+        const alt = await fetch('/cocolumber.jpg.jpg', { method: 'GET' });
+        this.imageSrc = alt.ok ? '/cocolumber.jpg.jpg' : '/pwa-512x512.png';
+      } catch {
+        this.imageSrc = '/pwa-512x512.png';
+      }
+    }
+  }
 }
 </script>
 
@@ -62,14 +92,19 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #fff;
+  padding: 20px;
 }
 
 .about-hero {
   text-align: center;
   padding: 2rem;
-  background: linear-gradient(135deg, var(--secondary-color), #6D4C41);
-  color: var(--white);
-  border-radius: 15px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 .about-hero h1 {
@@ -83,27 +118,30 @@ export default {
   gap: 1.5rem;
 }
 
+.card {
+  background: #242442;
+  border-radius: 16px;
+  padding: 25px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  color: #fff;
+}
+
 .about-content h2 {
-  color: var(--primary-color);
+  color: #4CAF50;
   margin-bottom: 1rem;
 }
 
 .about-content p {
   line-height: 1.8;
-}
-
-.tech-stack {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1.5rem;
-  margin-top: 1rem;
+  color: #ccc;
 }
 
 .tech-item {
   text-align: center;
   padding: 1rem;
-  background: var(--background-color);
-  border-radius: 10px;
+  background: #242442;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .tech-icon {
@@ -113,13 +151,13 @@ export default {
 }
 
 .tech-item h3 {
-  color: var(--primary-dark);
+  color: #4CAF50;
   margin-bottom: 0.25rem;
 }
 
 .tech-item p {
   font-size: 0.9rem;
-  color: #666;
+  color: #ccc;
 }
 
 .features-list {
@@ -131,7 +169,56 @@ export default {
 
 .features-list li {
   padding: 0.75rem;
-  background: var(--background-color);
-  border-radius: 5px;
+  background: #242442;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  color: #ccc;
+}
+
+.contact-info p {
+  margin-bottom: 1rem;
+  color: #ccc;
+  line-height: 1.6;
+  display: flex;
+  align-items: center;
+}
+
+.contact-info strong {
+  color: #81C784;
+}
+
+.contact-icon {
+  font-size: 1.5rem;
+  margin-right: 0.5rem;
+}
+
+.about-image {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.image-card {
+  max-width: 900px;
+  width: 100%;
+  background: #242442;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  text-align: center;
+}
+
+.product-image {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto 12px;
+}
+
+.image-caption {
+  color: #bdbdbd;
+  font-size: 0.95rem;
 }
 </style>
