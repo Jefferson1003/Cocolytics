@@ -1,11 +1,28 @@
 <template>
   <div class="home">
     <section class="hero">
-      <h1>Welcome to Cocolytics</h1>
-      <p>Your powerful analytics platform</p>
-      <div class="hero-buttons">
-        <button class="btn" @click="fetchData">Load Data</button>
-        <button class="btn btn-outline" @click="checkHealth">Check API</button>
+      <div class="hero-content">
+        <h1 class="hero-title">Welcome to Cocolytics</h1>
+        <p class="hero-subtitle">Your powerful analytics platform</p>
+      </div>
+
+      <div class="hero-images">
+        <h2>🌴 Premium Quality</h2>
+        <p>Discover exceptional craftsmanship</p>
+        <div class="welcome-images">
+          <div class="image-item">
+            <img src="/images/timber-1.jpg" alt="Premium stacked timber" class="welcome-img" />
+            <h3>Quality Selection</h3>
+          </div>
+          <div class="image-item">
+            <img src="/images/timber-2.jpg" alt="Fine wood craftsmanship" class="welcome-img" />
+            <h3>Expert Craftsmanship</h3>
+          </div>
+          <div class="image-item">
+            <img src="/images/timber-3.jpg" alt="Professional lumber handling" class="welcome-img" />
+            <h3>Professional Service</h3>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -28,16 +45,6 @@
           <h3>{{ item.name }}</h3>
           <p class="value">{{ item.value }}</p>
         </div>
-      </div>
-    </section>
-
-    <section class="status-section" v-if="healthStatus">
-      <div class="card status-card">
-        <h3>API Status</h3>
-        <p class="status" :class="{ 'status-ok': healthStatus.status === 'OK' }">
-          {{ healthStatus.status }}
-        </p>
-        <p class="timestamp">{{ healthStatus.timestamp }}</p>
       </div>
     </section>
 
@@ -82,31 +89,31 @@
           <div class="shop-icon">🏪</div>
           <h3>Tropical Paradise Shop</h3>
           <p>Fresh coconuts daily</p>
-          <button class="btn">Visit Traders</button>
+          <router-link to="/orders" class="btn">Visit Traders</router-link>
         </div>
         <div class="shop-card">
           <div class="shop-icon">🏪</div>
           <h3>Island Market</h3>
           <p>Premium coconut selection</p>
-          <button class="btn">Visit Traders</button>
+          <router-link to="/orders" class="btn">Visit Traders</router-link>
         </div>
         <div class="shop-card">
           <div class="shop-icon">🏪</div>
           <h3>Beachside Store</h3>
           <p>Locally sourced coconuts</p>
-          <button class="btn">Visit Traders</button>
+          <router-link to="/orders" class="btn">Visit Traders</router-link>
         </div>
         <div class="shop-card">
           <div class="shop-icon">🏪</div>
           <h3>Palm Grove Emporium</h3>
           <p>Wide variety of coconuts</p>
-          <button class="btn">Visit Traders</button>
+          <router-link to="/orders" class="btn">Visit Traders</router-link>
         </div>
         <div class="shop-card">
           <div class="shop-icon">🏪</div>
           <h3>Coconut Haven</h3>
           <p>Quality coconuts guaranteed</p>
-          <button class="btn">Visit Traders</button>
+          <router-link to="/orders" class="btn">Visit Traders</router-link>
         </div>
       </div>
     </section>
@@ -216,29 +223,93 @@ export default {
   flex-direction: column;
   gap: 3rem;
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background: #e5e5e5;
   color: #fff;
   padding: 20px;
 }
 
 .hero {
   text-align: center;
-  padding: 3rem 1rem;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding: 4rem 2rem 3rem;
+  background: linear-gradient(135deg, #2d1b4e 0%, #3d2463 50%, #4a2f77 100%);
   color: #fff;
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border-radius: 20px;
+  box-shadow: 0 25px 70px rgba(61, 36, 99, 0.5);
+  position: relative;
+  overflow: hidden;
 }
 
-.hero h1 {
-  font-size: 2.5rem;
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(255,255,255,0.05) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 3rem;
+}
+
+.hero-images {
+  position: relative;
+  z-index: 1;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hero-images h2 {
+  font-size: 2rem;
   margin-bottom: 0.5rem;
+  color: #e0d5ff;
 }
 
-.hero p {
-  font-size: 1.2rem;
-  opacity: 0.9;
+.hero-images p {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 2rem;
+}
+
+.welcome-badge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  padding: 8px 20px;
+  border-radius: 30px;
+  font-size: 0.95rem;
+  font-weight: 600;
   margin-bottom: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  animation: fadeInDown 0.8s ease-out;
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #fff;
+  animation: slideDown 0.6s ease-out;
+}
+
+.hero-subtitle {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin-bottom: 0.8rem;
+  color: rgba(255, 255, 255, 0.9);
+  animation: slideDown 0.6s ease-out 0.1s both;
+}
+
+.hero-description {
+  font-size: 1rem;
+  opacity: 0.85;
+  margin-bottom: 2rem;
+  color: rgba(255, 255, 255, 0.85);
+  animation: slideDown 0.6s ease-out 0.2s both;
 }
 
 .hero-buttons {
@@ -246,26 +317,123 @@ export default {
   gap: 1rem;
   justify-content: center;
   flex-wrap: wrap;
+  animation: slideDown 0.6s ease-out 0.3s both;
 }
 
-.hero .btn {
-  background: #242442;
-  color: #4CAF50;
+.btn {
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
 }
 
-.hero .btn:hover {
-  background: #333;
+.btn-primary {
+  background: #fff;
+  color: #4a2f77;
 }
 
-.hero .btn-outline {
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 255, 255, 0.2);
+}
+
+.btn-outline {
   background: transparent;
-  border-color: #4CAF50;
-  color: #4CAF50;
+  border-color: #fff;
+  color: #fff;
 }
 
-.hero .btn-outline:hover {
-  background: #4CAF50;
-  color: #fff;
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+}
+
+.cocolytics-welcome {
+  text-align: center;
+  padding: 3rem 1rem;
+  background: linear-gradient(135deg, #2a2a3e 0%, #1a1a2e 100%);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  margin-bottom: 2rem;
+}
+
+.cocolytics-welcome h2 {
+  font-size: 2rem;
+  color: #4CAF50;
+  margin-bottom: 0.5rem;
+}
+
+.cocolytics-welcome p {
+  font-size: 1.1rem;
+  color: #ccc;
+  margin-bottom: 2rem;
+}
+
+.welcome-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+}
+
+.image-item {
+  background: #242442;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s;
+}
+
+.image-item:hover {
+  transform: translateY(-8px);
+}
+
+.welcome-img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  display: block;
+}
+
+.image-item h3 {
+  color: #81C784;
+  padding: 1rem;
+  margin: 0;
+  font-size: 1.1rem;
 }
 
 .install-section .install-card {

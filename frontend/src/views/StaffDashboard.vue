@@ -544,6 +544,106 @@ export default {
 .modal-body p {
   font-size: 1rem;
   color: #333;
+
+/* Camera Scanner Styles */
+.camera-modal {
+  background: #242442;
+  border-radius: 16px;
+  max-width: 600px;
+  width: 90%;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.camera-header {
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  color: white;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.camera-header h2 {
+  font-size: 1.3rem;
+  margin: 0;
+}
+
+.camera-body {
+  padding: 20px;
+  background: #1a1a2e;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.camera-feed,
+.captured-image {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.camera-footer {
+  padding: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  background: #242442;
+  border-top: 1px solid #333;
+}
+
+.btn-capture,
+.btn-retake,
+.btn-save {
+  padding: 12px 28px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-capture {
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  color: white;
+}
+
+.btn-capture:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+}
+
+.btn-retake {
+  background: #757575;
+  color: white;
+}
+
+.btn-retake:hover {
+  background: #616161;
+}
+
+.btn-save {
+  background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+  color: white;
+}
+
+.btn-save:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.camera-error {
+  color: #f44336;
+  padding: 10px 20px;
+  text-align: center;
+  background: rgba(244, 67, 54, 0.1);
+  margin: 0 20px 20px;
+  border-radius: 8px;
+}
   margin: 0;
 }
 

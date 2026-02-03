@@ -7,25 +7,29 @@
       </button>
     </div>
     <nav class="sidebar-nav">
-      <router-link to="/staff" class="nav-item" :class="{ active: isActive('/staff') }" title="Overview">
-        <span class="nav-icon">📊</span>
-        <span class="nav-label" v-show="sidebarOpen">Overview</span>
-      </router-link>
-      <a href="#reports" class="nav-item" title="Reports">
-        <span class="nav-icon">📈</span>
-        <span class="nav-label" v-show="sidebarOpen">Reports</span>
-      </a>
-      <a href="#users" class="nav-item" title="Recent Users">
-        <span class="nav-icon">👥</span>
-        <span class="nav-label" v-show="sidebarOpen">Recent Users</span>
-      </a>
       <router-link to="/staff/add-cocolumber" class="nav-item" :class="{ active: isActive('/staff/add-cocolumber') }" title="Add Coconut">
         <span class="nav-icon">🌴</span>
         <span class="nav-label" v-show="sidebarOpen">Add Product</span>
       </router-link>
+      <router-link to="/staff/paper-uploads" class="nav-item" :class="{ active: isActive('/staff/paper-uploads') }" title="Upload Papers">
+        <span class="nav-icon">📄</span>
+        <span class="nav-label" v-show="sidebarOpen">Upload Papers</span>
+      </router-link>
+      <router-link to="/staff/inventory" class="nav-item" :class="{ active: isActive('/staff/inventory') }" title="Inventory">
+        <span class="nav-icon">📦</span>
+        <span class="nav-label" v-show="sidebarOpen">Inventory</span>
+      </router-link>
+      <router-link to="/staff" class="nav-item" :class="{ active: isActive('/staff') }" title="Warehouse Dispatch">
+        <span class="nav-icon">🚚</span>
+        <span class="nav-label" v-show="sidebarOpen">Warehouse Dispatch</span>
+      </router-link>
       <router-link to="/staff/orders" class="nav-item" :class="{ active: isActive('/staff/orders') }" title="Manage Orders">
         <span class="nav-icon">📋</span>
         <span class="nav-label" v-show="sidebarOpen">Manage Orders</span>
+      </router-link>
+      <router-link to="/staff/camera-scanner" class="nav-item" :class="{ active: isActive('/staff/camera-scanner') }" title="Camera Scanner">
+        <span class="nav-icon">📷</span>
+        <span class="nav-label" v-show="sidebarOpen">Camera Scanner</span>
       </router-link>
     </nav>
     <div class="sidebar-footer">

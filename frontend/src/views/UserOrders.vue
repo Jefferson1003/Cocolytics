@@ -65,6 +65,21 @@
           </button>
         </div>
         <p v-else class="empty-cart">Your cart is empty. Select coconuts above to order.</p>
+
+        <div class="arrived-orders">
+          <h3>✅ Arrived (Approved) Orders</h3>
+          <div v-if="arrivedOrders.length > 0" class="arrived-list">
+            <div v-for="order in arrivedOrders" :key="order.id" class="arrived-item">
+              <div class="item-info">
+                <h4>{{ order.size }}</h4>
+                <p>Length: {{ order.length }} cm | Quantity: {{ order.quantity }} units</p>
+                <p class="order-date">Arrived: {{ formatDate(order.created_at) }}</p>
+              </div>
+              <span class="arrived-badge">Arrived</span>
+            </div>
+          </div>
+          <p v-else class="empty-arrived">No arrived orders yet.</p>
+        </div>
       </div>
 
       <!-- Success Message -->
@@ -127,12 +142,25 @@ export default {
   computed: {
     totalItems() {
       return this.cartItems.reduce((sum, item) => sum + item.quantity, 0)
+    },
+    arrivedOrders() {
+      return this.userOrders.filter(order =>
+        String(order.status).toLowerCase() === 'completed' ||
+        String(order.status).toLowerCase() === 'approved'
+      )
     }
   },
   mounted() {
     this.token = localStorage.getItem('token')
     this.fetchAvailableProducts()
     this.fetchUserOrders()
+    // Load cart from localStorage so cart is shared across views
+    try {
+      const stored = localStorage.getItem('cartItems')
+      this.cartItems = stored ? JSON.parse(stored) : []
+    } catch (e) {
+      this.cartItems = []
+    }
   },
   methods: {
     async fetchAvailableProducts() {
@@ -204,12 +232,15 @@ export default {
           })
         }
         this.orderQuantities[product.id] = 0
+        // Persist cart
+        try { localStorage.setItem('cartItems', JSON.stringify(this.cartItems)) } catch (e) {}
         this.successMessage = `${product.size} added to cart!`
         setTimeout(() => this.successMessage = '', 3000)
       }
     },
     removeFromCart(index) {
       this.cartItems.splice(index, 1)
+      try { localStorage.setItem('cartItems', JSON.stringify(this.cartItems)) } catch (e) {}
     },
     async submitOrder() {
       if (this.cartItems.length === 0) {
@@ -237,6 +268,7 @@ export default {
         this.successMessage = '✓ Order placed successfully!'
         this.cartItems = []
         this.orderQuantities = {}
+        try { localStorage.removeItem('cartItems') } catch (e) {}
         this.fetchUserOrders()
         setTimeout(() => this.successMessage = '', 3000)
       } catch (error) {
@@ -532,6 +564,50 @@ export default {
   padding: 30px;
   background: #1a1a2e;
   border-radius: 12px;
+}
+
+.arrived-orders {
+  margin-top: 25px;
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #333;
+}
+
+.arrived-orders h3 {
+  margin: 0 0 15px 0;
+  color: #27ae60;
+  font-size: 1.1em;
+}
+
+.arrived-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.arrived-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #242442;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.arrived-badge {
+  background: #27ae60;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+.empty-arrived {
+  color: #888;
+  text-align: center;
+  padding: 10px 0;
 }
 
 /* My Orders Section */

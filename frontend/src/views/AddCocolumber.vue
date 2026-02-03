@@ -41,7 +41,7 @@
 
         <!-- Stock Input -->
         <div class="form-group">
-          <label for="stock">Stock Quantity <span class="required">*</span></label>
+          <label for="stock">Current Stock Quantity <span class="required">*</span></label>
           <input
             type="number"
             id="stock"
@@ -50,32 +50,56 @@
             class="form-input"
             required
           />
+          <small>Amount currently available in inventory</small>
+        </div>
+
+        <!-- Production Target -->
+        <div class="form-group">
+          <label for="production_target">Production Target (Monthly) <span class="optional">(optional)</span></label>
+          <input
+            type="number"
+            id="production_target"
+            v-model.number="formData.production_target"
+            placeholder="e.g., 500 - Target units to produce per month"
+            class="form-input"
+          />
+          <small>Set a monthly production goal for this product size</small>
         </div>
 
         <!-- Product Picture Upload -->
         <div class="form-group">
           <label for="product_picture">Product Picture <span class="optional">(optional)</span></label>
-          <div class="file-input-wrapper">
+          <div 
+            class="drag-drop-zone"
+            :class="{ 'drag-over': isDragging }"
+            @dragover.prevent="handleDragOver"
+            @dragleave.prevent="handleDragLeave"
+            @drop.prevent="handleDrop"
+          >
             <input
               type="file"
               id="product_picture"
               @change="handleFileUpload"
               accept="image/*"
               class="file-input"
+              ref="fileInput"
             />
-            <label for="product_picture" class="file-label">
+            <div v-if="!imagePreview" class="drop-zone-content" @click="triggerFileInput">
               <span class="file-icon">📷</span>
-              <span v-if="!formData.selectedFile" class="file-text">Click to select image</span>
-              <span v-else class="file-text">{{ formData.selectedFile.name }}</span>
-            </label>
+              <p class="drop-text">
+                <strong>Drag & Drop</strong> your image here<br>
+                or <span class="click-text">click to browse</span>
+              </p>
+              <span v-if="formData.selectedFile" class="file-name">{{ formData.selectedFile.name }}</span>
+            </div>
+            
+            <!-- Image Preview -->
+            <div v-if="imagePreview" class="image-preview-large">
+              <img :src="imagePreview" alt="Preview" />
+              <button type="button" @click="removeImage" class="btn-remove-image">✕ Remove</button>
+            </div>
           </div>
-          <small>Accepted: JPEG, PNG, GIF (Max 5MB)</small>
-          
-          <!-- Image Preview -->
-          <div v-if="imagePreview" class="image-preview">
-            <img :src="imagePreview" alt="Preview" />
-            <button type="button" @click="removeImage" class="btn-remove-image">✕</button>
-          </div>
+          <small>Accepted: JPEG, PNG, GIF (Max 5MB) - Drag and drop or click to upload</small>
         </div>
 
         <!-- Submit Button -->
@@ -210,7 +234,8 @@ export default {
       errorMessage: '',
       editingProduct: null,
       editingFile: null,
-      token: null
+      token: null,
+      isDragging: false
     };
   },
   mounted() {
@@ -220,15 +245,60 @@ export default {
   methods: {
     handleFileUpload(event) {
       const file = event.target.files[0];
-      if (file) {
-        this.formData.selectedFile = file;
-        // Create preview
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          this.imagePreview = e.target.result;
-        };
-        reader.readAsDataURL(file);
+      this.processFile(file);
+    },
+    handleDragOver(event) {
+      this.isDragging = true;
+    },
+    handleDragLeave(event) {
+      this.isDragging = false;
+    },
+    handleDrop(event) {
+      this.isDragging = false;
+      const file = event.dataTransfer.files[0];
+      
+      if (file && file.type.startsWith('image/')) {
+        this.processFile(file);
+      } else {
+        this.errorMessage = 'Please drop an image file';
+        setTimeout(() => {
+          this.errorMessage = '';
+        }, 3000);
       }
+    },
+    processFile(file) {
+      if (!file) return;
+      
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      if (!allowedTypes.includes(file.type)) {
+        this.errorMessage = 'Only JPEG, PNG, and GIF images are allowed';
+        setTimeout(() => {
+          this.errorMessage = '';
+        }, 3000);
+        return;
+      }
+      
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        this.errorMessage = 'File size must be less than 5MB';
+        setTimeout(() => {
+          this.errorMessage = '';
+        }, 3000);
+        return;
+      }
+      
+      this.formData.selectedFile = file;
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.imagePreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    },
+    triggerFileInput() {
+      this.$refs.fileInput.click();
     },
     handleEditFileUpload(event) {
       const file = event.target.files[0];
@@ -521,74 +591,111 @@ export default {
   box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
 }
 
-.file-input-wrapper {
-  position: relative;
-}
-
 .file-input {
   display: none;
 }
 
-.file-label {
+.drag-drop-zone {
+  position: relative;
+  border: 3px dashed #667eea;
+  border-radius: 12px;
+  background: #1a1a2e;
+  transition: all 0.3s ease;
+  min-height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 12px 15px;
-  border: 2px dashed #667eea;
-  border-radius: 8px;
-  background: #1a1a2e;
-  cursor: pointer;
-  transition: all 0.3s;
 }
 
-.file-label:hover {
-  background: #f0f2ff;
+.drag-drop-zone.drag-over {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
   border-color: #764ba2;
+  border-style: solid;
+  transform: scale(1.02);
+}
+
+.drop-zone-content {
+  text-align: center;
+  padding: 40px 20px;
+  cursor: pointer;
+  width: 100%;
 }
 
 .file-icon {
-  font-size: 1.5em;
+  font-size: 3em;
+  display: block;
+  margin-bottom: 15px;
 }
 
-.file-text {
+.drop-text {
   color: #a8b3ff;
+  font-size: 1em;
+  margin: 10px 0;
+  line-height: 1.6;
+}
+
+.drop-text strong {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.click-text {
+  color: #764ba2;
+  text-decoration: underline;
   font-weight: 500;
+}
+
+.file-name {
+  display: block;
+  margin-top: 10px;
+  color: #95a5a6;
+  font-size: 0.9em;
+  font-style: italic;
 }
 
 small {
   color: #95a5a6;
   margin-top: 5px;
   font-size: 0.85em;
-}
-
-.image-preview {
-  position: relative;
-  margin-top: 15px;
-  border-radius: 8px;
-  overflow: hidden;
-  max-width: 200px;
-}
-
-.image-preview img {
-  width: 100%;
-  height: auto;
   display: block;
 }
 
+.image-preview-large {
+  position: relative;
+  width: 100%;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.image-preview-large img {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+  object-fit: contain;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
 .btn-remove-image {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(231, 76, 60, 0.9);
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
   color: white;
   border: none;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
+  border-radius: 6px;
+  padding: 10px 20px;
   cursor: pointer;
-  font-size: 1.2em;
-  transition: background 0.3s;
+  font-size: 0.95em;
+  font-weight: 600;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-remove-image:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(231, 76, 60, 0.4);
 }
 
 .btn-remove-image:hover {

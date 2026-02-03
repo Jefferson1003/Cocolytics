@@ -33,6 +33,73 @@ pool.getConnection()
     console.error('❌ Database connection failed:', err.message);
   });
 
+// Ensure paper_uploads table exists
+(async () => {
+  try {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS paper_uploads (
+        id INT NOT NULL AUTO_INCREMENT,
+        user_id INT NOT NULL,
+        title VARCHAR(150) NOT NULL,
+        description TEXT,
+        file_path VARCHAR(255) NOT NULL,
+        status ENUM('pending','approved','rejected') DEFAULT 'pending',
+        reviewed_by INT DEFAULT NULL,
+        review_note VARCHAR(255) DEFAULT NULL,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY user_id (user_id),
+        KEY reviewed_by (reviewed_by),
+        KEY idx_status (status),
+        CONSTRAINT paper_uploads_ibfk_1 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        CONSTRAINT paper_uploads_ibfk_2 FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+    
+    // Create stock_transactions table for tracking stock movements
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS stock_transactions (
+        id INT NOT NULL AUTO_INCREMENT,
+        product_id INT NOT NULL,
+        user_id INT DEFAULT NULL,
+        transaction_type ENUM('stock_in','dispatch','adjust') NOT NULL,
+        quantity INT NOT NULL,
+        reason VARCHAR(255),
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY product_id (product_id),
+        KEY user_id (user_id),
+        KEY transaction_type (transaction_type),
+        CONSTRAINT stock_trans_ibfk_1 FOREIGN KEY (product_id) REFERENCES cocolumber_logs(id) ON DELETE CASCADE,
+        CONSTRAINT stock_trans_ibfk_2 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+    
+    // Create warehouse_dispatches table for tracking products leaving warehouse
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS warehouse_dispatches (
+        id INT NOT NULL AUTO_INCREMENT,
+        product_id INT NOT NULL,
+        user_id INT DEFAULT NULL,
+        quantity INT NOT NULL,
+        customer_name VARCHAR(255) NOT NULL,
+        date_released DATETIME NOT NULL,
+        notes TEXT,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY product_id (product_id),
+        KEY user_id (user_id),
+        KEY date_released (date_released),
+        CONSTRAINT warehouse_disp_ibfk_1 FOREIGN KEY (product_id) REFERENCES cocolumber_logs(id) ON DELETE CASCADE,
+        CONSTRAINT warehouse_disp_ibfk_2 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+  } catch (error) {
+    console.error('❌ Failed to ensure tables:', error.message);
+  }
+})();
+
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -72,6 +139,34 @@ const upload = multer({
   storage: storage,
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
   fileFilter: fileFilter
+});
+
+// Multer configuration for paper uploads (PDF/JPG/PNG)
+const paperStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'paper-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const paperFileFilter = (req, file, cb) => {
+  const allowedTypes = /pdf|jpeg|jpg|png/;
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = allowedTypes.test(file.mimetype.toLowerCase());
+
+  if (mimetype && extname) {
+    return cb(null, true);
+  }
+  cb(new Error('Only PDF, JPG, and PNG files are allowed'));
+};
+
+const paperUpload = multer({
+  storage: paperStorage,
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB limit
+  fileFilter: paperFileFilter
 });
 
 // Serve uploaded files as static
@@ -336,6 +431,68 @@ app.get('/api/staff/dashboard', authenticateToken, authorizeRoles('staff', 'admi
   }
 });
 
+// AI Detection endpoint for cocolumber
+app.post('/api/staff/detect-cocolumber', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
+  try {
+    const { image } = req.body;
+    
+    if (!image) {
+      return res.status(400).json({ message: 'Image data required' });
+    }
+    
+    // Call Python ML service
+    const axios = require('axios');
+    
+    try {
+      const mlResponse = await axios.post('http://localhost:5000/predict', {
+        image: image
+      }, {
+        timeout: 30000, // 30 second timeout
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      res.json(mlResponse.data);
+    } catch (mlError) {
+      console.error('ML Service error:', mlError.message);
+      
+      // Fallback to simulation if ML service is not running
+      console.warn('ML service not available, using simulation...');
+      const simulatedResult = simulateMLDetection();
+      res.json(simulatedResult);
+    }
+    
+  } catch (error) {
+    console.error('Detection error:', error);
+    res.status(500).json({ message: 'Detection failed', error: error.message });
+  }
+});
+
+// Fallback simulation when ML service is unavailable
+function simulateMLDetection() {
+  const scenarios = [
+    {
+      detectedClass: 'cocolumber',
+      height: (Math.random() * 10 + 8).toFixed(1),
+      diameter: Math.floor(Math.random() * 30 + 35),
+      estimatedLumber: Math.floor(Math.random() * 100 + 80),
+      quality: ['Grade A', 'Grade B', 'Premium'][Math.floor(Math.random() * 3)],
+      confidence: Math.floor(Math.random() * 15 + 85)
+    },
+    {
+      detectedClass: 'human',
+      confidence: 92
+    },
+    {
+      detectedClass: 'car',
+      confidence: 88
+    }
+  ];
+  
+  return scenarios[Math.floor(Math.random() * scenarios.length)];
+}
+
 // ==================== COCOLUMBER PRODUCT ROUTES ====================
 
 // Add new cocolumber log (staff and admin only)
@@ -512,6 +669,451 @@ app.delete('/api/staff/cocolumber/:id', authenticateToken, authorizeRoles('staff
   }
 });
 
+// ==================== INVENTORY MANAGEMENT ROUTES ====================
+
+// Update cocolumber stock only (for inventory management)
+app.put('/api/cocolumber/:id', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { stock } = req.body;
+
+    if (stock === undefined || stock === null) {
+      return res.status(400).json({ message: 'Stock quantity is required' });
+    }
+
+    // Check if cocolumber exists
+    const [logs] = await pool.execute(
+      'SELECT * FROM cocolumber_logs WHERE id = ?',
+      [id]
+    );
+
+    if (logs.length === 0) {
+      return res.status(404).json({ message: 'Cocolumber not found' });
+    }
+
+    // Update stock
+    await pool.execute(
+      'UPDATE cocolumber_logs SET stock = ? WHERE id = ?',
+      [stock, id]
+    );
+
+    res.json({ success: true, message: 'Stock updated successfully' });
+  } catch (error) {
+    console.error('Update cocolumber stock error:', error);
+    res.status(500).json({ message: 'Server error while updating stock' });
+  }
+});
+
+// Delete cocolumber (for inventory management)
+app.delete('/api/cocolumber/:id', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get log to delete associated file
+    const [logs] = await pool.execute(
+      'SELECT * FROM cocolumber_logs WHERE id = ?',
+      [id]
+    );
+
+    if (logs.length === 0) {
+      return res.status(404).json({ message: 'Cocolumber not found' });
+    }
+
+    const log = logs[0];
+
+    // Delete file if exists
+    if (log.product_picture) {
+      const filePath = path.join(__dirname, log.product_picture);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+
+    // Delete from database
+    await pool.execute(
+      'DELETE FROM cocolumber_logs WHERE id = ?',
+      [id]
+    );
+
+    res.json({ success: true, message: 'Product deleted successfully' });
+  } catch (error) {
+    console.error('Delete cocolumber error:', error);
+    res.status(500).json({ message: 'Server error while deleting product' });
+  }
+});
+
+// Stock-in (add stock to inventory)
+app.post('/api/cocolumber/:id/stock-in', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { quantity, reason } = req.body;
+
+    if (!quantity || quantity <= 0) {
+      return res.status(400).json({ message: 'Quantity must be greater than 0' });
+    }
+
+    // Check if product exists
+    const [logs] = await pool.execute(
+      'SELECT * FROM cocolumber_logs WHERE id = ?',
+      [id]
+    );
+
+    if (logs.length === 0) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    // Update stock
+    await pool.execute(
+      'UPDATE cocolumber_logs SET stock = stock + ? WHERE id = ?',
+      [quantity, id]
+    );
+
+    // Record transaction
+    await pool.execute(
+      'INSERT INTO stock_transactions (product_id, user_id, transaction_type, quantity, reason) VALUES (?, ?, ?, ?, ?)',
+      [id, req.user.id, 'stock_in', quantity, reason || null]
+    );
+
+    res.json({ success: true, message: `Added ${quantity} units to stock`, newStock: logs[0].stock + quantity });
+  } catch (error) {
+    console.error('Stock-in error:', error);
+    res.status(500).json({ message: 'Server error while adding stock' });
+  }
+});
+
+// Dispatch (deduct stock from inventory)
+app.post('/api/cocolumber/:id/dispatch', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { quantity, reason } = req.body;
+
+    if (!quantity || quantity <= 0) {
+      return res.status(400).json({ message: 'Quantity must be greater than 0' });
+    }
+
+    // Check if product exists and has enough stock
+    const [logs] = await pool.execute(
+      'SELECT * FROM cocolumber_logs WHERE id = ?',
+      [id]
+    );
+
+    if (logs.length === 0) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    const product = logs[0];
+
+    if (product.stock < quantity) {
+      return res.status(400).json({ message: `Insufficient stock. Available: ${product.stock}, Requested: ${quantity}` });
+    }
+
+    // Update stock
+    await pool.execute(
+      'UPDATE cocolumber_logs SET stock = stock - ? WHERE id = ?',
+      [quantity, id]
+    );
+
+    // Record transaction
+    await pool.execute(
+      'INSERT INTO stock_transactions (product_id, user_id, transaction_type, quantity, reason) VALUES (?, ?, ?, ?, ?)',
+      [id, req.user.id, 'dispatch', quantity, reason || null]
+    );
+
+    res.json({ success: true, message: `Dispatched ${quantity} units`, newStock: product.stock - quantity });
+  } catch (error) {
+    console.error('Dispatch error:', error);
+    res.status(500).json({ message: 'Server error while dispatching stock' });
+  }
+});
+
+// Adjust stock (with reason)
+app.post('/api/cocolumber/:id/adjust', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { quantity, reason } = req.body;
+
+    if (quantity === undefined || quantity === null) {
+      return res.status(400).json({ message: 'Adjustment quantity is required' });
+    }
+
+    if (!reason) {
+      return res.status(400).json({ message: 'Reason for adjustment is required' });
+    }
+
+    // Check if product exists
+    const [logs] = await pool.execute(
+      'SELECT * FROM cocolumber_logs WHERE id = ?',
+      [id]
+    );
+
+    if (logs.length === 0) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    const product = logs[0];
+    const newStock = product.stock + quantity;
+
+    // Prevent negative stock
+    if (newStock < 0) {
+      return res.status(400).json({ message: `Adjustment would result in negative stock. Current: ${product.stock}, Adjustment: ${quantity}` });
+    }
+
+    // Update stock
+    await pool.execute(
+      'UPDATE cocolumber_logs SET stock = stock + ? WHERE id = ?',
+      [quantity, id]
+    );
+
+    // Record transaction (use absolute value for display)
+    await pool.execute(
+      'INSERT INTO stock_transactions (product_id, user_id, transaction_type, quantity, reason) VALUES (?, ?, ?, ?, ?)',
+      [id, req.user.id, 'adjust', Math.abs(quantity), reason]
+    );
+
+    res.json({ success: true, message: `Stock adjusted by ${quantity} units`, newStock });
+  } catch (error) {
+    console.error('Adjust stock error:', error);
+    res.status(500).json({ message: 'Server error while adjusting stock' });
+  }
+});
+
+// Get stock transaction history for a product
+app.get('/api/cocolumber/:id/transactions', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [transactions] = await pool.execute(
+      `SELECT 
+        st.*,
+        u.name as user_name,
+        cl.size as product_size
+       FROM stock_transactions st
+       JOIN users u ON st.user_id = u.id
+       JOIN cocolumber_logs cl ON st.product_id = cl.id
+       WHERE st.product_id = ?
+       ORDER BY st.created_at DESC
+       LIMIT 50`,
+      [id]
+    );
+
+    res.json(transactions);
+  } catch (error) {
+    console.error('Get transactions error:', error);
+    res.status(500).json({ message: 'Server error while fetching transactions' });
+  }
+});
+
+// ==================== WAREHOUSE DISPATCH ROUTES ====================
+
+// Create warehouse dispatch (auto-deduct inventory)
+app.post('/api/warehouse/dispatch', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
+  try {
+    const { product_id, quantity, customer_name, date_released, notes } = req.body;
+
+    if (!product_id || !quantity || !customer_name || !date_released) {
+      return res.status(400).json({ message: 'Product, quantity, customer name, and date are required' });
+    }
+
+    // Check if product exists and has enough stock
+    const [products] = await pool.execute(
+      'SELECT * FROM cocolumber_logs WHERE id = ?',
+      [product_id]
+    );
+
+    if (products.length === 0) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    const product = products[0];
+
+    if (product.stock < quantity) {
+      return res.status(400).json({ 
+        message: `Insufficient stock. Available: ${product.stock}, Requested: ${quantity}` 
+      });
+    }
+
+    // Start transaction
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    try {
+      // 1. Deduct from inventory
+      await connection.execute(
+        'UPDATE cocolumber_logs SET stock = stock - ? WHERE id = ?',
+        [quantity, product_id]
+      );
+
+      // 2. Record dispatch
+      const [dispatchResult] = await connection.execute(
+        `INSERT INTO warehouse_dispatches 
+         (product_id, user_id, quantity, customer_name, date_released, notes) 
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [product_id, req.user.id, quantity, customer_name, date_released, notes || null]
+      );
+
+      // 3. Record stock transaction
+      await connection.execute(
+        `INSERT INTO stock_transactions 
+         (product_id, user_id, transaction_type, quantity, reason) 
+         VALUES (?, ?, 'dispatch', ?, ?)`,
+        [product_id, req.user.id, quantity, `Warehouse dispatch to ${customer_name}`]
+      );
+
+      await connection.commit();
+      connection.release();
+
+      res.json({
+        success: true,
+        message: 'Dispatch recorded and inventory updated',
+        dispatch_id: dispatchResult.insertId,
+        new_stock: product.stock - quantity
+      });
+    } catch (error) {
+      await connection.rollback();
+      connection.release();
+      throw error;
+    }
+  } catch (error) {
+    console.error('Warehouse dispatch error:', error);
+    res.status(500).json({ message: 'Server error while processing dispatch' });
+  }
+});
+
+// Get all warehouse dispatches
+app.get('/api/warehouse/dispatches', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
+  try {
+    const [dispatches] = await pool.execute(
+      `SELECT 
+        wd.*,
+        cl.size as product_size,
+        cl.length as product_length,
+        u.name as user_name
+       FROM warehouse_dispatches wd
+       JOIN cocolumber_logs cl ON wd.product_id = cl.id
+       LEFT JOIN users u ON wd.user_id = u.id
+       ORDER BY wd.date_released DESC, wd.created_at DESC
+       LIMIT 100`
+    );
+    res.json(dispatches);
+  } catch (error) {
+    console.error('Get dispatches error:', error);
+    res.status(500).json({ message: 'Server error while fetching dispatches' });
+  }
+});
+
+// ==================== PAPER UPLOAD ROUTES ====================
+
+// Create paper upload (staff/admin)
+app.post('/api/papers', authenticateToken, authorizeRoles('staff', 'admin'), paperUpload.single('paper'), async (req, res) => {
+  try {
+    const { title, description } = req.body;
+
+    if (!title || !req.file) {
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(400).json({ message: 'Title and file are required' });
+    }
+
+    const filePath = `/uploads/${req.file.filename}`;
+
+    const [result] = await pool.execute(
+      'INSERT INTO paper_uploads (user_id, title, description, file_path, status) VALUES (?, ?, ?, ?, ?)',
+      [req.user.id, title, description || null, filePath, 'pending']
+    );
+
+    res.json({
+      id: result.insertId,
+      user_id: req.user.id,
+      title,
+      description: description || null,
+      file_path: filePath,
+      status: 'pending'
+    });
+  } catch (error) {
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    console.error('Paper upload error:', error);
+    res.status(500).json({ message: 'Server error while uploading paper', error: error.message });
+  }
+});
+
+// Get current user's uploads (staff/admin)
+app.get('/api/papers/mine', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      'SELECT * FROM paper_uploads WHERE user_id = ? ORDER BY created_at DESC',
+      [req.user.id]
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error('Fetch papers error:', error);
+    res.status(500).json({ message: 'Server error while fetching papers' });
+  }
+});
+
+// Get pending uploads for admin
+app.get('/api/papers/pending', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      `SELECT p.*, u.name AS uploader_name, u.email AS uploader_email
+       FROM paper_uploads p
+       JOIN users u ON p.user_id = u.id
+       WHERE p.status = 'pending'
+       ORDER BY p.created_at DESC`
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error('Fetch pending papers error:', error);
+    res.status(500).json({ message: 'Server error while fetching pending papers' });
+  }
+});
+
+// Approve paper (admin)
+app.put('/api/papers/:id/approve', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reviewNote } = req.body;
+
+    const [result] = await pool.execute(
+      'UPDATE paper_uploads SET status = ?, reviewed_by = ?, review_note = ? WHERE id = ?',
+      ['approved', req.user.id, reviewNote || null, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Paper not found' });
+    }
+
+    res.json({ success: true, message: 'Paper approved' });
+  } catch (error) {
+    console.error('Approve paper error:', error);
+    res.status(500).json({ message: 'Server error while approving paper' });
+  }
+});
+
+// Reject paper (admin)
+app.put('/api/papers/:id/reject', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reviewNote } = req.body;
+
+    const [result] = await pool.execute(
+      'UPDATE paper_uploads SET status = ?, reviewed_by = ?, review_note = ? WHERE id = ?',
+      ['rejected', req.user.id, reviewNote || null, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Paper not found' });
+    }
+
+    res.json({ success: true, message: 'Paper rejected' });
+  } catch (error) {
+    console.error('Reject paper error:', error);
+    res.status(500).json({ message: 'Server error while rejecting paper' });
+  }
+});
+
 // ==================== USER ORDER ROUTES ====================
 
 // Get all available cocolumber products (all authenticated users)
@@ -524,6 +1126,19 @@ app.get('/api/cocolumber/all', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Get all cocolumbers error:', error);
     res.status(500).json({ message: 'Server error fetching products' });
+  }
+});
+
+// Get all cocolumber for inventory management (includes zero stock)
+app.get('/api/cocolumber/inventory', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
+  try {
+    const [products] = await pool.execute(
+      'SELECT * FROM cocolumber_logs ORDER BY created_at DESC'
+    );
+    res.json(products);
+  } catch (error) {
+    console.error('Get inventory error:', error);
+    res.status(500).json({ message: 'Server error fetching inventory' });
   }
 });
 

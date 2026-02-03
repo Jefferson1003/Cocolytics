@@ -63,6 +63,26 @@ CREATE TABLE IF NOT EXISTS `orders` (
   CONSTRAINT `orders_ibfk_2` FOREIGN KEY (`cocolumber_id`) REFERENCES `cocolumber_logs` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Paper uploads table (for admin approval)
+CREATE TABLE IF NOT EXISTS `paper_uploads` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `title` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `file_path` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status` enum('pending','approved','rejected') COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
+  `reviewed_by` int DEFAULT NULL,
+  `review_note` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `reviewed_by` (`reviewed_by`),
+  KEY `idx_status` (`status`),
+  CONSTRAINT `paper_uploads_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `paper_uploads_ibfk_2` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Order history table (for tracking status changes)
 CREATE TABLE IF NOT EXISTS `order_history` (
   `id` int NOT NULL AUTO_INCREMENT,

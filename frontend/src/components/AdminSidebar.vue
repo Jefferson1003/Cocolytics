@@ -19,6 +19,10 @@
         <span class="nav-icon">📈</span>
         <span class="nav-label" v-show="sidebarOpen">Analytics</span>
       </a>
+      <router-link to="/admin/paper-approvals" class="nav-item" :class="{ active: isActive('/admin/paper-approvals') }" title="Paper Approvals">
+        <span class="nav-icon">📄</span>
+        <span class="nav-label" v-show="sidebarOpen">Paper Approvals</span>
+      </router-link>
       <a href="#settings" class="nav-item" title="Settings">
         <span class="nav-icon">⚙️</span>
         <span class="nav-label" v-show="sidebarOpen">Settings</span>

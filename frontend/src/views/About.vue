@@ -6,13 +6,26 @@
     </section>
 
     <section class="about-content">
+      <div class="mission-section">
+        <div class="card">
+          <h2>Our Mission</h2>
+          <p>
+            Cocolytics aims to develop a centralized real-time platform for tracking coconut lumber production and inventory levels from raw materials to finished outputs, integrating advanced data analytics and visualization tools to provide insights on production efficiency, stock movement, demand patterns, and material wastage. The platform will automate reporting and documentation processes, including daily production logs, stock balances, and sales dispatches, to minimize human error and enhance transparency. A secure role-based access system will ensure controlled use for administrators, warehouse personnel, production supervisors, and sales staff. Additionally, predictive analytics models will forecast inventory needs, optimize schedules, and prevent shortages or excess materials, enabling comprehensive system evaluation and improvement.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="about-content">
       <div class="card">
-        <h2>Our Mission</h2>
+        <h2>What is Cocolytics?</h2>
         <p>
-          Cocolytics aims to develop a centralized real-time platform for tracking coconut lumber production and inventory levels from raw materials to finished outputs, integrating advanced data analytics and visualization tools to provide insights on production efficiency, stock movement, demand patterns, and material wastage. The platform will automate reporting and documentation processes, including daily production logs, stock balances, and sales dispatches, to minimize human error and enhance transparency. A secure role-based access system will ensure controlled use for administrators, warehouse personnel, production supervisors, and sales staff. Additionally, predictive analytics models will forecast inventory needs, optimize schedules, and prevent shortages or excess materials, enabling comprehensive system evaluation and improvement.
+          Cocolytics is a comprehensive cloud-based platform designed to revolutionize coconut lumber production management. Our solution integrates real-time inventory tracking, advanced analytics, and predictive forecasting to help businesses optimize their supply chain operations. Whether you're managing raw material sourcing, production workflows, or customer orders, Cocolytics provides the insights and tools you need to make data-driven decisions. With an intuitive user interface, mobile accessibility, and role-based security, Cocolytics empowers teams at every level—from warehouse staff to executive leadership—to work smarter, faster, and more efficiently.
         </p>
       </div>
+    </section>
 
+    <section class="about-content">
       <div class="card">
         <h2>Technology Stack</h2>
         <div class="tech-stack">
@@ -45,12 +58,6 @@
       </div>
     </section>
     
-    <section class="about-image">
-      <div class="image-card">
-        <img :src="imageSrc" alt="Stacked coconut lumber" class="product-image" />
-        <p class="image-caption">Stacked coconut lumber — example upload</p>
-      </div>
-    </section>
   </div>
 </template>
 
@@ -59,29 +66,7 @@ export default {
   name: 'About',
   data() {
     return {
-      // Try the user image in /public/images first; if it's missing, fall back to a bundled public asset
-      imageSrc: '/images/cocolumber.jpg'
-    }
-  },
-  async mounted() {
-    try {
-      let res = await fetch(this.imageSrc, { method: 'GET' });
-      if (!res.ok) {
-        // try alternative location (public root filename added earlier)
-        res = await fetch('/cocolumber.jpg.jpg', { method: 'GET' });
-        if (res.ok) {
-          this.imageSrc = '/cocolumber.jpg.jpg';
-        } else {
-          this.imageSrc = '/pwa-512x512.png';
-        }
-      }
-    } catch (e) {
-      try {
-        const alt = await fetch('/cocolumber.jpg.jpg', { method: 'GET' });
-        this.imageSrc = alt.ok ? '/cocolumber.jpg.jpg' : '/pwa-512x512.png';
-      } catch {
-        this.imageSrc = '/pwa-512x512.png';
-      }
+      imageSrc: '/images/timber-lumber.jpg'
     }
   }
 }
@@ -116,6 +101,31 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+}
+
+.mission-section {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.mission-section .card {
+  flex: 1;
+}
+
+.what-section {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.what-section .card {
+  flex: 1;
+}
+
+.what-section .image-card {
+  flex: 1;
+  padding: 0;
 }
 
 .card {
@@ -190,35 +200,5 @@ export default {
 .contact-icon {
   font-size: 1.5rem;
   margin-right: 0.5rem;
-}
-
-.about-image {
-  display: flex;
-  justify-content: center;
-  padding: 20px;
-}
-
-.image-card {
-  max-width: 900px;
-  width: 100%;
-  background: #242442;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
-  text-align: center;
-}
-
-.product-image {
-  width: 100%;
-  height: auto;
-  border-radius: 12px;
-  object-fit: cover;
-  display: block;
-  margin: 0 auto 12px;
-}
-
-.image-caption {
-  color: #bdbdbd;
-  font-size: 0.95rem;
 }
 </style>

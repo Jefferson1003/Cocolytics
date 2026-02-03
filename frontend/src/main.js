@@ -34,7 +34,13 @@ import AdminDashboard from './views/AdminDashboard.vue'
 import StaffDashboard from './views/StaffDashboard.vue'
 import AddCocolumber from './views/AddCocolumber.vue'
 import UserOrders from './views/UserOrders.vue'
+import Cart from './views/Cart.vue'
 import StaffOrders from './views/StaffOrders.vue'
+import CameraScanner from './views/CameraScanner.vue'
+import StaffPaperUploads from './views/StaffPaperUploads.vue'
+import AdminPaperApprovals from './views/AdminPaperApprovals.vue'
+import StaffInventory from './views/StaffInventory.vue'
+import WarehouseDispatch from './views/WarehouseDispatch.vue'
 
 // Define routes
 const routes = [
@@ -71,7 +77,7 @@ const routes = [
   {
     path: '/staff',
     name: 'StaffDashboard',
-    component: StaffDashboard,
+    component: WarehouseDispatch,
     meta: { requiresAuth: true, roles: ['staff', 'admin'] }
   },
   {
@@ -87,9 +93,40 @@ const routes = [
     meta: { requiresAuth: true, roles: ['staff', 'admin'] }
   },
   {
+    path: '/staff/camera-scanner',
+    name: 'CameraScanner',
+    component: CameraScanner,
+    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
+  },
+  {
+    path: '/staff/paper-uploads',
+    name: 'StaffPaperUploads',
+    component: StaffPaperUploads,
+    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
+  },
+  {
+    path: '/staff/inventory',
+    name: 'StaffInventory',
+    component: StaffInventory,
+    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
+  },
+  {
+    path: '/admin/paper-approvals',
+    name: 'AdminPaperApprovals',
+    component: AdminPaperApprovals,
+    meta: { requiresAuth: true, roles: ['admin'] }
+  },
+  {
     path: '/orders',
     name: 'UserOrders',
     component: UserOrders,
+    meta: { requiresAuth: true, roles: ['user', 'staff', 'admin'] }
+  }
+  ,
+  {
+    path: '/cart',
+    name: 'Cart',
+    component: Cart,
     meta: { requiresAuth: true, roles: ['user', 'staff', 'admin'] }
   }
 ]

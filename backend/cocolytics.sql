@@ -80,6 +80,23 @@ CREATE TABLE `orders` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
+-- Table structure for table `paper_uploads`
+--
+
+CREATE TABLE `paper_uploads` (
+  `id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `title` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `file_path` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status` enum('pending','approved','rejected') COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
+  `reviewed_by` int DEFAULT NULL,
+  `review_note` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
 -- Indexes for dumped tables
 --
 
@@ -105,6 +122,15 @@ ALTER TABLE `orders`
   ADD KEY `cocolumber_id` (`cocolumber_id`);
 
 --
+-- Indexes for table `paper_uploads`
+--
+ALTER TABLE `paper_uploads`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `reviewed_by` (`reviewed_by`),
+  ADD KEY `idx_status` (`status`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -124,6 +150,12 @@ ALTER TABLE `cocolumber_logs`
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `paper_uploads`
+--
+ALTER TABLE `paper_uploads`
   MODIFY `id` int NOT NULL AUTO_INCREMENT;
 COMMIT;
 

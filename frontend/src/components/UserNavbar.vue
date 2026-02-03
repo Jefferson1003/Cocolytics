@@ -6,7 +6,7 @@
     <div class="nav-links">
       <router-link to="/">Home</router-link>
       <router-link to="/about">About</router-link>
-      <router-link to="/orders">🛒 Orders</router-link>
+      <router-link to="/cart" class="cart-link">🛒 Cart</router-link>
     </div>
     <div class="nav-actions">
       <button v-if="deferredPrompt" @click="installApp" class="install-btn">
@@ -120,6 +120,13 @@ export default {
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s;
+}
+
+.cart-link {
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(255,255,255,0.06);
+  padding: 6px 10px;
+  border-radius: 6px;
 }
 
 .nav-links a:hover {
