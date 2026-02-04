@@ -32,7 +32,7 @@ export default {
   },
   computed: {
     isAdminRoute() {
-      return this.$route.path === '/admin'
+      return this.$route.path.startsWith('/admin')
     },
     isStaffRoute() {
       return this.$route.path.startsWith('/staff')
@@ -76,19 +76,31 @@ export default {
 
 html, body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #f5f7fa;
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
   color: #333;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 #app {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  width: 100vw;
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+  overflow-x: hidden;
 }
 
 .main-content {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
+  width: 100%;
+  background: transparent;
+  max-width: 100vw;
 }
 
 .main-content.no-nav {
@@ -96,12 +108,12 @@ html, body {
 }
 
 .simple-footer {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  background: rgba(26, 26, 46, 0.8);
   color: white;
   text-align: center;
   padding: 20px;
-  margin-top: 40px;
-  border-top: 2px solid #4CAF50;
+  border-top: 1px solid rgba(76, 175, 80, 0.3);
+  backdrop-filter: blur(10px);
 }
 
 .simple-footer p {

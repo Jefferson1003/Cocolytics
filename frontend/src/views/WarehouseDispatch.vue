@@ -310,53 +310,94 @@ export default {
 .staff-layout {
   display: flex;
   min-height: 100vh;
-  background: #f5f5f5;
+  max-width: 100vw;
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+  background-attachment: fixed;
+  position: relative;
+  overflow-x: hidden;
 }
 
 .dashboard-container {
   flex: 1;
-  margin-left: 250px;
-  padding: 40px;
+  margin-left: 280px;
+  padding: 30px 40px;
+  overflow: hidden;
   transition: margin-left 0.3s ease;
+  width: calc(100% - 280px);
+  max-width: calc(100vw - 280px);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  box-sizing: border-box;
 }
 
 .dispatch-container {
-  max-width: 1400px;
+  max-width: 100%;
   margin: 0 auto;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
+.dispatch-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dispatch-container::-webkit-scrollbar-track {
+  background: rgba(30, 30, 63, 0.3);
+  border-radius: 4px;
+}
+
+.dispatch-container::-webkit-scrollbar-thumb {
+  background: rgba(76, 175, 80, 0.4);
+  border-radius: 4px;
+}
+
+.dispatch-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(76, 175, 80, 0.6);
 }
 
 .header {
-  margin-bottom: 40px;
+  margin-bottom: 32px;
+  text-align: center;
+  flex-shrink: 0;
 }
 
 .header h1 {
   font-size: 2.5em;
-  color: #242442;
+  color: #4CAF50;
   margin-bottom: 10px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 .header p {
-  color: #666;
-  font-size: 1.1em;
+  color: #bbb;
+  font-size: 1.2em;
 }
 
 /* Dispatch Form Section */
 .dispatch-form-section {
-  background: white;
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  margin-bottom: 40px;
+  background: linear-gradient(135deg, rgba(36, 68, 66, 0.6) 0%, rgba(30, 30, 63, 0.8) 100%);
+  border: 1px solid rgba(76, 175, 80, 0.2);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  margin-bottom: 32px;
 }
 
 .dispatch-form-section h2 {
-  margin: 0 0 25px 0;
-  color: #242442;
+  margin: 0 0 28px 0;
+  color: #4CAF50;
   font-size: 1.6em;
+  font-weight: 700;
 }
 
 .dispatch-form {
-  max-width: 900px;
+  max-width: 100%;
 }
 
 .form-row {
@@ -373,50 +414,57 @@ export default {
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  color: #242442;
+  color: #ddd;
   font-weight: 600;
+  font-size: 1em;
 }
 
 .required {
-  color: #e74c3c;
+  color: #ff6b6b;
 }
 
 .form-input {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  padding: 12px;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 8px;
   font-size: 1em;
   font-family: inherit;
+  background: rgba(30, 30, 63, 0.7);
+  color: #fff;
+  transition: all 0.3s ease;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
 }
 
 .form-group small {
   display: block;
   margin-top: 5px;
-  color: #888;
+  color: #aaa;
   font-size: 0.9em;
 }
 
 .btn-submit {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 1.1em;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
 }
 
 .btn-submit:hover:not(:disabled) {
   transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
 }
 
 .btn-submit:disabled {
@@ -426,10 +474,12 @@ export default {
 
 /* Dispatch History Section */
 .dispatch-history-section {
-  background: white;
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(135deg, rgba(36, 68, 66, 0.6) 0%, rgba(30, 30, 63, 0.8) 100%);
+  border: 1px solid rgba(76, 175, 80, 0.2);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
 }
 
 .section-header {
@@ -437,26 +487,42 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 25px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .section-header h2 {
   margin: 0;
-  color: #242442;
+  color: #4CAF50;
   font-size: 1.6em;
+  font-weight: 700;
 }
 
 .search-input {
-  padding: 8px 16px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  padding: 10px 16px;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 8px;
   width: 300px;
   font-size: 0.95em;
+  background: rgba(30, 30, 63, 0.7);
+  color: #fff;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.search-input::placeholder {
+  color: #888;
 }
 
 .loading {
   text-align: center;
   padding: 40px;
-  color: #667eea;
+  color: #4CAF50;
   font-size: 1.1em;
 }
 
@@ -470,29 +536,36 @@ export default {
 }
 
 .dispatch-table thead {
-  background: #f8f9fa;
-  border-bottom: 2px solid #ddd;
+  background: rgba(76, 175, 80, 0.1);
+  border-bottom: 2px solid rgba(76, 175, 80, 0.3);
 }
 
 .dispatch-table th {
   padding: 15px;
   text-align: left;
-  color: #242442;
-  font-weight: 600;
+  color: #4CAF50;
+  font-weight: 700;
+  font-size: 0.95em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .dispatch-table td {
   padding: 15px;
-  border-bottom: 1px solid #eee;
-  color: #333;
+  border-bottom: 1px solid rgba(76, 175, 80, 0.1);
+  color: #ddd;
+}
+
+.dispatch-table tbody tr {
+  transition: all 0.3s ease;
 }
 
 .dispatch-table tbody tr:hover {
-  background: #f8f9fa;
+  background: rgba(76, 175, 80, 0.05);
 }
 
 .id-cell {
-  color: #667eea;
+  color: #4CAF50;
   font-weight: 600;
 }
 
@@ -503,10 +576,11 @@ export default {
 
 .product-cell strong {
   margin-bottom: 4px;
+  color: #fff;
 }
 
 .product-cell small {
-  color: #888;
+  color: #aaa;
 }
 
 .quantity-cell {
@@ -514,26 +588,27 @@ export default {
 }
 
 .quantity-badge {
-  background: #e3f2fd;
-  color: #1976d2;
-  padding: 4px 8px;
-  border-radius: 4px;
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  padding: 4px 10px;
+  border-radius: 6px;
   font-size: 0.9em;
   font-weight: 600;
 }
 
 .date-cell {
-  color: #888;
+  color: #aaa;
   font-size: 0.9em;
 }
 
 .user-cell {
-  color: #667eea;
+  color: #4CAF50;
   font-weight: 500;
 }
 
 .notes-cell {
-  color: #666;
+  color: #bbb;
   font-size: 0.9em;
   max-width: 200px;
   white-space: nowrap;
@@ -552,7 +627,7 @@ export default {
 }
 
 .empty-state p {
-  color: #666;
+  color: #aaa;
   font-size: 1.1em;
 }
 
