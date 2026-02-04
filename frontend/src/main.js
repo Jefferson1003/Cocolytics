@@ -117,12 +117,15 @@ const routes = [
     meta: { requiresAuth: true, roles: ['admin'] }
   },
   {
-    path: '/orders',
+    path: '/user/orders',
     name: 'UserOrders',
     component: UserOrders,
     meta: { requiresAuth: true, roles: ['user', 'staff', 'admin'] }
-  }
-  ,
+  },
+  {
+    path: '/orders',
+    redirect: '/user/orders'
+  },
   {
     path: '/cart',
     name: 'Cart',

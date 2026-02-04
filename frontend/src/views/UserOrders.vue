@@ -97,6 +97,16 @@
       <!-- My Orders -->
       <div class="my-orders">
         <h2>🌴 My Coconut Orders</h2>
+        
+        <!-- Debug Info (remove this later) -->
+        <div style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; margin-bottom: 20px; font-size: 12px;">
+          <strong>🐛 Debug Info:</strong><br>
+          Loading: {{ loadingOrders }}<br>
+          Orders Count: {{ userOrders.length }}<br>
+          Token Exists: {{ !!token }}<br>
+          <span v-if="userOrders.length > 0">Orders: {{ JSON.stringify(userOrders.map(o => ({id: o.id, size: o.size, status: o.status}))) }}</span>
+        </div>
+        
         <div v-if="!loadingOrders">
           <div v-if="userOrders.length > 0" class="orders-list">
             <div v-for="order in userOrders" :key="order.id" class="order-card">
@@ -112,7 +122,7 @@
               </div>
             </div>
           </div>
-          <p v-else class="no-orders">You haven't placed any coconut orders yet.</p>
+          <p v-else class="no-orders">You haven't placed any coconut orders yet. Try adding products to cart and placing an order!</p>
         </div>
         <div v-else class="loading">Loading orders...</div>
       </div>
