@@ -83,7 +83,7 @@
     </section>
 
     <section class="shop-section">
-      <h2>🥥 Coconut Shops</h2>
+      <h2>🌴 Coconut Shops</h2>
       <div class="shop-grid">
         <div class="shop-card">
           <div class="shop-icon">🏪</div>

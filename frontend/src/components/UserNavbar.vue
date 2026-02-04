@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar">
     <div class="nav-brand">
-      <router-link to="/">🥥 Cocolytics</router-link>
+      <router-link to="/">🌴 Cocolytics</router-link>
     </div>
     <div class="nav-links">
       <router-link to="/">Home</router-link>

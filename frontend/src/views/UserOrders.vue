@@ -3,13 +3,13 @@
     <div class="orders-container">
       <!-- Available Products -->
       <div class="available-products">
-        <h2>🥥 Available Coconuts</h2>
+        <h2>🌴 Available Coconuts</h2>
         <div v-if="!loadingProducts">
           <div v-if="availableProducts.length > 0" class="products-grid">
             <div v-for="product in availableProducts" :key="product.id" class="product-card">
               <div class="product-image">
                 <img v-if="product.product_picture" :src="getImageUrl(product.product_picture)" :alt="product.size" />
-                <div v-else class="no-image">🥥</div>
+                <div v-else class="no-image">🌴</div>
               </div>
               <div class="product-info">
                 <h3>{{ product.size }}</h3>
@@ -47,7 +47,7 @@
 
       <!-- Shopping Cart -->
       <div class="shopping-cart">
-        <h2>🥥 Coconut Cart</h2>
+        <h2>🌴 Coconut Cart</h2>
         <div v-if="cartItems.length > 0" class="cart-items">
           <div v-for="(item, index) in cartItems" :key="index" class="cart-item">
             <div class="item-info">
@@ -96,7 +96,7 @@
 
       <!-- My Orders -->
       <div class="my-orders">
-        <h2>🥥 My Coconut Orders</h2>
+        <h2>🌴 My Coconut Orders</h2>
         <div v-if="!loadingOrders">
           <div v-if="userOrders.length > 0" class="orders-list">
             <div v-for="order in userOrders" :key="order.id" class="order-card">
