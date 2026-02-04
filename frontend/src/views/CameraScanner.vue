@@ -517,16 +517,20 @@ export default {
 <style scoped>
 .staff-layout {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  background: linear-gradient(135deg, #8b7fc7 0%, #9d8fcc 100%);
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+  background-attachment: fixed;
+  padding-top: 70px;
 }
 
 .dashboard-container {
   flex: 1;
-  margin-left: 250px;
-  padding: 30px;
+  padding: 20px 16px;
   overflow-y: auto;
-  transition: margin-left 0.3s ease;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -545,9 +549,11 @@ export default {
 }
 
 .scanner-wrapper {
-  background: white;
+  background: linear-gradient(135deg, rgba(36, 68, 66, 0.6) 0%, rgba(30, 30, 63, 0.8) 100%);
+  border: 1px solid rgba(76, 175, 80, 0.2);
   border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
   width: 100%;
   max-width: 1000px;
   overflow: hidden;

@@ -506,14 +506,6 @@ export default {
 </script>
 
 <style scoped>
-.add-cocolumber-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 30px 20px;
-  background: #f5f5f5;
-  min-height: calc(100vh - 250px);
-}
-
 .header {
   text-align: center;
   color: #fff;
@@ -535,11 +527,13 @@ export default {
 }
 
 .form-wrapper {
-  background: #242442;
+  background: linear-gradient(135deg, rgba(36, 68, 66, 0.6) 0%, rgba(30, 30, 63, 0.8) 100%);
+  border: 1px solid rgba(76, 175, 80, 0.2);
   border-radius: 15px;
   padding: 40px;
   margin-bottom: 40px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
@@ -909,11 +903,28 @@ small {
 /* Staff Layout & Sidebar Styles */
 .staff-layout {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  background: #f5f7fa;
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+  background-attachment: fixed;
+  padding-top: 70px;
 }
 
+.dashboard-container {
+  flex: 1;
+  padding: 20px 16px;
+  overflow-y: auto;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
 
+.add-cocolumber-container {
+  width: 100%;
+  padding: 20px 0;
+  background: transparent;
+  min-height: auto;
+}
 
 /* Modal Overlay */
 .modal-overlay {

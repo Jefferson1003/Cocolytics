@@ -1148,13 +1148,47 @@ app.post('/api/orders/create', authenticateToken, async (req, res) => {
     const { items } = req.body;
     const userId = req.user.id;
 
+    console.log('Creating order for user:', userId);
+    console.log('Order items:', JSON.stringify(items, null, 2));
+
     if (!items || items.length === 0) {
       return res.status(400).json({ message: 'No items in order' });
+    }
+
+    // Validate items have required fields
+    for (const item of items) {
+      if (!item.id || !item.quantity) {
+        return res.status(400).json({ 
+          message: 'Each item must have an id and quantity',
+          invalidItem: item
+        });
+      }
     }
 
     // Insert each order item
     const orderIds = [];
     for (const item of items) {
+      // Check if product exists and has enough stock
+      const [products] = await pool.execute(
+        'SELECT * FROM cocolumber_logs WHERE id = ?',
+        [item.id]
+      );
+
+      if (products.length === 0) {
+        return res.status(400).json({ 
+          message: `Product with ID ${item.id} not found` 
+        });
+      }
+
+      const product = products[0];
+      
+      if (product.stock < item.quantity) {
+        return res.status(400).json({ 
+          message: `Insufficient stock for ${product.size}. Available: ${product.stock}, Requested: ${item.quantity}` 
+        });
+      }
+
+      // Insert order
       const [result] = await pool.execute(
         'INSERT INTO orders (user_id, cocolumber_id, quantity, status) VALUES (?, ?, ?, ?)',
         [userId, item.id, item.quantity, 'pending']
@@ -1166,7 +1200,11 @@ app.post('/api/orders/create', authenticateToken, async (req, res) => {
         'UPDATE cocolumber_logs SET stock = stock - ? WHERE id = ?',
         [item.quantity, item.id]
       );
+      
+      console.log(`Order created: ID ${result.insertId}, Product: ${product.size}, Quantity: ${item.quantity}`);
     }
+
+    console.log('All orders created successfully:', orderIds);
 
     res.json({
       success: true,
@@ -1175,7 +1213,10 @@ app.post('/api/orders/create', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Create order error:', error);
-    res.status(500).json({ message: 'Server error creating order' });
+    res.status(500).json({ 
+      message: 'Server error creating order',
+      error: error.message 
+    });
   }
 });
 
@@ -1183,6 +1224,8 @@ app.post('/api/orders/create', authenticateToken, async (req, res) => {
 app.get('/api/orders/my-orders', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
+
+    console.log('Fetching orders for user:', userId);
 
     const [orders] = await pool.execute(
       `SELECT o.*, c.size, c.length, c.stock, c.product_picture
@@ -1193,10 +1236,15 @@ app.get('/api/orders/my-orders', authenticateToken, async (req, res) => {
       [userId]
     );
 
+    console.log(`Found ${orders.length} orders for user ${userId}`);
+
     res.json(orders);
   } catch (error) {
     console.error('Get user orders error:', error);
-    res.status(500).json({ message: 'Server error fetching orders' });
+    res.status(500).json({ 
+      message: 'Server error fetching orders',
+      error: error.message 
+    });
   }
 });
 

@@ -1,43 +1,62 @@
 <template>
-  <aside class="sidebar" :class="{ collapsed: !sidebarOpen }">
-    <div class="sidebar-header">
-      <h2 v-show="sidebarOpen">👔 Staff</h2>
-      <button class="sidebar-toggle" @click="sidebarOpen = !sidebarOpen" title="Toggle sidebar">
-        {{ sidebarOpen ? '◄' : '►' }}
+  <!-- Mobile Top Header -->
+  <header class="mobile-header">
+    <div class="header-left">
+      <button @click="showMenu = !showMenu" class="menu-btn">
+        <span class="menu-icon">☰</span>
       </button>
+      <div class="brand-logo">
+        <span class="brand-icon">👔</span>
+        <span class="brand-name">Staff Portal</span>
+      </div>
     </div>
-    <nav class="sidebar-nav">
-      <router-link to="/staff/add-cocolumber" class="nav-item" :class="{ active: isActive('/staff/add-cocolumber') }" title="Add Coconut">
-        <span class="nav-icon">🌴</span>
-        <span class="nav-label" v-show="sidebarOpen">Add Product</span>
-      </router-link>
-      <router-link to="/staff/paper-uploads" class="nav-item" :class="{ active: isActive('/staff/paper-uploads') }" title="Upload Papers">
-        <span class="nav-icon">📄</span>
-        <span class="nav-label" v-show="sidebarOpen">Upload Papers</span>
-      </router-link>
-      <router-link to="/staff/inventory" class="nav-item" :class="{ active: isActive('/staff/inventory') }" title="Inventory">
-        <span class="nav-icon">📦</span>
-        <span class="nav-label" v-show="sidebarOpen">Inventory</span>
-      </router-link>
-      <router-link to="/staff" class="nav-item" :class="{ active: isActive('/staff') }" title="Warehouse Dispatch">
-        <span class="nav-icon">🚚</span>
-        <span class="nav-label" v-show="sidebarOpen">Warehouse Dispatch</span>
-      </router-link>
-      <router-link to="/staff/orders" class="nav-item" :class="{ active: isActive('/staff/orders') }" title="Manage Orders">
-        <span class="nav-icon">📋</span>
-        <span class="nav-label" v-show="sidebarOpen">Manage Orders</span>
-      </router-link>
-      <router-link to="/staff/camera-scanner" class="nav-item" :class="{ active: isActive('/staff/camera-scanner') }" title="Camera Scanner">
-        <span class="nav-icon">📷</span>
-        <span class="nav-label" v-show="sidebarOpen">Camera Scanner</span>
-      </router-link>
-    </nav>
-    <div class="sidebar-footer">
-      <button @click="logout" class="logout-btn" title="Logout">
-        <span class="logout-icon">🚪</span>
-        <span class="logout-label" v-show="sidebarOpen">Logout</span>
-      </button>
+  </header>
+
+  <!-- Mobile Menu Overlay -->
+  <div v-if="showMenu" class="menu-overlay" @click="showMenu = false">
+    <div class="menu-content" @click.stop>
+      <div class="menu-header">
+        <div class="user-info">
+          <div class="user-avatar">S</div>
+          <div class="user-details">
+            <h3>Staff Member</h3>
+            <p>Staff Portal</p>
+          </div>
+        </div>
+        <button class="menu-close" @click="showMenu = false">&times;</button>
+      </div>
+      <nav class="menu-nav">
+        <router-link to="/staff" class="menu-item" @click="showMenu = false">
+          <span class="menu-icon">🏠</span>
+          <span class="menu-label">Home</span>
+        </router-link>
+        <router-link to="/staff/inventory" class="menu-item" @click="showMenu = false">
+          <span class="menu-icon">📦</span>
+          <span class="menu-label">Inventory</span>
+        </router-link>
+        <router-link to="/staff/add-cocolumber" class="menu-item" @click="showMenu = false">
+          <span class="menu-icon">➕</span>
+          <span class="menu-label">Add Product</span>
+        </router-link>
+        <router-link to="/staff/orders" class="menu-item" @click="showMenu = false">
+          <span class="menu-icon">📋</span>
+          <span class="menu-label">Orders</span>
+        </router-link>
+        <router-link to="/staff/paper-uploads" class="menu-item" @click="showMenu = false">
+          <span class="menu-icon">📄</span>
+          <span class="menu-label">Upload Papers</span>
+        </router-link>
+        <router-link to="/staff/camera-scanner" class="menu-item" @click="showMenu = false">
+          <span class="menu-icon">📷</span>
+          <span class="menu-label">Camera Scanner</span>
+        </router-link>
+        <button @click="logout" class="menu-item logout-item">
+          <span class="menu-icon">🚪</span>
+          <span class="menu-label">Logout</span>
+        </button>
+      </nav>
     </div>
+  </div>
 
     <!-- Logout Confirmation Modal -->
     <div v-if="showLogoutModal" class="modal-overlay" @click="cancelLogout">
@@ -55,7 +74,6 @@
         </div>
       </div>
     </div>
-  </aside>
 </template>
 
 <script>
@@ -63,13 +81,14 @@ export default {
   name: 'StaffSidebar',
   data() {
     return {
-      sidebarOpen: true,
+      showMenu: false,
       showLogoutModal: false
     }
   },
   methods: {
     logout() {
       this.showLogoutModal = true
+      this.showMenu = false
     },
     confirmLogout() {
       localStorage.removeItem('token')
@@ -78,133 +97,220 @@ export default {
     },
     cancelLogout() {
       this.showLogoutModal = false
-    },
-    isActive(path) {
-      return this.$route.path === path
     }
   }
 }
 </script>
 
 <style scoped>
-.sidebar {
-  width: 250px;
-  background: #242442;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1);
-  transition: width 0.3s ease;
+/* Mobile Header */
+.mobile-header {
   position: fixed;
-  height: 100vh;
-  left: 0;
   top: 0;
-  z-index: 100;
-  overflow-y: auto;
-  border-right: 3px solid #667eea;
-}
-
-.sidebar.collapsed {
-  width: 80px;
-}
-
-.sidebar-header {
-  padding: 25px 20px;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  gap: 10px;
+  padding: 0 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 100;
 }
 
-.sidebar-header h2 {
-  margin: 0;
-  font-size: 1.3em;
-  font-weight: 700;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.sidebar-toggle {
+.menu-btn {
   background: none;
   border: none;
   color: white;
+  font-size: 1.5em;
   cursor: pointer;
-  font-size: 1.2em;
-  padding: 5px 10px;
-  transition: transform 0.3s;
-}
-
-.sidebar-toggle:hover {
-  transform: scale(1.1);
-}
-
-.sidebar-nav {
-  flex: 1;
-  padding: 20px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 15px 20px;
-  color: rgba(255, 255, 255, 0.8);
-  text-decoration: none;
-  transition: all 0.3s;
-  cursor: pointer;
-}
-
-.nav-item:hover,
-.nav-item.active {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border-left: 3px solid white;
-  padding-left: 17px;
-}
-
-.nav-icon {
-  font-size: 1.3em;
-  min-width: 25px;
-}
-
-.nav-label {
-  white-space: nowrap;
-}
-
-.sidebar-footer {
-  padding: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.logout-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  padding: 12px 15px;
+  padding: 8px;
   border-radius: 8px;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
+.menu-btn:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+}
+
+.brand-icon {
+  font-size: 1.5em;
+}
+
+.brand-name {
+  font-size: 1.2em;
+  font-weight: 700;
+}
+
+/* Menu Overlay */
+.menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-start;
+  z-index: 1001;
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.menu-content {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  width: 85%;
+  max-width: 320px;
+  height: 100%;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.4);
+  animation: slideInLeft 0.3s;
+  overflow-y: auto;
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.user-info {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+}
+
+.user-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5em;
+  font-weight: bold;
+  color: white;
+  flex-shrink: 0;
+}
+
+.user-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-details h3 {
+  margin: 0;
+  color: white;
+  font-size: 1.1em;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-details p {
+  margin: 4px 0 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.menu-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.8em;
   cursor: pointer;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.menu-close:active {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.menu-nav {
+  padding: 10px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 18px 15px;
+  color: white;
+  text-decoration: none;
+  border-radius: 12px;
+  margin-bottom: 8px;
   transition: all 0.3s;
+  background: none;
+  border: none;
+  width: 100%;
+  font-family: inherit;
+  font-size: 1em;
+  cursor: pointer;
+}
+
+.menu-item:active {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(0.98);
+}
+
+.menu-icon {
+  font-size: 1.5em;
+  min-width: 30px;
+}
+
+.menu-label {
+  font-size: 1em;
   font-weight: 500;
 }
 
-.logout-btn:hover {
-  background: rgba(255, 0, 0, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
+.logout-item {
+  background: rgba(231, 76, 60, 0.2);
+  border: 1px solid rgba(231, 76, 60, 0.5);
 }
 
-.logout-icon {
-  font-size: 1.2em;
-  min-width: 25px;
-}
-
-.logout-label {
-  white-space: nowrap;
+.logout-item:active {
+  background: rgba(231, 76, 60, 0.3);
 }
 
 /* Modal Overlay */
@@ -214,32 +320,46 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1001;
+  z-index: 1002;
+  padding: 20px;
 }
 
 .modal-content {
   background: white;
-  border-radius: 12px;
-  max-width: 500px;
-  width: 90%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border-radius: 16px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: scaleIn 0.3s;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 25px;
+  padding: 20px;
   border-bottom: 1px solid #e0e0e0;
 }
 
 .modal-header h2 {
   margin: 0;
   color: #333;
+  font-size: 1.3em;
 }
 
 .modal-close {
@@ -249,62 +369,62 @@ export default {
   color: #95a5a6;
   cursor: pointer;
   transition: color 0.2s;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.modal-close:hover {
+.modal-close:active {
   color: #e74c3c;
 }
 
 .modal-body {
-  padding: 20px 25px;
+  padding: 20px;
   color: #666;
+  font-size: 1em;
 }
 
 .modal-footer {
   display: flex;
   gap: 10px;
-  padding: 20px 25px;
+  padding: 20px;
   border-top: 1px solid #e0e0e0;
   justify-content: flex-end;
 }
 
 .btn-cancel {
-  padding: 10px 20px;
+  padding: 12px 24px;
   background: #ecf0f1;
   color: #333;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  font-size: 1em;
 }
 
-.btn-cancel:hover {
+.btn-cancel:active {
   background: #d5dbdb;
+  transform: scale(0.98);
 }
 
 .btn-logout {
-  padding: 10px 20px;
+  padding: 12px 24px;
   background: #e74c3c;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  font-size: 1em;
 }
 
-.btn-logout:hover {
+.btn-logout:active {
   background: #c0392b;
-}
-
-@media (max-width: 768px) {
-  .sidebar {
-    width: 200px;
-  }
-
-  .sidebar.collapsed {
-    width: 60px;
-  }
+  transform: scale(0.98);
 }
 </style>

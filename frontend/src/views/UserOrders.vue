@@ -152,48 +152,84 @@ export default {
   },
   mounted() {
     this.token = localStorage.getItem('token')
+    if (!this.token) {
+      console.warn('No token found, redirecting to login')
+      this.$router.push('/login')
+      return
+    }
+    
+    console.log('UserOrders mounted, token exists')
     this.fetchAvailableProducts()
     this.fetchUserOrders()
+    
     // Load cart from localStorage so cart is shared across views
     try {
       const stored = localStorage.getItem('cartItems')
       this.cartItems = stored ? JSON.parse(stored) : []
+      console.log('Cart items loaded in UserOrders:', this.cartItems)
     } catch (e) {
+      console.error('Error loading cart:', e)
       this.cartItems = []
     }
   },
   methods: {
     async fetchAvailableProducts() {
       this.loadingProducts = true
+      this.errorMessage = ''
+      
+      console.log('Fetching available products...')
+      
       try {
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/cocolumber/all`, {
           headers: {
             'Authorization': `Bearer ${this.token}`
           }
         })
-        if (!response.ok) throw new Error('Failed to fetch products')
+        
+        console.log('Products response status:', response.status)
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.message || 'Failed to fetch products')
+        }
+        
         const data = await response.json()
+        console.log('Products fetched:', data.length, 'items')
         this.availableProducts = data
       } catch (error) {
         console.error('Error fetching products:', error)
-        this.errorMessage = 'Failed to load products'
+        this.errorMessage = 'Failed to load products: ' + error.message
       } finally {
         this.loadingProducts = false
       }
     },
     async fetchUserOrders() {
       this.loadingOrders = true
+      this.errorMessage = ''
+      
+      console.log('Fetching user orders...')
+      
       try {
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders/my-orders`, {
           headers: {
             'Authorization': `Bearer ${this.token}`
           }
         })
-        if (!response.ok) throw new Error('Failed to fetch orders')
+        
+        console.log('Orders response status:', response.status)
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.message || 'Failed to fetch orders')
+        }
+        
         const data = await response.json()
+        console.log('Orders fetched:', data.length, 'items')
+        console.log('Orders data:', data)
         this.userOrders = data
       } catch (error) {
         console.error('Error fetching orders:', error)
+        this.errorMessage = 'Failed to load orders: ' + error.message
       } finally {
         this.loadingOrders = false
       }
@@ -245,10 +281,16 @@ export default {
     async submitOrder() {
       if (this.cartItems.length === 0) {
         this.errorMessage = 'Cart is empty'
+        setTimeout(() => this.errorMessage = '', 3000)
         return
       }
 
       this.isSubmitting = true
+      this.errorMessage = ''
+      this.successMessage = ''
+      
+      console.log('Submitting order with items:', this.cartItems)
+      
       try {
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders/create`, {
           method: 'POST',
@@ -261,19 +303,32 @@ export default {
           })
         })
 
+        const data = await response.json()
+        console.log('Order submission response:', data)
+
         if (!response.ok) {
-          throw new Error('Failed to place order')
+          throw new Error(data.message || 'Failed to place order')
         }
 
         this.successMessage = '✓ Order placed successfully!'
         this.cartItems = []
         this.orderQuantities = {}
-        try { localStorage.removeItem('cartItems') } catch (e) {}
+        try { 
+          localStorage.removeItem('cartItems')
+          console.log('Cart cleared from localStorage')
+        } catch (e) {
+          console.error('Error clearing cart:', e)
+        }
+        
+        // Refresh orders list
         this.fetchUserOrders()
+        this.fetchAvailableProducts() // Refresh products to update stock
+        
         setTimeout(() => this.successMessage = '', 3000)
       } catch (error) {
         console.error('Error placing order:', error)
         this.errorMessage = 'Error: ' + error.message
+        setTimeout(() => this.errorMessage = '', 5000)
       } finally {
         this.isSubmitting = false
       }

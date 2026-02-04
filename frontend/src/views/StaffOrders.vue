@@ -3,7 +3,7 @@
     <StaffSidebar />
 
     <!-- Main Content -->
-    <div class="orders-container">
+    <div class="orders-main">
       <div class="orders-header">
         <h1>📋 Order Management</h1>
         <p>Manage all coconut orders</p>
@@ -151,148 +151,170 @@ export default {
 <style scoped>
 .staff-layout {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+  background-attachment: fixed;
+  padding-top: 70px;
 }
 
-.orders-container {
+.orders-main {
   flex: 1;
-  padding: 2rem;
-  margin-left: 250px;
+  padding: 20px 16px;
+  overflow-y: auto;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .orders-header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 24px;
 }
 
 .orders-header h1 {
-  color: #2c3e50;
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
+  color: white;
+  font-size: 1.5em;
+  margin-bottom: 8px;
 }
 
 .orders-header p {
-  color: #7f8c8d;
-  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.95em;
 }
 
 .all-orders {
-  background: white;
-  padding: 2rem;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: #242442;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .all-orders h2 {
-  color: #2c3e50;
-  margin-bottom: 1.5rem;
-  font-size: 1.8rem;
+  color: white;
+  margin-bottom: 16px;
+  font-size: 1.2em;
 }
 
 .orders-list {
   display: grid;
-  gap: 1.5rem;
+  gap: 12px;
 }
 
 .order-card {
-  border: 1px solid #ecf0f1;
-  border-radius: 8px;
-  padding: 1.5rem;
-  background: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: box-shadow 0.3s ease;
-}
-
-.order-card:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, rgba(36, 68, 66, 0.6) 0%, rgba(30, 30, 63, 0.8) 100%);
+  border: 1px solid rgba(76, 175, 80, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  border-left: 4px solid #4CAF50;
 }
 
 .order-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 12px;
 }
 
 .order-header h3 {
-  color: #2c3e50;
+  color: white;
   margin: 0;
+  font-size: 1.1em;
 }
 
 .status-badge {
-  padding: 0.25rem 0.75rem;
+  padding: 6px 12px;
   border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: bold;
+  font-size: 0.75em;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
 .status-badge.pending {
-  background: #f39c12;
-  color: white;
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
 }
 
 .status-badge.completed {
-  background: #27ae60;
-  color: white;
+  background: rgba(76, 175, 80, 0.2);
+  color: #81C784;
 }
 
 .status-badge.cancelled {
-  background: #e74c3c;
-  color: white;
+  background: rgba(244, 67, 54, 0.2);
+  color: #ff6b6b;
+}
+
+.order-details {
+  margin-bottom: 12px;
 }
 
 .order-details p {
-  margin: 0.5rem 0;
-  color: #555;
+  margin: 8px 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9em;
+}
+
+.order-details strong {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .order-actions {
-  margin-top: 1rem;
+  margin-top: 12px;
   display: flex;
-  gap: 0.5rem;
+  gap: 8px;
+  flex-wrap: wrap;
   align-items: center;
 }
 
 .btn-complete,
 .btn-cancel {
-  padding: 0.5rem 1rem;
+  padding: 10px 16px;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
-  font-weight: bold;
-  transition: background 0.3s ease;
+  font-weight: 600;
+  font-size: 0.9em;
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 100px;
 }
 
 .btn-complete {
-  background: #27ae60;
+  background: rgba(76, 175, 80, 0.8);
   color: white;
 }
 
-.btn-complete:hover {
-  background: #229954;
+.btn-complete:active {
+  background: rgba(76, 175, 80, 1);
+  transform: scale(0.98);
 }
 
 .btn-cancel {
-  background: #e74c3c;
+  background: rgba(244, 67, 54, 0.8);
   color: white;
 }
 
-.btn-cancel:hover {
-  background: #c0392b;
+.btn-cancel:active {
+  background: rgba(244, 67, 54, 1);
+  transform: scale(0.98);
 }
 
 .status-text {
-  font-weight: bold;
-  color: #7f8c8d;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9em;
 }
 
 .product-info {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .product-image-small {
@@ -301,6 +323,7 @@ export default {
   border-radius: 8px;
   overflow: hidden;
   flex-shrink: 0;
+  background: #242442;
 }
 
 .product-image-small img {
@@ -312,27 +335,36 @@ export default {
 .no-image-small {
   width: 100%;
   height: 100%;
-  background: #ecf0f1;
+  background: #242442;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 1.5em;
+}
+
+.product-details {
+  flex: 1;
+  min-width: 0;
 }
 
 .product-details p {
-  margin: 0.25rem 0;
+  margin: 4px 0;
+  font-size: 0.9em;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .no-orders {
   text-align: center;
-  color: #7f8c8d;
+  color: rgba(255, 255, 255, 0.6);
   font-style: italic;
-  padding: 2rem;
+  padding: 40px 20px;
+  font-size: 0.95em;
 }
 
 .loading {
   text-align: center;
-  color: #7f8c8d;
-  padding: 2rem;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 40px 20px;
+  font-size: 0.95em;
 }
 </style>

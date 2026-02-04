@@ -1,5 +1,8 @@
 <template>
-  <div class="page">
+  <div class="staff-layout">
+    <StaffSidebar />
+    
+    <div class="page">
     <div class="page-header">
       <h2>📄 Upload Papers for Approval</h2>
       <p>Submit documents to be reviewed and approved by admin.</p>
@@ -51,12 +54,18 @@
         </div>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
 <script>
+import StaffSidebar from '../components/StaffSidebar.vue'
+
 export default {
   name: 'StaffPaperUploads',
+  components: {
+    StaffSidebar
+  },
   data() {
     return {
       title: '',
@@ -152,70 +161,125 @@ export default {
 </script>
 
 <style scoped>
+.staff-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+  background-attachment: fixed;
+  padding-top: 70px;
+}
+
 .page {
-  padding: 30px;
-  max-width: 1100px;
+  flex: 1;
+  padding: 20px 16px;
+  overflow-y: auto;
+  max-width: 1200px;
   margin: 0 auto;
+  width: 100%;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 24px;
 }
 
 .page-header h2 {
-  margin: 0 0 8px;
-  color: #333;
+  color: white;
+  font-size: 1.5em;
+  margin-bottom: 8px;
 }
 
 .page-header p {
-  margin: 0 0 20px;
-  color: #666;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.95em;
 }
 
 .upload-card,
 .list-card {
-  background: #242442;
-  border-radius: 14px;
-  padding: 24px;
-  margin-bottom: 24px;
-  color: #fff;
+  background: linear-gradient(135deg, rgba(36, 68, 66, 0.6) 0%, rgba(30, 30, 63, 0.8) 100%);
+  border: 1px solid rgba(76, 175, 80, 0.2);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  margin-bottom: 20px;
+}
+
+.list-card h3 {
+  color: white;
+  margin-bottom: 16px;
+  font-size: 1.2em;
 }
 
 .form-grid {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
+  margin-bottom: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .field label {
-  display: block;
-  margin-bottom: 6px;
-  color: #bbb;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  font-size: 0.95em;
 }
 
-.field input,
+.field input[type="text"],
 .field textarea {
   width: 100%;
-  background: #1a1a2e;
-  color: #fff;
-  border: 1px solid #333;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
-  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-family: inherit;
+  font-size: 1em;
+}
+
+.field input[type="text"]:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.field input[type="file"] {
+  padding: 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 0.9em;
 }
 
 .file-name {
-  display: inline-block;
-  margin-top: 6px;
-  color: #aaa;
+  color: #81C784;
+  font-size: 0.85em;
 }
 
 .actions {
-  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
 }
 
 .btn {
+  padding: 14px 32px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
+  color: white;
   border: none;
-  padding: 12px 18px;
   border-radius: 8px;
-  cursor: pointer;
   font-weight: 600;
+  font-size: 1em;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .btn:disabled {
@@ -223,21 +287,35 @@ export default {
   cursor: not-allowed;
 }
 
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
 .alert {
-  margin-top: 16px;
-  padding: 10px 12px;
+  padding: 12px;
   border-radius: 8px;
-  font-weight: 600;
+  font-size: 0.9em;
+  text-align: center;
 }
 
 .alert.success {
-  background: #2ecc71;
-  color: #1b5e20;
+  background: rgba(76, 175, 80, 0.2);
+  color: #81C784;
+  border: 1px solid rgba(76, 175, 80, 0.3);
 }
 
 .alert.error {
-  background: #e74c3c;
-  color: #fff;
+  background: rgba(244, 67, 54, 0.2);
+  color: #ff6b6b;
+  border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.loading,
+.empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95em;
 }
 
 .list {
@@ -248,46 +326,70 @@ export default {
 
 .list-item {
   background: #1a1a2e;
-  border-radius: 10px;
-  padding: 14px;
+  border-radius: 12px;
+  padding: 16px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 12px;
+  border-left: 4px solid #667eea;
 }
 
-.list-item h4 {
-  margin: 0 0 4px;
+.info {
+  flex: 1;
+  min-width: 0;
 }
 
-.meta {
-  color: #aaa;
+.info h4 {
+  color: white;
+  margin: 0 0 8px 0;
+  font-size: 1em;
+}
+
+.info p {
+  color: rgba(255, 255, 255, 0.7);
+  margin: 4px 0;
   font-size: 0.9em;
 }
 
+.info .meta {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8em;
+}
+
+.info a {
+  color: #667eea;
+  font-size: 0.9em;
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 8px;
+}
+
+.info a:active {
+  color: #764ba2;
+}
+
 .status {
-  padding: 4px 10px;
-  border-radius: 999px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75em;
   font-weight: 600;
-  text-transform: capitalize;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .status-pending {
-  background: #f39c12;
-  color: #fff;
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
 }
 
 .status-approved {
-  background: #27ae60;
-  color: #fff;
+  background: rgba(76, 175, 80, 0.2);
+  color: #81C784;
 }
 
 .status-rejected {
-  background: #e74c3c;
-  color: #fff;
-}
-
-.loading,
-.empty {
-  color: #aaa;
+  background: rgba(244, 67, 54, 0.2);
+  color: #ff6b6b;
 }
 </style>

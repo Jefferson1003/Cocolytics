@@ -224,59 +224,66 @@ export default {
   flex-direction: column;
   min-height: 100vh;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding-top: 56px; /* Space for fixed header */
 }
-
-
 
 .dashboard-container {
   flex: 1;
-  margin-left: 0;
-  padding: 30px;
+  padding: 20px 16px;
   overflow-y: auto;
+  max-width: 100%;
 }
 
 .dashboard-header {
-  margin-bottom: 30px;
+  margin-bottom: 24px;
+  text-align: center;
 }
 
 .dashboard-header h1 {
-  font-size: 2rem;
+  font-size: 1.5em;
   color: #81C784;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .dashboard-header p {
-  color: #888;
-  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.95em;
 }
 
 .user-info-card {
   background: #242442;
   border-radius: 16px;
-  padding: 25px;
-  margin-bottom: 30px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .info-item {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.info-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
 .info-item .label {
-  color: #888;
-  font-size: 0.9rem;
-  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9em;
 }
 
 .info-item .value {
   color: #81C784;
   font-weight: 500;
-  font-size: 1.1rem;
+  font-size: 1em;
+  text-align: right;
 }
 
 .role-badge {
@@ -285,59 +292,68 @@ export default {
   padding: 4px 12px;
   border-radius: 20px;
   display: inline-block;
-  width: fit-content;
+  font-size: 0.85em;
 }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .stat-card {
   background: #242442;
   border-radius: 16px;
-  padding: 20px;
+  padding: 16px;
   display: flex;
   align-items: center;
-  gap: 15px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  gap: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .stat-icon {
-  font-size: 2.5rem;
+  font-size: 2em;
+  flex-shrink: 0;
+}
+
+.stat-info {
+  flex: 1;
 }
 
 .stat-info h3 {
-  font-size: 1.8rem;
-  color: #fff;
-  margin: 0;
+  font-size: 1.5em;
+  color: white;
+  margin: 0 0 4px 0;
 }
 
 .stat-info p {
-  color: #888;
+  color: rgba(255, 255, 255, 0.6);
   margin: 0;
+  font-size: 0.9em;
 }
 
 .dashboard-sections {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
-  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
 .section {
   background: #242442;
   border-radius: 16px;
-  padding: 25px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .section h2 {
-  color: #4CAF50;
-  margin-bottom: 20px;
-  font-size: 1.3rem;
+  color: #81C784;
+  margin-bottom: 16px;
+  font-size: 1.2em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .features-list {
@@ -348,11 +364,12 @@ export default {
 
 .features-list li {
   padding: 12px 0;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #ccc;
+  align-items: flex-start;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95em;
 }
 
 .features-list li:last-child {
@@ -360,224 +377,215 @@ export default {
 }
 
 .feature-icon {
-  font-size: 1.2rem;
+  font-size: 1.1em;
+  flex-shrink: 0;
 }
 
 .activity-list {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 12px;
 }
 
 .activity-item {
   display: flex;
-  gap: 15px;
+  gap: 12px;
   padding: 12px;
   background: rgba(76, 175, 80, 0.1);
-  border-radius: 8px;
+  border-radius: 12px;
   border-left: 4px solid #4CAF50;
 }
 
 .activity-icon {
-  font-size: 1.5rem;
+  font-size: 1.4em;
   min-width: 30px;
+  flex-shrink: 0;
+}
+
+.activity-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .activity-info h4 {
-  margin: 0 0 5px 0;
-  color: #fff;
-  font-size: 1rem;
+  margin: 0 0 4px 0;
+  color: white;
+  font-size: 0.95em;
 }
 
 .activity-info p {
-  margin: 0 0 5px 0;
-  color: #ccc;
-  font-size: 0.9rem;
+  margin: 0 0 4px 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85em;
+  line-height: 1.3;
 }
 
 .activity-date {
-  color: #888;
-  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.75em;
 }
 
-.quick-actions {
-  margin-bottom: 30px;
-}
-
-.quick-actions h2 {
-  color: #4CAF50;
-  margin-bottom: 20px;
-  font-size: 1.3rem;
-}
-
-.actions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-}
-
-.action-card {
-  background: #242442;
-  border-radius: 16px;
-  padding: 20px;
-  text-align: center;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
-}
-
-.action-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-}
-
-.action-icon {
-  font-size: 2rem;
-  display: block;
-  margin-bottom: 10px;
-}
-
-.action-card h3 {
-  margin: 10px 0 5px 0;
-  color: #4CAF50;
-}
-
-.action-card p {
-  margin: 0;
-  color: #ccc;
-  font-size: 0.9rem;
-}
-
-.error-message {
-  background: rgba(244, 67, 54, 0.1);
-  color: #f44336;
-  padding: 15px;
-  border-radius: 8px;
-  margin-top: 20px;
-}
-
-.loading {
-  color: #888;
-  text-align: center;
-  padding: 20px;
-}
-
-@media (max-width: 768px) {
-  .dashboard-container {
-    margin-left: 0;
-    padding: 20px;
-  }
-
-  .dashboard-sections {
-    grid-template-columns: 1fr;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .dashboard-header h1 {
-    font-size: 1.5rem;
-  }
-}
-
-/* Mission Section Styles */
 .mission-section {
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .mission-card {
   background: #242442;
   border-radius: 16px;
-  padding: 30px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .mission-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .mission-header h2 {
-  color: #4CAF50;
-  font-size: 1.8rem;
-  margin-bottom: 10px;
+  color: #81C784;
+  font-size: 1.3em;
+  margin-bottom: 8px;
 }
 
 .mission-subtitle {
-  color: #81C784;
-  font-size: 1.1rem;
+  color: rgba(129, 199, 132, 0.8);
+  font-size: 1em;
   font-weight: 500;
 }
 
 .mission-content {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 30px;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .mission-text h3 {
   color: #81C784;
-  font-size: 1.3rem;
-  margin-bottom: 15px;
+  font-size: 1.1em;
+  margin-bottom: 12px;
 }
 
 .mission-text p {
-  color: #ccc;
+  color: rgba(255, 255, 255, 0.8);
   line-height: 1.6;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
+  font-size: 0.95em;
 }
 
 .mission-features {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .feature-item {
   background: rgba(76, 175, 80, 0.1);
   border-radius: 12px;
-  padding: 20px;
+  padding: 16px;
   border-left: 4px solid #4CAF50;
-  transition: all 0.3s ease;
 }
 
-.feature-item:hover {
-  background: rgba(76, 175, 80, 0.15);
-  transform: translateX(5px);
-}
-
-.feature-icon {
-  font-size: 1.5rem;
+.feature-item .feature-icon {
+  font-size: 1.4em;
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .feature-item h4 {
-  color: #4CAF50;
-  margin: 0 0 8px 0;
-  font-size: 1.1rem;
+  color: #81C784;
+  margin: 0 0 6px 0;
+  font-size: 1em;
+  font-weight: 600;
 }
 
 .feature-item p {
-  color: #ccc;
+  color: rgba(255, 255, 255, 0.7);
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.85em;
   line-height: 1.4;
 }
 
-@media (max-width: 768px) {
-  .mission-content {
+.quick-actions {
+  margin-bottom: 20px;
+}
+
+.quick-actions h2 {
+  color: #81C784;
+  margin-bottom: 16px;
+  font-size: 1.2em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.action-card {
+  background: #242442;
+  border-radius: 12px;
+  padding: 16px 12px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
+}
+
+.action-card:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.action-icon {
+  font-size: 2em;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.action-card h3 {
+  margin: 0 0 6px 0;
+  color: #81C784;
+  font-size: 0.95em;
+  font-weight: 600;
+}
+
+.action-card p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8em;
+  line-height: 1.3;
+}
+
+.error-message {
+  background: rgba(244, 67, 54, 0.2);
+  color: #ff6b6b;
+  padding: 16px;
+  border-radius: 12px;
+  margin-top: 16px;
+  font-size: 0.9em;
+  text-align: center;
+}
+
+.loading {
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  padding: 20px;
+  font-size: 0.95em;
+}
+
+/* Small screens - single column */
+@media (max-width: 480px) {
+  .actions-grid {
     grid-template-columns: 1fr;
-    gap: 25px;
-  }
-
-  .mission-card {
-    padding: 20px;
-  }
-
-  .mission-header h2 {
-    font-size: 1.5rem;
   }
 }
 </style>

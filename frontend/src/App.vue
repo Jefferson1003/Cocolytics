@@ -72,6 +72,7 @@ export default {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html, body {
@@ -81,26 +82,40 @@ html, body {
   width: 100%;
   height: 100%;
   overflow-x: hidden;
-  overflow-y: hidden;
   margin: 0;
   padding: 0;
+  /* Mobile optimization */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 16px;
+  /* Hide scrollbar but keep functionality */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
 }
 
 #app {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  width: 100vw;
+  width: 100%;
+  max-width: 100vw;
   background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
   overflow-x: hidden;
 }
 
 .main-content {
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   width: 100%;
-  background: transparent;
   max-width: 100vw;
+  background: transparent;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 .main-content.no-nav {
@@ -108,16 +123,58 @@ html, body {
 }
 
 .simple-footer {
-  background: rgba(26, 26, 46, 0.8);
+  background: rgba(26, 26, 46, 0.95);
   color: white;
   text-align: center;
-  padding: 20px;
+  padding: 16px;
   border-top: 1px solid rgba(76, 175, 80, 0.3);
   backdrop-filter: blur(10px);
 }
 
 .simple-footer p {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.85em;
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+/* Prevent horizontal scroll */
+body {
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Smooth transitions */
+* {
+  transition-property: background-color, color, border-color, opacity;
+  transition-duration: 0.2s;
+  transition-timing-function: ease-in-out;
+}
+
+/* Touch-friendly buttons */
+button, a, input, textarea, select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Fix for iOS input zoom */
+input, textarea, select {
+  font-size: 16px;
+}
+
+/* Hide all scrollbars globally but keep scroll functionality */
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
 }
 </style>
