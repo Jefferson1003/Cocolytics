@@ -27,8 +27,8 @@
       </div>
       <nav class="menu-nav">
         <router-link to="/staff" class="menu-item" @click="showMenu = false">
-          <span class="menu-icon">🏠</span>
-          <span class="menu-label">Home</span>
+          <span class="menu-icon">🚚</span>
+          <span class="menu-label">Warehouse Dispatch</span>
         </router-link>
         <router-link to="/staff/inventory" class="menu-item" @click="showMenu = false">
           <span class="menu-icon">📦</span>
@@ -49,6 +49,10 @@
         <router-link to="/staff/camera-scanner" class="menu-item" @click="showMenu = false">
           <span class="menu-icon">📷</span>
           <span class="menu-label">Camera Scanner</span>
+        </router-link>
+        <router-link to="/staff/profile" class="menu-item" @click="showMenu = false">
+          <span class="menu-icon">🏪</span>
+          <span class="menu-label">Store Profile</span>
         </router-link>
         <button @click="logout" class="menu-item logout-item">
           <span class="menu-icon">🚪</span>

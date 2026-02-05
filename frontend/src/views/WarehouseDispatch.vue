@@ -333,12 +333,13 @@ export default {
 }
 
 .dispatch-container {
-  max-width: 100%;
+  max-width: 1400px;
   margin: 0 auto;
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   min-height: 0;
+  width: 100%;
 }
 
 .dispatch-container::-webkit-scrollbar {

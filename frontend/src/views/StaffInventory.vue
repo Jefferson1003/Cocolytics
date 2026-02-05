@@ -10,6 +10,83 @@
           <p>View and manage your cocolumber stock</p>
         </div>
 
+        <!-- Inventory Cards -->
+        <div class="inventory-section">
+          <div class="section-header">
+            <h2>Stock Details</h2>
+          </div>
+
+          <div v-if="loading" class="loading">
+            <div class="loading-spinner">⏳</div>
+            <p>Loading inventory...</p>
+          </div>
+          
+          <div v-else-if="inventory.length > 0" class="products-grid">
+            <div v-for="item in inventory" :key="item.id" class="product-card" :class="{ 'low-stock': item.stock < 10 }">
+              <!-- Stock Indicator Badge -->
+              <div class="stock-indicator" v-if="item.stock < 10">
+                <span v-if="item.stock === 0">⛔ Out of Stock</span>
+                <span v-else-if="item.stock < 5">⚠️ Critical</span>
+                <span v-else>⚠️ Low Stock</span>
+              </div>
+              
+              <!-- Product Image -->
+              <div class="product-image">
+                <img v-if="item.product_picture" :src="getImageUrl(item.product_picture)" :alt="item.size" />
+                <div v-else class="no-image">🥥</div>
+              </div>
+              
+              <!-- Product Info -->
+              <div class="product-info">
+                <h3>{{ item.size }}</h3>
+                <div class="info-row">
+                  <span class="info-label">📏 Length:</span>
+                  <span class="info-value">{{ item.length }} cm</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">📦 Stock:</span>
+                  <span class="stock-badge" :class="{ critical: item.stock < 5, warning: item.stock >= 5 && item.stock < 10, available: item.stock >= 10 }">
+                    {{ item.stock }} units
+                  </span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">📅 Added:</span>
+                  <span class="info-value date-text">{{ formatDate(item.created_at) }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">🏷️ ID:</span>
+                  <span class="info-value">#{{ item.id }}</span>
+                </div>
+              </div>
+              
+              <!-- Action Buttons -->
+              <div class="product-actions">
+                <button @click="stockIn(item)" class="btn-action btn-stock-in" title="Stock In - Add inventory">
+                  <span class="btn-icon">📥</span>
+                  <span class="btn-label">Add</span>
+                </button>
+                <button @click="dispatch(item)" class="btn-action btn-dispatch" title="Dispatch - Ship products" :disabled="item.stock === 0">
+                  <span class="btn-icon">📤</span>
+                  <span class="btn-label">Dispatch</span>
+                </button>
+                <button @click="editItem(item)" class="btn-action btn-edit" title="Edit - Update product">
+                  <span class="btn-icon">✏️</span>
+                  <span class="btn-label">Edit</span>
+                </button>
+                <button @click="deleteItem(item.id)" class="btn-action btn-delete" title="Delete - Remove product">
+                  🗑️
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div v-else class="empty-state">
+            <div class="empty-icon">📦</div>
+            <h3>No Products in Inventory</h3>
+            <p>Start by adding your first coconut product</p>
+          </div>
+        </div>
+
         <!-- Stats Cards -->
         <div class="stats-cards">
           <div class="stat-card">
@@ -32,71 +109,6 @@
               <p class="stat-label">Low Stock (&lt; 10)</p>
               <p class="stat-value">{{ lowStockCount }}</p>
             </div>
-          </div>
-        </div>
-
-        <!-- Inventory Table -->
-        <div class="inventory-section">
-          <div class="section-header">
-            <h2>Stock Details</h2>
-            <router-link to="/staff/add-cocolumber" class="btn-add-product">
-              + Add New Product
-            </router-link>
-          </div>
-
-          <div v-if="loading" class="loading">Loading inventory...</div>
-          <div v-else-if="inventory.length > 0" class="table-responsive">
-            <table class="inventory-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Size</th>
-                  <th>Length (cm)</th>
-                  <th>Current Stock</th>
-                  <th>Status</th>
-                  <th>Added Date</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="item in inventory" :key="item.id" :class="{ 'low-stock': item.stock < 10 }">
-                  <td class="id-cell">{{ item.id }}</td>
-                  <td class="size-cell">
-                    <div class="product-image-small">
-                      <img v-if="item.product_picture" :src="getImageUrl(item.product_picture)" :alt="item.size" />
-                      <div v-else class="no-image">🥥</div>
-                    </div>
-                    <span>{{ item.size }}</span>
-                  </td>
-                  <td>{{ item.length }} cm</td>
-                  <td class="stock-cell">
-                    <span class="stock-badge" :class="{ critical: item.stock < 5, warning: item.stock >= 5 && item.stock < 10 }">
-                      {{ item.stock }} units
-                    </span>
-                  </td>
-                  <td>
-                    <span class="status-badge" :class="{ available: item.stock > 0, unavailable: item.stock === 0 }">
-                      {{ item.stock > 0 ? 'Available' : 'Out of Stock' }}
-                    </span>
-                  </td>
-                  <td class="date-cell">{{ formatDate(item.created_at) }}</td>
-                  <td class="actions-cell">
-                    <button @click="stockIn(item)" class="btn-action btn-stock-in" title="Stock In">📥</button>
-                    <button @click="dispatch(item)" class="btn-action btn-dispatch" title="Dispatch">📤</button>
-                    <button @click="adjust(item)" class="btn-action btn-adjust" title="Adjust">⚙️</button>
-                    <button @click="editItem(item)" class="btn-action btn-edit" title="Edit">✏️</button>
-                    <button @click="deleteItem(item.id)" class="btn-action btn-delete" title="Delete">🗑️</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div v-else class="empty-state">
-            <p class="empty-icon">📦</p>
-            <p>No products in inventory yet.</p>
-            <router-link to="/staff/add-cocolumber" class="btn-add-first">
-              Add Your First Product
-            </router-link>
           </div>
         </div>
 
@@ -126,10 +138,13 @@
       <div v-if="showEditModal" class="modal-overlay" @click="closeEditModal">
         <div class="modal-content" @click.stop>
           <div class="modal-header">
-            <h2>Edit Product Stock</h2>
+            <h2>✏️ Edit Product Stock</h2>
             <button class="modal-close" @click="closeEditModal">&times;</button>
           </div>
           <div class="modal-body">
+            <div class="modal-description">
+              <p><strong>Edit stock</strong> to set a specific quantity. Use this for quick updates.</p>
+            </div>
             <div v-if="editingItem" class="edit-form">
               <div class="form-group">
                 <label>Size</label>
@@ -140,14 +155,15 @@
                 <input type="number" v-model.number="editingItem.length" class="form-input" disabled />
               </div>
               <div class="form-group">
-                <label>Stock Quantity</label>
-                <input type="number" v-model.number="editingItem.stock" class="form-input" min="0" />
+                <label>Stock Quantity <span class="required">*</span></label>
+                <input type="number" v-model.number="editingItem.stock" class="form-input" min="0" placeholder="Enter new stock quantity" />
+                <small>Current stock: <strong>{{ originalItem?.stock }} units</strong></small>
               </div>
             </div>
           </div>
           <div class="modal-footer">
             <button @click="closeEditModal" class="btn-cancel">Cancel</button>
-            <button @click="saveEdit" class="btn-save">Save Changes</button>
+            <button @click="saveEdit" class="btn-save">✓ Save Changes</button>
           </div>
         </div>
       </div>
@@ -160,9 +176,15 @@
             <button class="modal-close" @click="closeStockInModal">&times;</button>
           </div>
           <div class="modal-body">
+            <div class="modal-description">
+              <p><strong>Add inventory</strong> when receiving new stock from suppliers or production.</p>
+            </div>
             <div class="form-group">
-              <label>Quantity to Add</label>
-              <input type="number" v-model.number="stockInForm.quantity" class="form-input" min="1" placeholder="Enter quantity" />
+              <label>Current Stock: <strong>{{ selectedProduct?.stock }} units</strong></label>
+            </div>
+            <div class="form-group">
+              <label>Quantity to Add <span class="required">*</span></label>
+              <input type="number" v-model.number="stockInForm.quantity" class="form-input" min="1" placeholder="Enter quantity to add" />
             </div>
             <div class="form-group">
               <label>Reason (optional)</label>
@@ -171,7 +193,7 @@
           </div>
           <div class="modal-footer">
             <button @click="closeStockInModal" class="btn-cancel">Cancel</button>
-            <button @click="confirmStockIn" class="btn-save">Add Stock</button>
+            <button @click="confirmStockIn" class="btn-save">✓ Add Stock</button>
           </div>
         </div>
       </div>
@@ -184,12 +206,15 @@
             <button class="modal-close" @click="closeDispatchModal">&times;</button>
           </div>
           <div class="modal-body">
+            <div class="modal-description">
+              <p><strong>Dispatch products</strong> when shipping to customers or releasing from warehouse.</p>
+            </div>
             <div class="form-group">
               <label>Current Stock: <strong>{{ selectedProduct?.stock }} units</strong></label>
             </div>
             <div class="form-group">
-              <label>Quantity to Dispatch</label>
-              <input type="number" v-model.number="dispatchForm.quantity" class="form-input" min="1" :max="selectedProduct?.stock" placeholder="Enter quantity" />
+              <label>Quantity to Dispatch <span class="required">*</span></label>
+              <input type="number" v-model.number="dispatchForm.quantity" class="form-input" min="1" :max="selectedProduct?.stock" placeholder="Enter quantity to dispatch" />
             </div>
             <div class="form-group">
               <label>Reason (optional)</label>
@@ -198,7 +223,7 @@
           </div>
           <div class="modal-footer">
             <button @click="closeDispatchModal" class="btn-cancel">Cancel</button>
-            <button @click="confirmDispatch" class="btn-save">Dispatch</button>
+            <button @click="confirmDispatch" class="btn-save">✓ Dispatch</button>
           </div>
         </div>
       </div>
@@ -562,14 +587,15 @@ export default {
 }
 
 .header h1 {
-  font-size: 1.5em;
+  font-size: 2.5em;
   color: white;
   margin-bottom: 8px;
+  font-weight: 700;
 }
 
 .header p {
   color: rgba(255, 255, 255, 0.8);
-  font-size: 0.95em;
+  font-size: 1.1em;
 }
 
 /* Stats Cards */
@@ -658,177 +684,286 @@ export default {
 
 .loading {
   text-align: center;
-  padding: 40px;
+  padding: 60px 20px;
+  color: #667eea;
+}
+
+.loading-spinner {
+  font-size: 3em;
+  margin-bottom: 15px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading p {
+  font-size: 1.1em;
+  margin: 0;
   color: rgba(255, 255, 255, 0.7);
-  font-size: 1em;
 }
 
-/* Mobile Card Layout instead of table */
-.table-responsive {
+/* Products Grid Layout */
+.products-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
 }
 
-.inventory-table {
-  display: none; /* Hide table on mobile */
-}
-
-/* Create mobile card view */
-.inventory-table tbody tr {
-  background: #1a1a2e;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 12px;
+/* Product Card */
+.product-card {
+  background: linear-gradient(135deg, #1a1a2e 0%, #242442 100%);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s, box-shadow 0.3s;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  border-left: 4px solid #667eea;
+  position: relative;
 }
 
-.inventory-table tbody tr.low-stock {
-  background: rgba(255, 193, 7, 0.1);
-  border-left-color: #ffc107;
+.product-card.low-stock {
+  border-color: rgba(255, 193, 7, 0.6);
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, #1a1a2e 100%);
 }
 
-.inventory-table td {
-  padding: 0;
-  border: none;
-  color: rgba(255, 255, 255, 0.9);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
 }
 
-.inventory-table td::before {
-  content: attr(data-label);
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.85em;
+/* Stock Indicator Badge */
+.stock-indicator {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 193, 7, 0.95);
+  color: #1a1a2e;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75em;
+  font-weight: 700;
+  z-index: 10;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(5px);
 }
 
-.id-cell {
-  color: #667eea;
-  font-weight: 600;
-}
-
-.size-cell {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.product-image-small {
-  width: 50px;
-  height: 50px;
-  border-radius: 8px;
-  background: #242442;
+/* Product Image */
+.product-image {
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  flex-shrink: 0;
 }
 
-.product-image-small img {
+.product-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
 .no-image {
-  font-size: 1.5em;
+  font-size: 4em;
+  opacity: 0.5;
 }
 
+/* Product Info */
+.product-info {
+  padding: 20px;
+  flex-grow: 1;
+}
+
+.product-info h3 {
+  margin: 0 0 15px 0;
+  color: white;
+  font-size: 1.4em;
+  font-weight: 700;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.info-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.info-value {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  font-size: 0.95em;
+}
+
+.date-text {
+  font-size: 0.85em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Stock Badges */
 .stock-badge {
   padding: 6px 12px;
   border-radius: 8px;
-  font-size: 0.85em;
-  font-weight: 600;
-}
-
-.stock-badge.warning {
-  background: rgba(255, 193, 7, 0.2);
-  color: #ffc107;
+  font-size: 0.9em;
+  font-weight: 700;
 }
 
 .stock-badge.critical {
-  background: rgba(244, 67, 54, 0.2);
+  background: rgba(244, 67, 54, 0.25);
   color: #ff6b6b;
+  box-shadow: 0 0 10px rgba(244, 67, 54, 0.3);
 }
 
-.status-badge {
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 0.85em;
-  font-weight: 600;
+.stock-badge.warning {
+  background: rgba(255, 193, 7, 0.25);
+  color: #ffc107;
+  box-shadow: 0 0 10px rgba(255, 193, 7, 0.3);
 }
 
-.status-badge.available {
-  background: rgba(76, 175, 80, 0.2);
+.stock-badge.available {
+  background: rgba(76, 175, 80, 0.25);
   color: #81C784;
 }
 
-.status-badge.unavailable {
-  background: rgba(244, 67, 54, 0.2);
-  color: #ff6b6b;
-}
-
-.date-cell {
-  font-size: 0.85em;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.actions-cell {
-  display: flex;
+/* Product Actions */
+.product-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid rgba(102, 126, 234, 0.2);
 }
 
 .btn-action {
-  padding: 8px 12px;
+  padding: 10px 8px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  font-size: 1.2em;
+  font-size: 0.85em;
   transition: all 0.2s;
-  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-weight: 600;
+  min-height: 60px;
 }
 
-.btn-action:active {
-  transform: scale(0.95);
+.btn-icon {
+  font-size: 1.5em;
+}
+
+.btn-label {
+  font-size: 0.85em;
 }
 
 .btn-stock-in {
-  background: rgba(76, 175, 80, 0.2);
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.3) 0%, rgba(76, 175, 80, 0.2) 100%);
+  border: 1px solid rgba(76, 175, 80, 0.5);
+}
+
+.btn-stock-in:hover {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.5) 0%, rgba(76, 175, 80, 0.3) 100%);
+  transform: translateY(-2px);
 }
 
 .btn-dispatch {
-  background: rgba(33, 150, 243, 0.2);
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.3) 0%, rgba(33, 150, 243, 0.2) 100%);
+  border: 1px solid rgba(33, 150, 243, 0.5);
 }
 
-.btn-adjust {
-  background: rgba(255, 193, 7, 0.2);
+.btn-dispatch:hover {
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.5) 0%, rgba(33, 150, 243, 0.3) 100%);
+  transform: translateY(-2px);
+}
+
+.btn-dispatch:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-dispatch:disabled:hover {
+  transform: none;
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.3) 0%, rgba(33, 150, 243, 0.2) 100%);
 }
 
 .btn-edit {
-  background: rgba(102, 126, 234, 0.2);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(102, 126, 234, 0.2) 100%);
+  border: 1px solid rgba(102, 126, 234, 0.5);
+}
+
+.btn-edit:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.5) 0%, rgba(102, 126, 234, 0.3) 100%);
+  transform: translateY(-2px);
 }
 
 .btn-delete {
-  background: rgba(244, 67, 54, 0.2);
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.3) 0%, rgba(244, 67, 54, 0.2) 100%);
+  border: 1px solid rgba(244, 67, 54, 0.5);
+  font-size: 1.3em;
+}
+
+.btn-delete:hover {
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.5) 0%, rgba(244, 67, 54, 0.3) 100%);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .products-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .btn-label {
+    display: none;
+  }
+  
+  .btn-action {
+    min-height: 50px;
+  }
+  
+  .product-actions {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 .empty-state {
   text-align: center;
-  padding: 40px 20px;
+  padding: 60px 20px;
   color: rgba(255, 255, 255, 0.7);
 }
 
 .empty-icon {
-  font-size: 3em;
-  margin-bottom: 16px;
+  font-size: 5em;
+  margin-bottom: 20px;
+  opacity: 0.4;
+}
+
+.empty-state h3 {
+  color: #667eea;
+  margin: 0 0 10px 0;
+  font-size: 1.5em;
+}
+
+.empty-state p {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.1em;
+  margin: 0 0 25px 0;
 }
 
 .btn-add-first {
@@ -986,6 +1121,21 @@ export default {
   padding: 24px 20px;
 }
 
+.modal-description {
+  background: rgba(102, 126, 234, 0.1);
+  border-left: 3px solid #667eea;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.modal-description p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+
 .form-group {
   margin-bottom: 20px;
 }
@@ -996,6 +1146,13 @@ export default {
   margin-bottom: 8px;
   font-weight: 500;
   font-size: 0.95em;
+}
+
+.form-group small {
+  display: block;
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85em;
 }
 
 .required {

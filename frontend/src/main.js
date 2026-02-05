@@ -41,6 +41,9 @@ import StaffPaperUploads from './views/StaffPaperUploads.vue'
 import AdminPaperApprovals from './views/AdminPaperApprovals.vue'
 import StaffInventory from './views/StaffInventory.vue'
 import WarehouseDispatch from './views/WarehouseDispatch.vue'
+import SellersList from './views/SellersList.vue'
+import SellerProducts from './views/SellerProducts.vue'
+import StaffProfile from './views/StaffProfile.vue'
 
 // Define routes
 const routes = [
@@ -111,6 +114,12 @@ const routes = [
     meta: { requiresAuth: true, roles: ['staff', 'admin'] }
   },
   {
+    path: '/staff/profile',
+    name: 'StaffProfile',
+    component: StaffProfile,
+    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
+  },
+  {
     path: '/admin/paper-approvals',
     name: 'AdminPaperApprovals',
     component: AdminPaperApprovals,
@@ -130,6 +139,18 @@ const routes = [
     path: '/cart',
     name: 'Cart',
     component: Cart,
+    meta: { requiresAuth: true, roles: ['user', 'staff', 'admin'] }
+  },
+  {
+    path: '/sellers',
+    name: 'SellersList',
+    component: SellersList,
+    meta: { requiresAuth: true, roles: ['user', 'staff', 'admin'] }
+  },
+  {
+    path: '/sellers/:sellerId',
+    name: 'SellerProducts',
+    component: SellerProducts,
     meta: { requiresAuth: true, roles: ['user', 'staff', 'admin'] }
   }
 ]
