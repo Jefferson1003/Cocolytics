@@ -14,14 +14,14 @@
       </div>
 
       <div v-else-if="sellers.length > 0" class="sellers-grid">
-        <div v-for="seller in sellers" :key="seller.user_id" class="seller-card" @click="viewSellerProducts(seller.user_id)">
+        <div v-for="seller in sellers" :key="seller.staff_id" class="seller-card" @click="viewSellerProducts(seller.staff_id)">
           <div class="seller-logo">
             <img v-if="seller.store_logo" :src="getImageUrl(seller.store_logo)" :alt="seller.store_name" />
             <div v-else class="default-logo">🥥</div>
           </div>
           
           <div class="seller-info">
-            <h3>{{ seller.store_name || `${seller.name}'s Store` }}</h3>
+            <h3>{{ seller.store_name || `${seller.staff_name}'s Store` }}</h3>
             <p class="seller-description">{{ seller.store_description || 'Quality coconut products' }}</p>
             
             <div class="seller-stats">
@@ -90,7 +90,7 @@ export default {
       }
     },
     viewSellerProducts(sellerId) {
-      this.$router.push(`/sellers/${sellerId}/products`)
+      this.$router.push(`/sellers/${sellerId}`)
     },
     getImageUrl(imagePath) {
       if (!imagePath) return ''
@@ -105,12 +105,13 @@ export default {
 <style scoped>
 .user-layout {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+  background-attachment: fixed;
   padding-top: 80px;
 }
 
 .sellers-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 40px 20px;
 }
@@ -121,25 +122,26 @@ export default {
 }
 
 .header h1 {
-  font-size: 2.5em;
-  color: white;
+  font-size: 2.8em;
+  color: #4CAF50;
   margin-bottom: 10px;
   font-weight: 700;
+  text-shadow: 0 2px 10px rgba(76, 175, 80, 0.3);
 }
 
 .header p {
   color: rgba(255, 255, 255, 0.9);
-  font-size: 1.2em;
+  font-size: 1.3em;
 }
 
 .loading {
   text-align: center;
   padding: 80px 20px;
-  color: white;
+  color: #4CAF50;
 }
 
 .loading-spinner {
-  font-size: 3em;
+  font-size: 4em;
   margin-bottom: 20px;
   animation: spin 2s linear infinite;
 }
@@ -149,27 +151,35 @@ export default {
   100% { transform: rotate(360deg); }
 }
 
+.loading p {
+  font-size: 1.2em;
+  color: #ddd;
+}
+
 .sellers-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 30px;
 }
 
 .seller-card {
-  background: white;
+  background: linear-gradient(135deg, rgba(36, 68, 66, 0.6) 0%, rgba(30, 30, 63, 0.8) 100%);
+  border: 1px solid rgba(76, 175, 80, 0.3);
   border-radius: 16px;
   padding: 30px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s, box-shadow 0.3s;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  backdrop-filter: blur(10px);
 }
 
 .seller-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 15px 40px rgba(76, 175, 80, 0.4);
+  border-color: rgba(76, 175, 80, 0.6);
 }
 
 .seller-logo {
@@ -178,10 +188,12 @@ export default {
   margin: 0 auto;
   border-radius: 50%;
   overflow: hidden;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+  border: 3px solid rgba(76, 175, 80, 0.2);
 }
 
 .seller-logo img {
@@ -191,7 +203,7 @@ export default {
 }
 
 .default-logo {
-  font-size: 3em;
+  font-size: 3.5em;
   color: white;
 }
 
@@ -202,15 +214,16 @@ export default {
 
 .seller-info h3 {
   margin: 0 0 10px 0;
-  color: #333;
-  font-size: 1.5em;
+  color: #4CAF50;
+  font-size: 1.6em;
   font-weight: 700;
 }
 
 .seller-description {
-  color: #666;
+  color: #ddd;
   margin: 0 0 20px 0;
   line-height: 1.6;
+  min-height: 50px;
 }
 
 .seller-stats {
@@ -218,18 +231,26 @@ export default {
   justify-content: center;
   gap: 20px;
   margin-bottom: 15px;
+  padding: 12px;
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 10px;
 }
 
 .stat {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #555;
-  font-size: 0.95em;
+  color: #81C784;
+  font-size: 1em;
+  font-weight: 600;
 }
 
 .stat-icon {
-  font-size: 1.2em;
+  font-size: 1.3em;
+}
+
+.stat-value {
+  color: #4CAF50;
 }
 
 .seller-contact {
@@ -237,48 +258,74 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  color: #667eea;
-  font-weight: 500;
+  color: #4CAF50;
+  font-weight: 600;
+  padding: 8px;
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 8px;
+}
+
+.contact-icon {
+  font-size: 1.2em;
 }
 
 .btn-view-store {
   width: 100%;
-  padding: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 15px;
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
   color: white;
   border: none;
   border-radius: 10px;
-  font-size: 1.1em;
+  font-size: 1.15em;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
 }
 
 .btn-view-store:hover {
-  transform: scale(1.02);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.5);
+  background: linear-gradient(135deg, #45a049 0%, #388E3C 100%);
 }
 
 .empty-state {
   text-align: center;
-  padding: 80px 20px;
-  color: white;
+  padding: 100px 20px;
+  background: linear-gradient(135deg, rgba(36, 68, 66, 0.4) 0%, rgba(30, 30, 63, 0.6) 100%);
+  border: 2px dashed rgba(76, 175, 80, 0.3);
+  border-radius: 16px;
 }
 
 .empty-icon {
-  font-size: 5em;
+  font-size: 6em;
   margin-bottom: 20px;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 .empty-state h3 {
-  font-size: 1.8em;
+  color: #4CAF50;
+  font-size: 2em;
   margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.empty-state p {
+  color: #ddd;
+  font-size: 1.2em;
 }
 
 @media (max-width: 768px) {
   .sellers-grid {
     grid-template-columns: 1fr;
+  }
+
+  .header h1 {
+    font-size: 2.2em;
+  }
+
+  .header p {
+    font-size: 1.1em;
   }
 }
 </style>

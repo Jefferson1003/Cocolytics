@@ -83,38 +83,37 @@
     </section>
 
     <section class="shop-section">
-      <h2>🌴 Coconut Shops</h2>
-      <div class="shop-grid">
-        <div class="shop-card">
-          <div class="shop-icon">🏪</div>
-          <h3>Tropical Paradise Shop</h3>
-          <p>Fresh coconuts daily</p>
-          <router-link to="/orders" class="btn">Visit Traders</router-link>
+      <h2>� Our Sellers</h2>
+      <p class="section-subtitle">Browse products from our trusted sellers</p>
+      
+      <div v-if="loadingSellers" class="loading-sellers">
+        <div class="spinner">⏳</div>
+        <p>Loading sellers...</p>
+      </div>
+
+      <div v-else-if="sellers.length > 0" class="shop-grid">
+        <div v-for="seller in sellers" :key="seller.staff_id" class="shop-card" @click="visitStore(seller.staff_id)">
+          <div class="shop-logo">
+            <img v-if="seller.store_logo" :src="getImageUrl(seller.store_logo)" :alt="seller.store_name" />
+            <div v-else class="default-shop-icon">🥥</div>
+          </div>
+          <h3>{{ seller.store_name || seller.staff_name + "'s Store" }}</h3>
+          <p class="shop-description">{{ seller.store_description || 'Quality coconut products' }}</p>
+          <div class="shop-stats">
+            <span class="stat-item">📦 {{ seller.product_count }} products</span>
+            <span class="stat-item">📊 {{ seller.total_stock }} in stock</span>
+          </div>
+          <div class="shop-contact" v-if="seller.contact_number">
+            <span>📞 {{ seller.contact_number }}</span>
+          </div>
+          <button class="btn btn-visit">Visit Store</button>
         </div>
-        <div class="shop-card">
-          <div class="shop-icon">🏪</div>
-          <h3>Island Market</h3>
-          <p>Premium coconut selection</p>
-          <router-link to="/orders" class="btn">Visit Traders</router-link>
-        </div>
-        <div class="shop-card">
-          <div class="shop-icon">🏪</div>
-          <h3>Beachside Store</h3>
-          <p>Locally sourced coconuts</p>
-          <router-link to="/orders" class="btn">Visit Traders</router-link>
-        </div>
-        <div class="shop-card">
-          <div class="shop-icon">🏪</div>
-          <h3>Palm Grove Emporium</h3>
-          <p>Wide variety of coconuts</p>
-          <router-link to="/orders" class="btn">Visit Traders</router-link>
-        </div>
-        <div class="shop-card">
-          <div class="shop-icon">🏪</div>
-          <h3>Coconut Haven</h3>
-          <p>Quality coconuts guaranteed</p>
-          <router-link to="/orders" class="btn">Visit Traders</router-link>
-        </div>
+      </div>
+
+      <div v-else class="empty-sellers">
+        <div class="empty-icon">🏪</div>
+        <h3>No Sellers Available</h3>
+        <p>Check back later for new sellers!</p>
       </div>
     </section>
   </div>
@@ -156,6 +155,8 @@ export default {
       healthStatus: null,
       isInstalled: false,
       showHistoricalData: false,
+      sellers: [],
+      loadingSellers: false,
       chartData: {
         labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
         datasets: [
@@ -193,8 +194,32 @@ export default {
     if (window.matchMedia('(display-mode: standalone)').matches) {
       this.isInstalled = true
     }
+    // Fetch sellers when component mounts
+    this.fetchSellers()
   },
   methods: {
+    async fetchSellers() {
+      this.loadingSellers = true
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/sellers`)
+        if (response.ok) {
+          this.sellers = await response.json()
+        }
+      } catch (error) {
+        console.error('Error fetching sellers:', error)
+      } finally {
+        this.loadingSellers = false
+      }
+    },
+    visitStore(sellerId) {
+      this.$router.push(`/sellers/${sellerId}`)
+    },
+    getImageUrl(imagePath) {
+      if (!imagePath) return ''
+      if (imagePath.startsWith('http')) return imagePath
+      if (imagePath.startsWith('/')) return `${import.meta.env.VITE_API_BASE_URL}${imagePath}`
+      return `${import.meta.env.VITE_API_BASE_URL}/uploads/${imagePath}`
+    },
     async fetchData() {
       try {
         const response = await axios.get('/api/data')
@@ -559,58 +584,160 @@ export default {
 }
 
 .shop-section h2 {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
   color: #4CAF50;
+  font-size: 2em;
+}
+
+.section-subtitle {
+  color: #ccc;
+  margin-bottom: 2rem;
+  font-size: 1.1em;
+}
+
+.loading-sellers {
+  text-align: center;
+  padding: 60px 20px;
+  color: #4CAF50;
+}
+
+.spinner {
+  font-size: 3em;
+  margin-bottom: 15px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .shop-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
 }
 
 .shop-card {
-  background: #242442;
+  background: linear-gradient(135deg, rgba(36, 68, 66, 0.6) 0%, rgba(30, 30, 63, 0.8) 100%);
+  border: 1px solid rgba(76, 175, 80, 0.2);
   border-radius: 16px;
-  padding: 20px;
+  padding: 25px;
   text-align: center;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  transition: transform 0.3s;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
 }
 
 .shop-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-8px);
+  box-shadow: 0 25px 70px rgba(76, 175, 80, 0.4);
+  border-color: rgba(76, 175, 80, 0.5);
 }
 
-.shop-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+.shop-logo {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+}
+
+.shop-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.default-shop-icon {
+  font-size: 3em;
+  color: white;
 }
 
 .shop-card h3 {
+  color: #4CAF50;
+  margin-bottom: 10px;
+  font-size: 1.4em;
+  font-weight: 700;
+}
+
+.shop-description {
+  color: #ddd;
+  font-size: 1em;
+  margin-bottom: 15px;
+  min-height: 45px;
+}
+
+.shop-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 15px;
+  padding: 12px;
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 8px;
+}
+
+.stat-item {
   color: #81C784;
-  margin-bottom: 0.5rem;
+  font-size: 0.95em;
+  font-weight: 500;
 }
 
-.shop-card p {
-  color: #fff;
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
+.shop-contact {
+  color: #4CAF50;
+  margin-bottom: 15px;
+  font-size: 0.9em;
 }
 
-.shop-card .btn {
-  background: #4CAF50;
+.btn-visit {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
   color: #fff;
   border: none;
-  padding: 10px 20px;
+  padding: 12px 30px;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.3s;
+  font-size: 1em;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
 }
 
-.shop-card .btn:hover {
-  background: #388E3C;
+.btn-visit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+}
+
+.empty-sellers {
+  text-align: center;
+  padding: 80px 20px;
+  background: rgba(36, 68, 66, 0.3);
+  border-radius: 16px;
+  border: 2px dashed rgba(76, 175, 80, 0.3);
+}
+
+.empty-icon {
+  font-size: 5em;
+  margin-bottom: 20px;
+  opacity: 0.6;
+}
+
+.empty-sellers h3 {
+  color: #4CAF50;
+  margin-bottom: 10px;
+  font-size: 1.5em;
+}
+
+.empty-sellers p {
+  color: #ccc;
+  font-size: 1.1em;
 }
 
 .chart-container {

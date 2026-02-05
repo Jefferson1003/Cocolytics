@@ -512,10 +512,10 @@ app.post('/api/staff/cocolumber', authenticateToken, authorizeRoles('staff', 'ad
     // Prepare product picture path
     const productPicture = req.file ? `/uploads/${req.file.filename}` : null;
 
-    // Insert into database
+    // Insert into database with staff_id
     const [result] = await pool.execute(
-      'INSERT INTO cocolumber_logs (size, length, stock, product_picture) VALUES (?, ?, ?, ?)',
-      [size, length, stock, productPicture]
+      'INSERT INTO cocolumber_logs (size, length, stock, product_picture, staff_id) VALUES (?, ?, ?, ?, ?)',
+      [size, length, stock, productPicture, req.user.id]
     );
 
     res.status(201).json({
@@ -542,9 +542,18 @@ app.post('/api/staff/cocolumber', authenticateToken, authorizeRoles('staff', 'ad
 // Get all cocolumber logs (staff and admin only)
 app.get('/api/staff/cocolumber', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
   try {
-    const [logs] = await pool.execute(
-      'SELECT * FROM cocolumber_logs ORDER BY created_at DESC'
-    );
+    // Admins see all products, staff see only their own
+    let query = 'SELECT * FROM cocolumber_logs';
+    let params = [];
+    
+    if (req.user.role === 'staff') {
+      query += ' WHERE staff_id = ?';
+      params.push(req.user.id);
+    }
+    
+    query += ' ORDER BY created_at DESC';
+    
+    const [logs] = await pool.execute(query, params);
     res.json({ success: true, data: logs });
   } catch (error) {
     console.error('Get cocolumber logs error:', error);
@@ -1132,9 +1141,18 @@ app.get('/api/cocolumber/all', authenticateToken, async (req, res) => {
 // Get all cocolumber for inventory management (includes zero stock)
 app.get('/api/cocolumber/inventory', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
   try {
-    const [products] = await pool.execute(
-      'SELECT * FROM cocolumber_logs ORDER BY created_at DESC'
-    );
+    // Admins see all products, staff see only their own
+    let query = 'SELECT * FROM cocolumber_logs';
+    let params = [];
+    
+    if (req.user.role === 'staff') {
+      query += ' WHERE staff_id = ?';
+      params.push(req.user.id);
+    }
+    
+    query += ' ORDER BY created_at DESC';
+    
+    const [products] = await pool.execute(query, params);
     res.json(products);
   } catch (error) {
     console.error('Get inventory error:', error);
@@ -1285,6 +1303,136 @@ app.put('/api/orders/:id/status', authenticateToken, authorizeRoles('staff', 'ad
   } catch (error) {
     console.error('Update order status error:', error);
     res.status(500).json({ message: 'Server error updating order' });
+  }
+});
+
+// ==================== MULTI-SELLER MARKETPLACE ROUTES ====================
+
+// Get all sellers with their product counts
+app.get('/api/sellers', async (req, res) => {
+  try {
+    const [sellers] = await pool.query(`
+      SELECT 
+        u.id as staff_id,
+        u.name as staff_name,
+        sp.store_name,
+        sp.store_description,
+        sp.store_logo,
+        sp.contact_number,
+        sp.is_active,
+        COUNT(cl.id) as product_count,
+        SUM(cl.stock) as total_stock
+      FROM users u
+      LEFT JOIN staff_profiles sp ON u.id = sp.staff_id
+      LEFT JOIN cocolumber_logs cl ON u.id = cl.staff_id
+      WHERE u.role = 'staff' AND (sp.is_active IS NULL OR sp.is_active = 1)
+      GROUP BY u.id
+      HAVING product_count > 0
+      ORDER BY product_count DESC
+    `);
+    res.json(sellers);
+  } catch (error) {
+    console.error('Error fetching sellers:', error);
+    res.status(500).json({ message: 'Error fetching sellers' });
+  }
+});
+
+// Get products by specific seller
+app.get('/api/sellers/:staffId/products', async (req, res) => {
+  try {
+    const [products] = await pool.query(`
+      SELECT 
+        cl.*,
+        u.name as staff_name,
+        sp.store_name,
+        sp.store_logo,
+        sp.contact_number
+      FROM cocolumber_logs cl
+      JOIN users u ON cl.staff_id = u.id
+      LEFT JOIN staff_profiles sp ON u.id = sp.staff_id
+      WHERE cl.staff_id = ? AND cl.stock > 0
+      ORDER BY cl.created_at DESC
+    `, [req.params.staffId]);
+    res.json(products);
+  } catch (error) {
+    console.error('Error fetching seller products:', error);
+    res.status(500).json({ message: 'Error fetching products' });
+  }
+});
+
+// Get staff profile
+app.get('/api/staff/profile', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
+  try {
+    const [profile] = await pool.query(`
+      SELECT * FROM staff_profiles WHERE staff_id = ?
+    `, [req.user.id]);
+    
+    if (profile.length === 0) {
+      // Return default profile if not exists
+      const [user] = await pool.query('SELECT name FROM users WHERE id = ?', [req.user.id]);
+      return res.json({
+        store_name: user[0]?.name + "'s Store" || 'My Store',
+        store_description: '',
+        store_logo: null,
+        contact_number: '',
+        store_address: '',
+        is_active: true
+      });
+    }
+    
+    res.json(profile[0]);
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    res.status(500).json({ message: 'Error fetching profile' });
+  }
+});
+
+// Update staff profile with multer for logo upload
+app.put('/api/staff/profile', authenticateToken, authorizeRoles('staff', 'admin'), upload.single('store_logo'), async (req, res) => {
+  try {
+    const { store_name, store_description, contact_number, store_address, is_active } = req.body;
+    const store_logo = req.file ? `/uploads/${req.file.filename}` : null;
+
+    // Check if profile exists
+    const [existing] = await pool.query(
+      'SELECT * FROM staff_profiles WHERE staff_id = ?',
+      [req.user.id]
+    );
+
+    if (existing.length === 0) {
+      // Insert new profile
+      await pool.query(`
+        INSERT INTO staff_profiles 
+        (staff_id, store_name, store_description, store_logo, contact_number, store_address, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `, [req.user.id, store_name, store_description, store_logo, contact_number, store_address, is_active]);
+    } else {
+      // Update existing profile
+      const updateFields = {
+        store_name,
+        store_description,
+        contact_number,
+        store_address,
+        is_active
+      };
+      
+      if (store_logo) {
+        updateFields.store_logo = store_logo;
+      }
+
+      const updateQuery = `
+        UPDATE staff_profiles 
+        SET ${Object.keys(updateFields).map(key => `${key} = ?`).join(', ')}
+        WHERE staff_id = ?
+      `;
+      
+      await pool.query(updateQuery, [...Object.values(updateFields), req.user.id]);
+    }
+
+    res.json({ message: 'Profile updated successfully' });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ message: 'Error updating profile' });
   }
 });
 
