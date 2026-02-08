@@ -97,20 +97,28 @@ pool.getConnection()
     );
 
     // Add staff_id column to orders table if it doesn't exist
-    await pool.execute(
-      `ALTER TABLE orders ADD COLUMN IF NOT EXISTS staff_id INT DEFAULT NULL`
+    const [orderStaffCol] = await pool.execute(
+      `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE table_schema = DATABASE() AND table_name = 'orders' AND column_name = 'staff_id'`
     );
+    if (orderStaffCol[0].count === 0) {
+      await pool.execute('ALTER TABLE orders ADD COLUMN staff_id INT DEFAULT NULL');
+    }
 
-    // Add index for staff_id
-    await pool.execute(
-      `ALTER TABLE orders ADD INDEX IF NOT EXISTS idx_staff_id (staff_id)`
+    // Add index for staff_id if it doesn't exist
+    const [orderStaffIdx] = await pool.execute(
+      `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.STATISTICS
+       WHERE table_schema = DATABASE() AND table_name = 'orders' AND index_name = 'idx_staff_id'`
     );
+    if (orderStaffIdx[0].count === 0) {
+      await pool.execute('ALTER TABLE orders ADD INDEX idx_staff_id (staff_id)');
+    }
 
-    // Create staff_profiles table if it doesn't exist
+    // Create staff_profiles table if it doesn't exist (uses staff_id)
     await pool.execute(
       `CREATE TABLE IF NOT EXISTS staff_profiles (
         id INT NOT NULL AUTO_INCREMENT,
-        user_id INT NOT NULL UNIQUE,
+        staff_id INT NOT NULL,
         store_name VARCHAR(100) NOT NULL,
         store_description TEXT,
         store_logo VARCHAR(255),
@@ -120,9 +128,35 @@ pool.getConnection()
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (id),
-        CONSTRAINT fk_staff_profile_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        UNIQUE KEY unique_staff_id (staff_id),
+        CONSTRAINT fk_staff_profile_user FOREIGN KEY (staff_id) REFERENCES users(id) ON DELETE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
     );
+
+    // Migrate staff_profiles.user_id -> staff_id if needed
+    const [staffIdCol] = await pool.execute(
+      `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE table_schema = DATABASE() AND table_name = 'staff_profiles' AND column_name = 'staff_id'`
+    );
+    if (staffIdCol[0].count === 0) {
+      await pool.execute('ALTER TABLE staff_profiles ADD COLUMN staff_id INT NULL');
+    }
+
+    const [userIdCol] = await pool.execute(
+      `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE table_schema = DATABASE() AND table_name = 'staff_profiles' AND column_name = 'user_id'`
+    );
+    if (userIdCol[0].count > 0) {
+      await pool.execute('UPDATE staff_profiles SET staff_id = user_id WHERE staff_id IS NULL');
+    }
+
+    const [staffProfileIdx] = await pool.execute(
+      `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.STATISTICS
+       WHERE table_schema = DATABASE() AND table_name = 'staff_profiles' AND index_name = 'unique_staff_id'`
+    );
+    if (staffProfileIdx[0].count === 0) {
+      await pool.execute('ALTER TABLE staff_profiles ADD UNIQUE KEY unique_staff_id (staff_id)');
+    }
   } catch (error) {
     console.error('❌ Failed to ensure tables:', error.message);
   }
@@ -1207,7 +1241,7 @@ app.get('/api/staff-stores', async (req, res) => {
         COUNT(DISTINCT cl.id) as product_count,
         COALESCE(SUM(cl.stock), 0) as total_stock
        FROM users u
-       LEFT JOIN staff_profiles sp ON u.id = sp.user_id
+      LEFT JOIN staff_profiles sp ON u.id = sp.staff_id
        LEFT JOIN cocolumber_logs cl ON u.id = cl.staff_id AND cl.stock > 0
        WHERE u.role = 'staff' AND (sp.is_active = TRUE OR sp.is_active IS NULL)
        GROUP BY u.id, sp.id
@@ -1234,10 +1268,13 @@ app.get('/api/staff-stores/:staffId/products', async (req, res) => {
         u.id as staff_id,
         sp.store_name,
         sp.store_logo,
-        sp.store_description
+        sp.store_description,
+        sp.store_address,
+        sp.contact_number,
+        sp.is_active
        FROM cocolumber_logs cl
        JOIN users u ON cl.staff_id = u.id
-       LEFT JOIN staff_profiles sp ON u.id = sp.user_id
+      LEFT JOIN staff_profiles sp ON u.id = sp.staff_id
        WHERE cl.staff_id = ? AND cl.stock > 0
        ORDER BY cl.created_at DESC`,
       [staffId]
@@ -1249,7 +1286,10 @@ app.get('/api/staff-stores/:staffId/products', async (req, res) => {
           staff_id: staffId,
           store_name: '',
           store_logo: null,
-          store_description: ''
+          store_description: '',
+          store_address: '',
+          contact_number: '',
+          is_active: false
         },
         products: []
       });
@@ -1261,7 +1301,12 @@ app.get('/api/staff-stores/:staffId/products', async (req, res) => {
         staff_name: products[0].staff_name,
         store_name: products[0].store_name,
         store_logo: products[0].store_logo,
-        store_description: products[0].store_description
+        store_description: products[0].store_description,
+        store_address: products[0].store_address,
+        contact_number: products[0].contact_number,
+        is_active: products[0].is_active,
+        product_count: products.length,
+        total_stock: products.reduce((sum, p) => sum + p.stock, 0)
       },
       products: products
     });
@@ -1290,7 +1335,7 @@ app.get('/api/staff-stores/:staffId', async (req, res) => {
         COUNT(DISTINCT cl.id) as product_count,
         COALESCE(SUM(cl.stock), 0) as total_stock
        FROM users u
-       LEFT JOIN staff_profiles sp ON u.id = sp.user_id
+      LEFT JOIN staff_profiles sp ON u.id = sp.staff_id
        LEFT JOIN cocolumber_logs cl ON u.id = cl.staff_id AND cl.stock > 0
        WHERE u.id = ? AND u.role = 'staff'
        GROUP BY u.id, sp.id`,
@@ -1333,6 +1378,13 @@ app.post('/api/orders/create', authenticateToken, async (req, res) => {
       }
     }
 
+    // Check if orders.staff_id exists (for backward compatibility)
+    const [ordersStaffCol] = await pool.execute(
+      `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE table_schema = DATABASE() AND table_name = 'orders' AND column_name = 'staff_id'`
+    );
+    const hasStaffIdColumn = ordersStaffCol[0].count > 0;
+
     // Insert each order item
     const orderIds = [];
     for (const item of items) {
@@ -1356,11 +1408,19 @@ app.post('/api/orders/create', authenticateToken, async (req, res) => {
         });
       }
 
-      // Insert order with staff_id (from product's staff_id)
-      const [result] = await pool.execute(
-        'INSERT INTO orders (user_id, cocolumber_id, quantity, status, staff_id) VALUES (?, ?, ?, ?, ?)',
-        [userId, item.id, item.quantity, 'pending', product.staff_id]
-      );
+      // Insert order (include staff_id only if column exists)
+      let result;
+      if (hasStaffIdColumn) {
+        [result] = await pool.execute(
+          'INSERT INTO orders (user_id, cocolumber_id, quantity, status, staff_id) VALUES (?, ?, ?, ?, ?)',
+          [userId, item.id, item.quantity, 'pending', product.staff_id || null]
+        );
+      } else {
+        [result] = await pool.execute(
+          'INSERT INTO orders (user_id, cocolumber_id, quantity, status) VALUES (?, ?, ?, ?)',
+          [userId, item.id, item.quantity, 'pending']
+        );
+      }
       orderIds.push(result.insertId);
 
       // Update stock (reduce by quantity ordered)
@@ -1404,7 +1464,7 @@ app.get('/api/orders/my-orders', authenticateToken, async (req, res) => {
        FROM orders o
        JOIN cocolumber_logs c ON o.cocolumber_id = c.id
        LEFT JOIN users u ON o.staff_id = u.id
-       LEFT JOIN staff_profiles sp ON o.staff_id = sp.user_id
+      LEFT JOIN staff_profiles sp ON o.staff_id = sp.staff_id
        WHERE o.user_id = ?
        ORDER BY o.created_at DESC`,
       [userId]
@@ -1425,8 +1485,7 @@ app.get('/api/orders/my-orders', authenticateToken, async (req, res) => {
 // Get all orders (staff and admin)
 app.get('/api/orders/all', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
   try {
-    const [orders] = await pool.execute(
-      `SELECT 
+    let query = `SELECT 
         o.*,
         u.name as user_name, u.email,
         c.size, c.length, c.product_picture,
@@ -1436,9 +1495,17 @@ app.get('/api/orders/all', authenticateToken, authorizeRoles('staff', 'admin'), 
        JOIN users u ON o.user_id = u.id
        JOIN cocolumber_logs c ON o.cocolumber_id = c.id
        LEFT JOIN users staff_u ON o.staff_id = staff_u.id
-       LEFT JOIN staff_profiles sp ON o.staff_id = sp.user_id
-       ORDER BY o.created_at DESC`
-    );
+      LEFT JOIN staff_profiles sp ON o.staff_id = sp.staff_id`;
+
+    const params = [];
+    if (req.user.role === 'staff') {
+      query += ' WHERE o.staff_id = ?';
+      params.push(req.user.id);
+    }
+
+    query += ' ORDER BY o.created_at DESC';
+
+    const [orders] = await pool.execute(query, params);
 
     res.json(orders);
   } catch (error) {
@@ -1453,14 +1520,23 @@ app.put('/api/orders/:id/status', authenticateToken, authorizeRoles('staff', 'ad
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!['pending', 'completed', 'cancelled'].includes(status)) {
+    if (!['pending', 'processing', 'completed', 'cancelled'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
     }
 
-    await pool.execute(
-      'UPDATE orders SET status = ? WHERE id = ?',
-      [status, id]
-    );
+    let updateQuery = 'UPDATE orders SET status = ? WHERE id = ?';
+    const params = [status, id];
+
+    if (req.user.role === 'staff') {
+      updateQuery += ' AND staff_id = ?';
+      params.push(req.user.id);
+    }
+
+    const [result] = await pool.execute(updateQuery, params);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Order not found or not authorized' });
+    }
 
     res.json({ success: true, message: 'Order status updated' });
   } catch (error) {
@@ -1527,13 +1603,16 @@ app.get('/api/sellers/:staffId/products', async (req, res) => {
 app.get('/api/staff/profile', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
   try {
     const [profile] = await pool.query(`
-      SELECT * FROM staff_profiles WHERE staff_id = ?
+      SELECT sp.*, u.name as staff_name FROM staff_profiles sp
+      JOIN users u ON sp.staff_id = u.id
+      WHERE sp.staff_id = ?
     `, [req.user.id]);
     
     if (profile.length === 0) {
       // Return default profile if not exists
       const [user] = await pool.query('SELECT name FROM users WHERE id = ?', [req.user.id]);
       return res.json({
+        staff_name: user[0]?.name || 'Staff',
         store_name: user[0]?.name + "'s Store" || 'My Store',
         store_description: '',
         store_logo: null,

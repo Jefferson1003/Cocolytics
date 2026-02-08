@@ -49,6 +49,30 @@
         </div>
       </div>
 
+      <!-- Store Location Map -->
+      <div v-if="storeInfo && storeInfo.store_address" class="store-location-section">
+        <div class="location-header">
+          <h2>📍 Store Location</h2>
+          <p>{{ storeInfo.store_address }}</p>
+        </div>
+        <div class="map-container">
+          <iframe 
+            v-if="storeInfo.store_address"
+            :src="`https://www.google.com/maps/embed/v1/place?key=AIzaSyBSpcnhrz6PvRRCc_98CynwdjKEmkWQZeQ&q=${encodeURIComponent(storeInfo.store_address)}`"
+            width="100%"
+            height="400"
+            style="border:0;"
+            allowfullscreen=""
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            class="google-map"
+          ></iframe>
+          <div v-else class="no-location">
+            <p>📍 Store address not provided yet</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Products Section -->
       <div class="products-section">
         <div class="section-title">
@@ -542,6 +566,81 @@ export default {
 .alert.success {
   background: #4CAF50;
   color: white;
+}
+
+.alert.error {
+  background: #f44336;
+  color: white;
+}
+
+/* Store Location Map Styles */
+.store-location-section {
+  background: linear-gradient(135deg, rgba(36, 68, 66, 0.6) 0%, rgba(30, 30, 63, 0.8) 100%);
+  border: 1px solid rgba(76, 175, 80, 0.2);
+  border-radius: 16px;
+  padding: 30px;
+  margin-bottom: 40px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.location-header {
+  margin-bottom: 20px;
+}
+
+.location-header h2 {
+  color: white;
+  font-size: 1.5em;
+  margin: 0 0 8px 0;
+  font-weight: 700;
+}
+
+.location-header p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.1em;
+  margin: 0;
+}
+
+.map-container {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.google-map {
+  width: 100%;
+  height: 400px;
+  border: none;
+  border-radius: 12px;
+}
+
+.no-location {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.1em;
+}
+
+@media (max-width: 768px) {
+  .store-location-section {
+    padding: 20px;
+  }
+
+  .google-map {
+    height: 300px;
+  }
+
+  .location-header h2 {
+    font-size: 1.2em;
+  }
+
+  .location-header p {
+    font-size: 0.95em;
+  }
 }
 
 .alert.error {

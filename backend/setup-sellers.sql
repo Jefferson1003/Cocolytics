@@ -1,13 +1,32 @@
 -- Multi-Seller Marketplace Setup
 -- This script creates 3 staff sellers: Vina, Paolo, and Bala
 
--- Step 1: Add staff_id column to cocolumber_logs table if not exists
-ALTER TABLE cocolumber_logs 
-ADD COLUMN IF NOT EXISTS staff_id INT DEFAULT NULL;
+-- Step 1: Add staff_id column to cocolumber_logs table
+-- Check if column exists, add if not
+SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+  WHERE table_schema = DATABASE() 
+  AND table_name = 'cocolumber_logs' 
+  AND column_name = 'staff_id');
 
--- Add index and foreign key if not exists
-ALTER TABLE cocolumber_logs
-ADD INDEX IF NOT EXISTS idx_staff_id (staff_id);
+SET @sql = IF(@col_exists = 0, 
+  'ALTER TABLE cocolumber_logs ADD COLUMN staff_id INT DEFAULT NULL', 
+  'SELECT "Column staff_id already exists" AS Info');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Add index if not exists
+SET @idx_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS 
+  WHERE table_schema = DATABASE() 
+  AND table_name = 'cocolumber_logs' 
+  AND index_name = 'idx_staff_id');
+
+SET @sql = IF(@idx_exists = 0, 
+  'ALTER TABLE cocolumber_logs ADD INDEX idx_staff_id (staff_id)', 
+  'SELECT "Index idx_staff_id already exists" AS Info');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- Step 2: Create staff_profiles table
 CREATE TABLE IF NOT EXISTS staff_profiles (
@@ -31,11 +50,15 @@ CREATE TABLE IF NOT EXISTS staff_profiles (
 -- Vina: vina@cocolytics.com / Staff123
 -- Paolo: paolo@cocolytics.com / Staff123
 -- Bala: bala@cocolytics.com / Staff123
--- Hash generated from Node.js bcrypt with cost 10
+-- Hash generated from bcryptjs with cost 10
 INSERT IGNORE INTO users (name, email, password, role) VALUES
-('Vina', 'vina@cocolytics.com', '$2b$10$z.J9g8QwN7mK2xR3vL5tOeH6pI4jB1sT8uY5wZ0xC2dF3eG4hJ5i', 'staff'),
-('Paolo', 'paolo@cocolytics.com', '$2b$10$z.J9g8QwN7mK2xR3vL5tOeH6pI4jB1sT8uY5wZ0xC2dF3eG4hJ5i', 'staff'),
-('Bala', 'bala@cocolytics.com', '$2b$10$z.J9g8QwN7mK2xR3vL5tOeH6pI4jB1sT8uY5wZ0xC2dF3eG4hJ5i', 'staff');
+('Vina', 'vina@cocolytics.com', '$2a$10$UR5FNi1oz/FHYuLskxCUzOamAWpcyO05DF4zLyvNwo6HhA284Ae2e', 'staff'),
+('Paolo', 'paolo@cocolytics.com', '$2a$10$UR5FNi1oz/FHYuLskxCUzOamAWpcyO05DF4zLyvNwo6HhA284Ae2e', 'staff'),
+('Bala', 'bala@cocolytics.com', '$2a$10$UR5FNi1oz/FHYuLskxCUzOamAWpcyO05DF4zLyvNwo6HhA284Ae2e', 'staff');
+
+-- Ensure existing staff accounts use the same password hash
+UPDATE users SET password = '$2a$10$UR5FNi1oz/FHYuLskxCUzOamAWpcyO05DF4zLyvNwo6HhA284Ae2e', role = 'staff'
+WHERE email IN ('vina@cocolytics.com', 'paolo@cocolytics.com', 'bala@cocolytics.com');
 
 -- Step 4: Get the staff IDs (we'll use these below)
 SET @vina_id = (SELECT id FROM users WHERE email = 'vina@cocolytics.com');

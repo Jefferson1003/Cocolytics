@@ -4,7 +4,7 @@
     
     <div class="main-content">
       <div class="profile-container">
-        <h1>🏪 Store Profile Settings</h1>
+        <h1>🏪 {{ staffName }} - {{ profile.store_name || 'Store Profile' }}</h1>
         
         <div v-if="successMessage" class="alert alert-success">
           <span class="alert-icon">✓</span>
@@ -123,6 +123,7 @@ export default {
         store_address: '',
         is_active: true
       },
+      staffName: '',
       previewLogo: '',
       logoFile: null,
       successMessage: '',
@@ -147,6 +148,7 @@ export default {
         if (response.ok) {
           const data = await response.json()
           this.profile = { ...this.profile, ...data }
+          this.staffName = data.staff_name || ''
           if (data.store_logo) {
             this.previewLogo = this.getImageUrl(data.store_logo)
           }

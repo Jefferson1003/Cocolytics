@@ -9,12 +9,25 @@
         <p>Manage all coconut orders</p>
       </div>
 
+      <div v-if="pendingOrdersCount > 0" class="pending-notification">
+        <div class="pending-icon">🔔</div>
+        <div class="pending-content">
+          <h3>New Orders Waiting</h3>
+          <p><strong>{{ pendingOrdersCount }}</strong> order{{ pendingOrdersCount > 1 ? 's' : '' }} pending acceptance.</p>
+        </div>
+        <button class="pending-btn" @click="scrollToOrders">Review Now</button>
+      </div>
+
+      <div v-if="newOrderMessage" class="toast-notification">
+        {{ newOrderMessage }}
+      </div>
+
       <!-- All Orders -->
-      <div class="all-orders">
+      <div class="all-orders" ref="ordersSection">
         <h2>🥥 All Orders</h2>
         <div v-if="!loadingOrders">
           <div v-if="allOrders.length > 0" class="orders-list">
-            <div v-for="order in allOrders" :key="order.id" class="order-card">
+            <div v-for="order in allOrders" :key="order.id" class="order-card" :class="{ pending: order.status === 'pending', processing: order.status === 'processing' }">
               <div class="order-header">
                 <h3>Order #{{ order.id }}</h3>
                 <span :class="['status-badge', order.status]">{{ order.status }}</span>
@@ -36,10 +49,10 @@
               <div class="order-actions">
                 <button
                   v-if="order.status === 'pending'"
-                  @click="updateOrderStatus(order.id, 'completed')"
-                  class="btn-complete"
+                  @click="updateOrderStatus(order.id, 'processing')"
+                  class="btn-accept"
                 >
-                  Mark as Completed
+                  Accept Order
                 </button>
                 <button
                   v-if="order.status === 'pending'"
@@ -47,6 +60,13 @@
                   class="btn-cancel"
                 >
                   Cancel Order
+                </button>
+                <button
+                  v-if="order.status === 'processing'"
+                  @click="updateOrderStatus(order.id, 'completed')"
+                  class="btn-complete"
+                >
+                  Mark as Completed
                 </button>
                 <span v-if="order.status !== 'pending'" class="status-text">
                   Status: {{ order.status }}
@@ -73,15 +93,36 @@ export default {
   data() {
     return {
       allOrders: [],
-      loadingOrders: false
+      loadingOrders: false,
+      pendingOrdersCount: 0,
+      lastPendingCount: 0,
+      newOrderMessage: '',
+      pollIntervalId: null
     }
   },
   mounted() {
     this.fetchAllOrders()
+    this.startPolling()
+  },
+  beforeUnmount() {
+    this.stopPolling()
   },
   methods: {
-    async fetchAllOrders() {
-      this.loadingOrders = true
+    startPolling() {
+      this.pollIntervalId = setInterval(() => {
+        this.fetchAllOrders(true)
+      }, 15000)
+    },
+    stopPolling() {
+      if (this.pollIntervalId) {
+        clearInterval(this.pollIntervalId)
+        this.pollIntervalId = null
+      }
+    },
+    async fetchAllOrders(silent = false) {
+      if (!silent) {
+        this.loadingOrders = true
+      }
       try {
         const token = localStorage.getItem('token')
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders/all`, {
@@ -92,11 +133,27 @@ export default {
         if (!response.ok) throw new Error('Failed to fetch orders')
         const data = await response.json()
         this.allOrders = data
+
+        const pendingCount = data.filter(order => order.status === 'pending').length
+        this.pendingOrdersCount = pendingCount
+
+        if (pendingCount > this.lastPendingCount) {
+          this.newOrderMessage = '✅ New order received! Please review and accept.'
+          setTimeout(() => {
+            this.newOrderMessage = ''
+          }, 4000)
+        }
+
+        this.lastPendingCount = pendingCount
       } catch (error) {
         console.error('Error fetching orders:', error)
-        alert('Failed to load orders')
+        if (!silent) {
+          alert('Failed to load orders')
+        }
       } finally {
-        this.loadingOrders = false
+        if (!silent) {
+          this.loadingOrders = false
+        }
       }
     },
     async updateOrderStatus(orderId, newStatus) {
@@ -143,6 +200,11 @@ export default {
       }
       // Otherwise, assume it's in the uploads folder
       return `${import.meta.env.VITE_API_BASE_URL}/uploads/${imagePath}`;
+    },
+    scrollToOrders() {
+      if (this.$refs.ordersSection) {
+        this.$refs.ordersSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
     }
   }
 }
@@ -190,6 +252,57 @@ export default {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
+.pending-notification {
+  background: linear-gradient(135deg, #ff9800 0%, #ff6b00 100%);
+  border-left: 6px solid #ff3d00;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+}
+
+.pending-icon {
+  font-size: 2em;
+}
+
+.pending-content {
+  flex: 1;
+}
+
+.pending-content h3 {
+  margin: 0 0 6px 0;
+  color: white;
+  font-size: 1.1em;
+}
+
+.pending-content p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.pending-btn {
+  background: white;
+  color: #ff6b00;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toast-notification {
+  background: rgba(76, 175, 80, 0.9);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  text-align: center;
+  font-weight: 600;
+}
+
 .all-orders h2 {
   color: white;
   margin-bottom: 16px;
@@ -209,6 +322,15 @@ export default {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
   border-left: 4px solid #4CAF50;
+}
+
+.order-card.pending {
+  border-left: 4px solid #ff9800;
+  box-shadow: 0 8px 24px rgba(255, 152, 0, 0.3);
+}
+
+.order-card.processing {
+  border-left: 4px solid #03a9f4;
 }
 
 .order-header {
@@ -235,6 +357,11 @@ export default {
 .status-badge.pending {
   background: rgba(255, 193, 7, 0.2);
   color: #ffc107;
+}
+
+.status-badge.processing {
+  background: rgba(3, 169, 244, 0.2);
+  color: #4fc3f7;
 }
 
 .status-badge.completed {
@@ -269,6 +396,7 @@ export default {
   align-items: center;
 }
 
+.btn-accept,
 .btn-complete,
 .btn-cancel {
   padding: 10px 16px;
@@ -280,6 +408,16 @@ export default {
   transition: all 0.2s;
   flex: 1;
   min-width: 100px;
+}
+
+.btn-accept {
+  background: rgba(3, 169, 244, 0.9);
+  color: white;
+}
+
+.btn-accept:active {
+  background: rgba(3, 169, 244, 1);
+  transform: scale(0.98);
 }
 
 .btn-complete {

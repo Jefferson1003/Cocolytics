@@ -10,6 +10,16 @@
           <p>View and manage your cocolumber stock</p>
         </div>
 
+        <!-- Critical Stock Notification -->
+        <div v-if="lowStockCount > 0" class="critical-stock-notification">
+          <div class="notification-icon">⚠️</div>
+          <div class="notification-content">
+            <h3>Low Stock Warning!</h3>
+            <p><strong>{{ lowStockCount }}</strong> product{{ lowStockCount > 1 ? 's' : '' }} {{ lowStockCount > 1 ? 'have' : 'has' }} less than 30 units in stock. Please restock soon to avoid running out.</p>
+          </div>
+          <button @click="scrollToAlert" class="notification-btn">View Items</button>
+        </div>
+
         <!-- Inventory Cards -->
         <div class="inventory-section">
           <div class="section-header">
@@ -22,12 +32,12 @@
           </div>
           
           <div v-else-if="inventory.length > 0" class="products-grid">
-            <div v-for="item in inventory" :key="item.id" class="product-card" :class="{ 'low-stock': item.stock < 10 }">
+            <div v-for="item in inventory" :key="item.id" class="product-card" :class="{ 'low-stock': item.stock < 30 }">
               <!-- Stock Indicator Badge -->
-              <div class="stock-indicator" v-if="item.stock < 10">
+              <div class="stock-indicator" v-if="item.stock < 30">
                 <span v-if="item.stock === 0">⛔ Out of Stock</span>
-                <span v-else-if="item.stock < 5">⚠️ Critical</span>
-                <span v-else>⚠️ Low Stock</span>
+                <span v-else-if="item.stock < 10">🔴 Critical Stock</span>
+                <span v-else>⚠️ Low Stock Warning</span>
               </div>
               
               <!-- Product Image -->
@@ -45,7 +55,7 @@
                 </div>
                 <div class="info-row">
                   <span class="info-label">📦 Stock:</span>
-                  <span class="stock-badge" :class="{ critical: item.stock < 5, warning: item.stock >= 5 && item.stock < 10, available: item.stock >= 10 }">
+                  <span class="stock-badge" :class="{ critical: item.stock < 10, warning: item.stock >= 10 && item.stock < 30, available: item.stock >= 30 }">
                     {{ item.stock }} units
                   </span>
                 </div>
@@ -103,10 +113,10 @@
               <p class="stat-value">{{ totalStock }}</p>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card warning-card">
             <div class="stat-icon">⚠️</div>
             <div class="stat-info">
-              <p class="stat-label">Low Stock (&lt; 10)</p>
+              <p class="stat-label">⚠️ Low Stock (&lt; 30)</p>
               <p class="stat-value">{{ lowStockCount }}</p>
             </div>
           </div>
@@ -114,8 +124,8 @@
 
         <!-- Low Stock Alert -->
         <div v-if="lowStockItems.length > 0" class="low-stock-alert">
-          <h3>⚠️ Low Stock Alert</h3>
-          <p>The following products have low stock:</p>
+          <h3>⚠️ Low Stock Warning - Action Required!</h3>
+          <p>The following products have less than 30 units in stock:</p>
           <ul>
             <li v-for="item in lowStockItems" :key="item.id">
               <strong>{{ item.size }}</strong> - Only {{ item.stock }} units left
@@ -299,10 +309,10 @@ export default {
       return this.inventory.reduce((sum, item) => sum + item.stock, 0)
     },
     lowStockCount() {
-      return this.inventory.filter(item => item.stock < 10).length
+      return this.inventory.filter(item => item.stock < 30).length
     },
     lowStockItems() {
-      return this.inventory.filter(item => item.stock < 10).sort((a, b) => a.stock - b.stock)
+      return this.inventory.filter(item => item.stock < 30).sort((a, b) => a.stock - b.stock)
     }
   },
   mounted() {
@@ -402,6 +412,12 @@ export default {
       if (imagePath.startsWith('http')) return imagePath
       if (imagePath.startsWith('/')) return `${import.meta.env.VITE_API_BASE_URL}${imagePath}`
       return `${import.meta.env.VITE_API_BASE_URL}/uploads/${imagePath}`
+    },
+    scrollToAlert() {
+      const alertElement = document.querySelector('.low-stock-alert')
+      if (alertElement) {
+        alertElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
     },
     stockIn(item) {
       this.selectedProduct = item
@@ -615,6 +631,90 @@ export default {
   gap: 16px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   border-left: 4px solid #667eea;
+}
+
+.stat-card.warning-card {
+  background: linear-gradient(135deg, #ff9800 0%, #ff6b00 100%);
+  border-left: 4px solid #ff5722;
+  animation: pulse-warning 2s infinite;
+}
+
+@keyframes pulse-warning {
+  0%, 100% { box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4); }
+  50% { box-shadow: 0 4px 25px rgba(255, 152, 0, 0.8); }
+}
+
+/* Critical Stock Notification Banner */
+.critical-stock-notification {
+  background: linear-gradient(135deg, #ff6b00 0%, #ff9800 100%);
+  border-left: 6px solid #ff3d00;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+  animation: notification-pulse 2s infinite;
+}
+
+@keyframes notification-pulse {
+  0%, 100% { 
+    transform: scale(1);
+    box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+  }
+  50% { 
+    transform: scale(1.01);
+    box-shadow: 0 8px 30px rgba(255, 152, 0, 0.6);
+  }
+}
+
+.notification-icon {
+  font-size: 3em;
+  flex-shrink: 0;
+  animation: shake 0.5s infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-content h3 {
+  margin: 0 0 8px 0;
+  color: white;
+  font-size: 1.4em;
+  font-weight: 700;
+}
+
+.notification-content p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 1em;
+  line-height: 1.5;
+}
+
+.notification-btn {
+  background: white;
+  color: #ff6b00;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.notification-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .stat-icon {
@@ -978,32 +1078,42 @@ export default {
 }
 
 .low-stock-alert {
-  background: rgba(255, 193, 7, 0.15);
-  border: 1px solid rgba(255, 193, 7, 0.3);
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.2) 0%, rgba(255, 107, 0, 0.15) 100%);
+  border: 2px solid #ff9800;
   border-radius: 12px;
-  padding: 20px;
+  padding: 24px;
   margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
 }
 
 .low-stock-alert h3 {
-  color: #ffc107;
-  margin: 0 0 12px 0;
-  font-size: 1.1em;
+  color: #ff9800;
+  margin: 0 0 16px 0;
+  font-size: 1.3em;
+  font-weight: 700;
 }
 
 .low-stock-alert p {
-  color: rgba(255, 255, 255, 0.8);
-  margin: 0 0 12px 0;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 16px 0;
+  font-size: 1.05em;
 }
 
 .low-stock-alert ul {
   margin: 0;
-  padding-left: 20px;
-  color: rgba(255, 255, 255, 0.9);
+  padding-left: 24px;
 }
 
 .low-stock-alert li {
-  margin-bottom: 8px;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 12px;
+  font-size: 1em;
+  line-height: 1.6;
+}
+
+.low-stock-alert li strong {
+  color: #ff9800;
+  font-weight: 700;
 }
 
 /* Alert Messages */
