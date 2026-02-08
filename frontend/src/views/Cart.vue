@@ -9,6 +9,8 @@
             <h3>{{ item.size }}</h3>
             <p>Length: {{ item.length }} cm</p>
             <p>Quantity: {{ item.quantity }} units</p>
+            <!-- Display store information if available -->
+            <p v-if="item.store_name" class="store-name">🏪 {{ item.store_name }}</p>
           </div>
           <div class="item-actions">
             <button @click="decrease(idx)" class="qty">−</button>
@@ -142,6 +144,8 @@ export default {
 <style scoped>
 .cart-page { max-width: 900px; margin: 40px auto; padding: 20px; }
 .cart-item { display:flex; justify-content:space-between; background:#242442; color:#fff; padding:12px; border-radius:8px; margin-bottom:12px }
+.item-info { flex: 1; }
+.store-name { color:#4CAF50; font-size:0.9em; margin-top:8px; font-weight:600; }
 .item-actions { display:flex; gap:8px; align-items:center }
 .qty { background:#667eea; border:none; color:#fff; padding:6px 10px; border-radius:6px; cursor:pointer }
 .btn-remove { background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer }

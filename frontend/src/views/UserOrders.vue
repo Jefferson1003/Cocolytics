@@ -118,6 +118,11 @@
                 <p><strong>Product:</strong> {{ order.size }}</p>
                 <p><strong>Length:</strong> {{ order.length }} cm</p>
                 <p><strong>Quantity:</strong> {{ order.quantity }} units</p>
+                <!-- Display staff/store information -->
+                <div v-if="order.store_name || order.staff_name" class="store-info">
+                  <span class="store-badge">🏪 From: {{ order.store_name || order.staff_name }}</span>
+                  <p v-if="order.contact_number" class="store-contact">📞 {{ order.contact_number }}</p>
+                </div>
                 <p class="order-date">{{ formatDate(order.created_at) }}</p>
               </div>
             </div>
@@ -748,6 +753,29 @@ export default {
   color: #888 !important;
   font-size: 0.85em !important;
   margin-top: 10px !important;
+}
+
+.store-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(76, 175, 80, 0.1);
+  border-left: 3px solid #4CAF50;
+  border-radius: 4px;
+}
+
+.store-badge {
+  color: #4CAF50;
+  font-weight: 600;
+  font-size: 0.9em;
+}
+
+.store-contact {
+  color: #888 !important;
+  font-size: 0.85em !important;
+  margin: 0 !important;
 }
 
 .no-orders {

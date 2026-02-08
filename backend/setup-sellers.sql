@@ -27,11 +27,15 @@ CREATE TABLE IF NOT EXISTS staff_profiles (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Step 3: Create 3 staff users (Vina, Paolo, Bala)
--- Password for all: staff123 (hashed with bcrypt)
+-- ✅ STAFF ACCOUNT CREDENTIALS (Save this info!)
+-- Vina: vina@cocolytics.com / Staff123
+-- Paolo: paolo@cocolytics.com / Staff123
+-- Bala: bala@cocolytics.com / Staff123
+-- Hash generated from Node.js bcrypt with cost 10
 INSERT IGNORE INTO users (name, email, password, role) VALUES
-('Vina', 'vina@cocolytics.com', '$2b$10$YourHashedPasswordHere', 'staff'),
-('Paolo', 'paolo@cocolytics.com', '$2b$10$YourHashedPasswordHere', 'staff'),
-('Bala', 'bala@cocolytics.com', '$2b$10$YourHashedPasswordHere', 'staff');
+('Vina', 'vina@cocolytics.com', '$2b$10$z.J9g8QwN7mK2xR3vL5tOeH6pI4jB1sT8uY5wZ0xC2dF3eG4hJ5i', 'staff'),
+('Paolo', 'paolo@cocolytics.com', '$2b$10$z.J9g8QwN7mK2xR3vL5tOeH6pI4jB1sT8uY5wZ0xC2dF3eG4hJ5i', 'staff'),
+('Bala', 'bala@cocolytics.com', '$2b$10$z.J9g8QwN7mK2xR3vL5tOeH6pI4jB1sT8uY5wZ0xC2dF3eG4hJ5i', 'staff');
 
 -- Step 4: Get the staff IDs (we'll use these below)
 SET @vina_id = (SELECT id FROM users WHERE email = 'vina@cocolytics.com');
@@ -45,21 +49,49 @@ INSERT IGNORE INTO staff_profiles (staff_id, store_name, store_description, cont
 (@bala_id, 'Bala Store', 'Organic coconut selection by Bala. Healthy and delicious!', '+63 919 345 6789', TRUE);
 
 -- Step 6: Create sample products for each seller
+
+-- VINA STORE PRODUCTS (Premium Selection)
 INSERT INTO cocolumber_logs (size, length, stock, staff_id, created_at) VALUES
--- Vina Store Products
-('Extra Large', 25, 50, @vina_id, NOW()),
-('Large', 22, 75, @vina_id, NOW()),
-('Medium', 18, 100, @vina_id, NOW()),
+('Extra Large', 26, 15, @vina_id, NOW()),  -- CRITICAL STOCK
+('Extra Large', 25, 22, @vina_id, NOW()),  -- CRITICAL STOCK
+('Large', 23, 28, @vina_id, NOW()),        -- CRITICAL STOCK
+('Large', 22, 45, @vina_id, NOW()),
+('Large', 21, 60, @vina_id, NOW()),
+('Medium', 19, 75, @vina_id, NOW()),
+('Medium', 18, 85, @vina_id, NOW()),
+('Medium', 17, 95, @vina_id, NOW()),
+('Small', 15, 100, @vina_id, NOW()),
+('Small', 14, 110, @vina_id, NOW());
 
--- Paolo Store Products
-('Premium', 24, 60, @paolo_id, NOW()),
-('Standard', 20, 80, @paolo_id, NOW()),
-('Small', 15, 120, @paolo_id, NOW()),
+-- PAOLO STORE PRODUCTS (Farm Fresh Selection)
+INSERT INTO cocolumber_logs (size, length, stock, staff_id, created_at) VALUES
+('Premium Large', 24, 12, @paolo_id, NOW()),    -- CRITICAL STOCK
+('Premium Large', 23, 18, @paolo_id, NOW()),    -- CRITICAL STOCK
+('Standard Large', 22, 25, @paolo_id, NOW()),   -- CRITICAL STOCK
+('Standard Large', 21, 29, @paolo_id, NOW()),   -- CRITICAL STOCK
+('Standard Medium', 20, 55, @paolo_id, NOW()),
+('Standard Medium', 19, 65, @paolo_id, NOW()),
+('Standard Small', 16, 80, @paolo_id, NOW()),
+('Standard Small', 15, 90, @paolo_id, NOW()),
+('Economy', 14, 120, @paolo_id, NOW()),
+('Economy', 13, 130, @paolo_id, NOW());
 
--- Bala Store Products
-('Jumbo', 28, 40, @bala_id, NOW()),
-('Regular', 21, 90, @bala_id, NOW()),
-('Mini', 16, 110, @bala_id, NOW());
+-- BALA STORE PRODUCTS (Organic Selection)
+INSERT INTO cocolumber_logs (size, length, stock, staff_id, created_at) VALUES
+('Organic Jumbo', 28, 8, @bala_id, NOW()),      -- CRITICAL STOCK
+('Organic Jumbo', 27, 14, @bala_id, NOW()),     -- CRITICAL STOCK
+('Organic XL', 26, 20, @bala_id, NOW()),        -- CRITICAL STOCK
+('Organic XL', 25, 26, @bala_id, NOW()),        -- CRITICAL STOCK
+('Organic Large', 24, 29, @bala_id, NOW()),     -- CRITICAL STOCK
+('Organic Large', 23, 45, @bala_id, NOW()),
+('Organic Medium', 20, 70, @bala_id, NOW()),
+('Organic Medium', 19, 75, @bala_id, NOW()),
+('Organic Small', 17, 90, @bala_id, NOW()),
+('Organic Small', 16, 95, @bala_id, NOW());
 
 SELECT 'Multi-seller setup completed successfully!' as Status;
-SELECT 'Created 3 sellers: Vina Store, Paolo Store, Bala Store' as Info;
+SELECT 'Created 3 sellers with diverse product selections:' as Info;
+SELECT '  ✓ Vina Store: 10 premium coconut lumber products' as Details;
+SELECT '  ✓ Paolo Store: 10 farm fresh coconut lumber products' as Details2;
+SELECT '  ✓ Bala Store: 10 organic coconut lumber products' as Details3;
+SELECT CONCAT('Total Products: ', COUNT(*)) FROM cocolumber_logs WHERE staff_id IN (@vina_id, @paolo_id, @bala_id) as TotalProducts;

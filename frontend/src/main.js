@@ -44,6 +44,8 @@ import WarehouseDispatch from './views/WarehouseDispatch.vue'
 import SellersList from './views/SellersList.vue'
 import SellerProducts from './views/SellerProducts.vue'
 import StaffProfile from './views/StaffProfile.vue'
+import StaffStoreView from './views/StaffStoreView.vue'
+import UserDashboard from './views/UserDashboard.vue'
 
 // Define routes
 const routes = [
@@ -151,6 +153,18 @@ const routes = [
     path: '/sellers/:sellerId',
     name: 'SellerProducts',
     component: SellerProducts,
+    meta: { requiresAuth: true, roles: ['user', 'staff', 'admin'] }
+  },
+  {
+    path: '/staff-store/:staffId',
+    name: 'StaffStoreView',
+    component: StaffStoreView,
+    meta: { requiresAuth: true, roles: ['user', 'staff', 'admin'] }
+  },
+  {
+    path: '/user/dashboard',
+    name: 'UserDashboard',
+    component: UserDashboard,
     meta: { requiresAuth: true, roles: ['user', 'staff', 'admin'] }
   }
 ]

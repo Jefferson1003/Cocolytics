@@ -95,6 +95,34 @@ pool.getConnection()
         CONSTRAINT warehouse_disp_ibfk_2 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
     );
+
+    // Add staff_id column to orders table if it doesn't exist
+    await pool.execute(
+      `ALTER TABLE orders ADD COLUMN IF NOT EXISTS staff_id INT DEFAULT NULL`
+    );
+
+    // Add index for staff_id
+    await pool.execute(
+      `ALTER TABLE orders ADD INDEX IF NOT EXISTS idx_staff_id (staff_id)`
+    );
+
+    // Create staff_profiles table if it doesn't exist
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS staff_profiles (
+        id INT NOT NULL AUTO_INCREMENT,
+        user_id INT NOT NULL UNIQUE,
+        store_name VARCHAR(100) NOT NULL,
+        store_description TEXT,
+        store_logo VARCHAR(255),
+        contact_number VARCHAR(20),
+        store_address TEXT,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        CONSTRAINT fk_staff_profile_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
   } catch (error) {
     console.error('❌ Failed to ensure tables:', error.message);
   }
@@ -1160,10 +1188,132 @@ app.get('/api/cocolumber/inventory', authenticateToken, authorizeRoles('staff', 
   }
 });
 
+// ==================== STAFF STORES ROUTES ====================
+
+// Get all staff stores with their products (for users to browse)
+app.get('/api/staff-stores', async (req, res) => {
+  try {
+    const [staffStores] = await pool.execute(
+      `SELECT 
+        u.id as staff_id,
+        u.name as staff_name,
+        u.email,
+        sp.store_name,
+        sp.store_description,
+        sp.store_logo,
+        sp.contact_number,
+        sp.store_address,
+        sp.is_active,
+        COUNT(DISTINCT cl.id) as product_count,
+        COALESCE(SUM(cl.stock), 0) as total_stock
+       FROM users u
+       LEFT JOIN staff_profiles sp ON u.id = sp.user_id
+       LEFT JOIN cocolumber_logs cl ON u.id = cl.staff_id AND cl.stock > 0
+       WHERE u.role = 'staff' AND (sp.is_active = TRUE OR sp.is_active IS NULL)
+       GROUP BY u.id, sp.id
+       HAVING product_count > 0 OR total_stock > 0
+       ORDER BY sp.store_name ASC`
+    );
+
+    res.json(staffStores);
+  } catch (error) {
+    console.error('Get staff stores error:', error);
+    res.status(500).json({ message: 'Server error fetching staff stores' });
+  }
+});
+
+// Get products from a specific staff store
+app.get('/api/staff-stores/:staffId/products', async (req, res) => {
+  try {
+    const { staffId } = req.params;
+
+    const [products] = await pool.execute(
+      `SELECT 
+        cl.*,
+        u.name as staff_name,
+        u.id as staff_id,
+        sp.store_name,
+        sp.store_logo,
+        sp.store_description
+       FROM cocolumber_logs cl
+       JOIN users u ON cl.staff_id = u.id
+       LEFT JOIN staff_profiles sp ON u.id = sp.user_id
+       WHERE cl.staff_id = ? AND cl.stock > 0
+       ORDER BY cl.created_at DESC`,
+      [staffId]
+    );
+
+    if (products.length === 0) {
+      return res.json({
+        store_info: {
+          staff_id: staffId,
+          store_name: '',
+          store_logo: null,
+          store_description: ''
+        },
+        products: []
+      });
+    }
+
+    res.json({
+      store_info: {
+        staff_id: products[0].staff_id,
+        staff_name: products[0].staff_name,
+        store_name: products[0].store_name,
+        store_logo: products[0].store_logo,
+        store_description: products[0].store_description
+      },
+      products: products
+    });
+  } catch (error) {
+    console.error('Get staff store products error:', error);
+    res.status(500).json({ message: 'Server error fetching products' });
+  }
+});
+
+// Get staff store details
+app.get('/api/staff-stores/:staffId', async (req, res) => {
+  try {
+    const { staffId } = req.params;
+
+    const [storeDetails] = await pool.execute(
+      `SELECT 
+        u.id as staff_id,
+        u.name as staff_name,
+        u.email,
+        sp.store_name,
+        sp.store_description,
+        sp.store_logo,
+        sp.contact_number,
+        sp.store_address,
+        sp.is_active,
+        COUNT(DISTINCT cl.id) as product_count,
+        COALESCE(SUM(cl.stock), 0) as total_stock
+       FROM users u
+       LEFT JOIN staff_profiles sp ON u.id = sp.user_id
+       LEFT JOIN cocolumber_logs cl ON u.id = cl.staff_id AND cl.stock > 0
+       WHERE u.id = ? AND u.role = 'staff'
+       GROUP BY u.id, sp.id`,
+      [staffId]
+    );
+
+    if (storeDetails.length === 0) {
+      return res.status(404).json({ message: 'Staff store not found' });
+    }
+
+    res.json(storeDetails[0]);
+  } catch (error) {
+    console.error('Get staff store error:', error);
+    res.status(500).json({ message: 'Server error fetching store details' });
+  }
+});
+
+// ==================== ORDERS ROUTES ====================
+
 // Create order (all authenticated users)
 app.post('/api/orders/create', authenticateToken, async (req, res) => {
   try {
-    const { items } = req.body;
+    const { items, staffId } = req.body;
     const userId = req.user.id;
 
     console.log('Creating order for user:', userId);
@@ -1206,10 +1356,10 @@ app.post('/api/orders/create', authenticateToken, async (req, res) => {
         });
       }
 
-      // Insert order
+      // Insert order with staff_id (from product's staff_id)
       const [result] = await pool.execute(
-        'INSERT INTO orders (user_id, cocolumber_id, quantity, status) VALUES (?, ?, ?, ?)',
-        [userId, item.id, item.quantity, 'pending']
+        'INSERT INTO orders (user_id, cocolumber_id, quantity, status, staff_id) VALUES (?, ?, ?, ?, ?)',
+        [userId, item.id, item.quantity, 'pending', product.staff_id]
       );
       orderIds.push(result.insertId);
 
@@ -1246,9 +1396,15 @@ app.get('/api/orders/my-orders', authenticateToken, async (req, res) => {
     console.log('Fetching orders for user:', userId);
 
     const [orders] = await pool.execute(
-      `SELECT o.*, c.size, c.length, c.stock, c.product_picture
+      `SELECT 
+        o.*,
+        c.size, c.length, c.stock, c.product_picture,
+        u.name as staff_name,
+        sp.store_name, sp.store_logo, sp.contact_number
        FROM orders o
        JOIN cocolumber_logs c ON o.cocolumber_id = c.id
+       LEFT JOIN users u ON o.staff_id = u.id
+       LEFT JOIN staff_profiles sp ON o.staff_id = sp.user_id
        WHERE o.user_id = ?
        ORDER BY o.created_at DESC`,
       [userId]
@@ -1270,10 +1426,17 @@ app.get('/api/orders/my-orders', authenticateToken, async (req, res) => {
 app.get('/api/orders/all', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
   try {
     const [orders] = await pool.execute(
-      `SELECT o.*, u.name as user_name, u.email, c.size, c.length, c.product_picture
+      `SELECT 
+        o.*,
+        u.name as user_name, u.email,
+        c.size, c.length, c.product_picture,
+        staff_u.name as staff_name,
+        sp.store_name
        FROM orders o
        JOIN users u ON o.user_id = u.id
        JOIN cocolumber_logs c ON o.cocolumber_id = c.id
+       LEFT JOIN users staff_u ON o.staff_id = staff_u.id
+       LEFT JOIN staff_profiles sp ON o.staff_id = sp.user_id
        ORDER BY o.created_at DESC`
     );
 

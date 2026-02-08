@@ -151,6 +151,9 @@
         </div>
       </div>
 
+      <!-- Staff Stores Section -->
+      <StaffStoresSection />
+
       <div class="error-message" v-if="error">{{ error }}</div>
     </div>
   </div>
@@ -159,11 +162,13 @@
 <script>
 import axios from 'axios'
 import UserNavbar from '../components/UserNavbar.vue'
+import StaffStoresSection from '../components/StaffStoresSection.vue'
 
 export default {
   name: 'UserDashboard',
   components: {
-    UserNavbar
+    UserNavbar,
+    StaffStoresSection
   },
   data() {
     return {
