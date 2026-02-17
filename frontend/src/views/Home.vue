@@ -83,12 +83,12 @@
     </section>
 
     <section class="shop-section">
-      <h2>� Our Sellers</h2>
-      <p class="section-subtitle">Browse products from our trusted sellers</p>
+      <h2>🛒 Our Traders</h2>
+      <p class="section-subtitle">Browse products from our trusted traders</p>
       
       <div v-if="loadingSellers" class="loading-sellers">
         <div class="spinner">⏳</div>
-        <p>Loading sellers...</p>
+        <p>Loading traders...</p>
       </div>
 
       <div v-else-if="sellers.length > 0" class="shop-grid">
@@ -97,7 +97,7 @@
             <img v-if="seller.store_logo" :src="getImageUrl(seller.store_logo)" :alt="seller.store_name" />
             <div v-else class="default-shop-icon">🥥</div>
           </div>
-          <h3>{{ seller.store_name || seller.staff_name + "'s Store" }}</h3>
+          <h3>{{ seller.store_name || seller.staff_name + "'s Trader" }}</h3>
           <p class="shop-description">{{ seller.store_description || 'Quality coconut products' }}</p>
           <div class="shop-stats">
             <span class="stat-item">📦 {{ seller.product_count }} products</span>
@@ -106,14 +106,14 @@
           <div class="shop-contact" v-if="seller.contact_number">
             <span>📞 {{ seller.contact_number }}</span>
           </div>
-          <button class="btn btn-visit">Visit Store</button>
+          <button class="btn btn-visit">Visit Trader</button>
         </div>
       </div>
 
       <div v-else class="empty-sellers">
         <div class="empty-icon">🏪</div>
-        <h3>No Sellers Available</h3>
-        <p>Check back later for new sellers!</p>
+        <h3>No Traders Available</h3>
+        <p>Check back later for new traders!</p>
       </div>
     </section>
   </div>

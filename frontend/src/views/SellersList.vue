@@ -4,8 +4,8 @@
     
     <div class="sellers-container">
       <div class="header">
-        <h1>🛍️ Choose Your Seller</h1>
-        <p>Browse products from our trusted coconut sellers</p>
+        <h1>🛍️ Choose Your Trader</h1>
+        <p>Browse products from our trusted coconut traders</p>
       </div>
 
       <div v-if="loading" class="loading">
@@ -21,7 +21,7 @@
           </div>
           
           <div class="seller-info">
-            <h3>{{ seller.store_name || `${seller.staff_name}'s Store` }}</h3>
+            <h3>{{ seller.store_name || `${seller.staff_name}'s Trader` }}</h3>
             <p class="seller-description">{{ seller.store_description || 'Quality coconut products' }}</p>
             
             <div class="seller-stats">
@@ -42,15 +42,15 @@
           </div>
           
           <button class="btn-view-store">
-            View Store →
+            View Trader →
           </button>
         </div>
       </div>
 
       <div v-else class="empty-state">
         <div class="empty-icon">🏪</div>
-        <h3>No Sellers Available</h3>
-        <p>Check back later for available sellers</p>
+        <h3>No Traders Available</h3>
+        <p>Check back later for available traders</p>
       </div>
     </div>
   </div>

@@ -38,6 +38,10 @@
           <span class="menu-icon">➕</span>
           <span class="menu-label">Add Product</span>
         </router-link>
+        <router-link to="/staff/reports" class="menu-item" @click="showMenu = false">
+          <span class="menu-icon">📊</span>
+          <span class="menu-label">My Reports</span>
+        </router-link>
         <router-link to="/staff/orders" class="menu-item" @click="showMenu = false">
           <span class="menu-icon">📋</span>
           <span class="menu-label">Orders</span>
@@ -52,7 +56,7 @@
         </router-link>
         <router-link to="/staff/profile" class="menu-item" @click="showMenu = false">
           <span class="menu-icon">🏪</span>
-          <span class="menu-label">Store Profile</span>
+          <span class="menu-label">Trader Profile</span>
         </router-link>
         <button @click="logout" class="menu-item logout-item">
           <span class="menu-icon">🚪</span>

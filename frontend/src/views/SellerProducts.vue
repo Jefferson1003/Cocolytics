@@ -3,7 +3,7 @@
     <UserNavbar />
     
     <div class="store-dashboard-container">
-      <!-- Store Header Banner -->
+      <!-- Trader Banner -->
       <div class="store-banner" v-if="seller">
         <div class="banner-overlay"></div>
         <div class="banner-content">
@@ -17,14 +17,14 @@
             <div class="store-meta">
               <span v-if="seller.contact_number" class="meta-item">📞 {{ seller.contact_number }}</span>
               <span class="meta-item">📦 {{ products.length }} Products</span>
-              <span class="meta-item">🏪 Available Now</span>
+              <span class="meta-item">👤 Available Now</span>
             </div>
           </div>
-          <button @click="$router.push('/sellers')" class="btn-back-float">← All Sellers</button>
+          <button @click="$router.push('/sellers')" class="btn-back-float">← All Traders</button>
         </div>
       </div>
 
-      <!-- Store Stats Cards -->
+      <!-- Trader Stats Cards -->
       <div class="stats-section" v-if="!loading">
         <div class="stat-card">
           <div class="stat-icon">📦</div>
@@ -63,7 +63,7 @@
         
         <div v-if="loading" class="loading">
           <div class="loading-spinner">⏳</div>
-          <p>Loading store products...</p>
+          <p>Loading trader products...</p>
         </div>
 
         <div v-else-if="filteredProducts.length > 0" class="products-grid">
@@ -105,7 +105,7 @@
           <div class="empty-icon">📦</div>
           <h3>No Products Found</h3>
           <p v-if="searchQuery">Try adjusting your search</p>
-          <p v-else>This store doesn't have any products in stock right now</p>
+          <p v-else>This trader doesn't have any products in stock right now</p>
         </div>
       </div>
     </div>
@@ -114,6 +114,12 @@
     <div v-if="successMessage" class="alert alert-success">
       <span class="alert-icon">✓</span>
       {{ successMessage }}
+    </div>
+
+    <!-- Error Message -->
+    <div v-if="errorMessage" class="alert alert-error">
+      <span class="alert-icon">✕</span>
+      {{ errorMessage }}
     </div>
   </div>
 </template>
@@ -132,6 +138,7 @@ export default {
       products: [],
       loading: false,
       successMessage: '',
+      errorMessage: '',
       token: null,
       searchQuery: ''
     }
@@ -169,7 +176,7 @@ export default {
         this.products = data
         if (data.length > 0) {
           this.seller = {
-            store_name: data[0].store_name || `${data[0].staff_name}'s Store`,
+            store_name: data[0].store_name || `${data[0].staff_name}'s Trader`,
             staff_name: data[0].staff_name,
             store_description: 'Quality coconut products'
           }
@@ -181,9 +188,56 @@ export default {
       }
     },
     addToCart(product) {
-      // Add to cart logic here
-      this.successMessage = `Added ${product.size} to cart!`
-      setTimeout(() => this.successMessage = '', 3000)
+      if (!this.token) {
+        this.errorMessage = 'Please log in to add items to cart'
+        setTimeout(() => {
+          this.$router.push('/login')
+        }, 2000)
+        return
+      }
+
+      if (product.stock <= 0) {
+        this.errorMessage = 'This product is out of stock'
+        setTimeout(() => this.errorMessage = '', 3000)
+        return
+      }
+
+      try {
+        let cart = localStorage.getItem('cartItems')
+        cart = cart ? JSON.parse(cart) : []
+
+        const existingItem = cart.find(item => item.id === product.id)
+        
+        if (existingItem) {
+          if (existingItem.quantity < product.stock) {
+            existingItem.quantity += 1
+          } else {
+            this.errorMessage = 'Cannot add more than available stock'
+            setTimeout(() => this.errorMessage = '', 3000)
+            return
+          }
+        } else {
+          cart.push({
+            id: product.id,
+            size: product.size,
+            length: product.length,
+            quantity: 1,
+            staff_id: product.staff_id,
+            store_name: product.store_name || this.seller?.store_name
+          })
+        }
+
+        localStorage.setItem('cartItems', JSON.stringify(cart))
+        
+        this.successMessage = `✓ Added ${product.size} to cart!`
+        setTimeout(() => {
+          this.successMessage = ''
+        }, 3000)
+      } catch (error) {
+        console.error('Error adding to cart:', error)
+        this.errorMessage = 'Error adding to cart'
+        setTimeout(() => this.errorMessage = '', 3000)
+      }
     },
     getStockClass(stock) {
       if (stock === 0) return 'out-of-stock'
@@ -215,7 +269,7 @@ export default {
   padding: 0 20px 40px;
 }
 
-/* Store Banner */
+/* Trader Banner */
 .store-banner {
   position: relative;
   background: linear-gradient(135deg, rgba(76, 175, 80, 0.8) 0%, rgba(56, 142, 60, 0.9) 100%);
@@ -617,6 +671,12 @@ export default {
 
 .alert-success {
   background: #4CAF50;
+  color: white;
+  font-weight: 600;
+}
+
+.alert-error {
+  background: #f44336;
   color: white;
   font-weight: 600;
 }

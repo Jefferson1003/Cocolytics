@@ -3,7 +3,7 @@
     <UserNavbar />
 
     <div class="store-container">
-      <!-- Store Header -->
+      <!-- Trader Header -->
       <div v-if="storeInfo && !loading" class="store-header-banner">
         <div class="store-header-content">
           <div class="store-logo-large">
@@ -49,10 +49,10 @@
         </div>
       </div>
 
-      <!-- Store Location Map -->
+      <!-- Trader Location Map -->
       <div v-if="storeInfo && storeInfo.store_address" class="store-location-section">
         <div class="location-header">
-          <h2>📍 Store Location</h2>
+          <h2>📍 Trader Location</h2>
           <p>{{ storeInfo.store_address }}</p>
         </div>
         <div class="map-container">
@@ -68,7 +68,7 @@
             class="google-map"
           ></iframe>
           <div v-else class="no-location">
-            <p>📍 Store address not provided yet</p>
+            <p>📍 Trader address not provided yet</p>
           </div>
         </div>
       </div>
@@ -114,8 +114,8 @@
         <div v-else class="empty-products">
           <div class="empty-icon">📦</div>
           <h3>No Products Available</h3>
-          <p>This store currently has no available products</p>
-          <router-link to="/sellers" class="btn-back">Browse Other Sellers</router-link>
+          <p>This trader currently has no available products</p>
+          <router-link to="/sellers" class="btn-back">Browse Other Traders</router-link>
         </div>
       </div>
 
@@ -159,14 +159,14 @@ export default {
       this.loading = true
       try {
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/staff-stores/${this.staffId}/products`)
-        if (!response.ok) throw new Error('Failed to fetch store data')
+        if (!response.ok) throw new Error('Failed to fetch trader data')
         const data = await response.json()
         this.storeInfo = data.store_info
         this.products = data.products
       } catch (error) {
-        console.error('Error fetching store data:', error)
-        this.errorMessage = 'Failed to load store. Please try again.'
-        this.storeInfo = { store_name: 'Store', staff_name: 'Staff Member' }
+        console.error('Error fetching trader data:', error)
+        this.errorMessage = 'Failed to load trader. Please try again.'
+        this.storeInfo = { store_name: 'Trader', staff_name: 'Trader' }
         this.products = []
       } finally {
         this.loading = false
@@ -191,7 +191,13 @@ export default {
         const existingItem = cart.find(item => item.id === product.id)
         
         if (existingItem) {
-          existingItem.quantity += 1
+          if (existingItem.quantity < product.stock) {
+            existingItem.quantity += 1
+          } else {
+            this.errorMessage = 'Cannot add more than available stock'
+            setTimeout(() => this.errorMessage = '', 3000)
+            return
+          }
         } else {
           cart.push({
             id: product.id,
@@ -212,6 +218,7 @@ export default {
       } catch (error) {
         console.error('Error adding to cart:', error)
         this.errorMessage = 'Error adding to cart'
+        setTimeout(() => this.errorMessage = '', 3000)
       }
     },
     getImageUrl(imagePath) {
@@ -573,7 +580,7 @@ export default {
   color: white;
 }
 
-/* Store Location Map Styles */
+/* Trader Location Map Styles */
 .store-location-section {
   background: linear-gradient(135deg, rgba(36, 68, 66, 0.6) 0%, rgba(30, 30, 63, 0.8) 100%);
   border: 1px solid rgba(76, 175, 80, 0.2);

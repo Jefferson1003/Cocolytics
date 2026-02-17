@@ -419,9 +419,15 @@ app.get('/api/admin/dashboard', authenticateToken, authorizeRoles('admin'), asyn
         usersByRole: userStats,
         adminFeatures: [
           'Manage Users',
-          'View Analytics',
+          'View Reports',
           'System Settings',
-          'Access Logs'
+          'Access Logs',
+          'Production Reports',
+          'Inventory Reports',
+          'Dispatch Reports',
+          'Yield & Wastage Analytics',
+          'Forecast Reports',
+          'System Logs'
         ]
       }
     });
@@ -1675,6 +1681,106 @@ app.put('/api/staff/profile', authenticateToken, authorizeRoles('staff', 'admin'
   } catch (error) {
     console.error('Error updating profile:', error);
     res.status(500).json({ message: 'Error updating profile' });
+  }
+});
+
+// ==================== STAFF REPORTS ROUTES ====================
+
+// Get staff sales reports with monthly/yearly breakdown
+app.get('/api/staff/reports', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
+  try {
+    const staffId = req.user.role === 'admin' ? req.query.staffId || req.user.id : req.user.id;
+    const period = req.query.period || 'month'; // month, quarter, year, all
+
+    // Get sales by month
+    const [monthlySales] = await pool.execute(`
+      SELECT 
+        DATE_FORMAT(o.created_at, '%Y-%m') as month,
+        COUNT(o.id) as total_orders,
+        SUM(o.quantity) as total_items,
+        ROUND(SUM(o.total_price), 2) as revenue
+      FROM orders o
+      WHERE o.staff_id = ?
+      GROUP BY DATE_FORMAT(o.created_at, '%Y-%m')
+      ORDER BY month DESC
+      LIMIT 12
+    `, [staffId]);
+
+    // Get sales by year
+    const [yearlySales] = await pool.execute(`
+      SELECT 
+        YEAR(o.created_at) as year,
+        COUNT(o.id) as total_orders,
+        SUM(o.quantity) as total_items,
+        ROUND(SUM(o.total_price), 2) as revenue
+      FROM orders o
+      WHERE o.staff_id = ?
+      GROUP BY YEAR(o.created_at)
+      ORDER BY year DESC
+    `, [staffId]);
+
+    // Get total stats
+    const [totalStats] = await pool.execute(`
+      SELECT 
+        COUNT(o.id) as total_orders,
+        SUM(o.quantity) as total_items,
+        ROUND(SUM(o.total_price), 2) as total_revenue,
+        ROUND(AVG(o.rating), 1) as avg_rating
+      FROM orders o
+      WHERE o.staff_id = ?
+    `, [staffId]);
+
+    // Get this month stats
+    const [thisMonthStats] = await pool.execute(`
+      SELECT 
+        COUNT(o.id) as total_orders,
+        SUM(o.quantity) as total_items,
+        ROUND(SUM(o.total_price), 2) as revenue
+      FROM orders o
+      WHERE o.staff_id = ? AND DATE_FORMAT(o.created_at, '%Y-%m') = DATE_FORMAT(NOW(), '%Y-%m')
+    `, [staffId]);
+
+    // Get last month stats for growth calculation
+    const [lastMonthStats] = await pool.execute(`
+      SELECT 
+        ROUND(SUM(o.total_price), 2) as revenue
+      FROM orders o
+      WHERE o.staff_id = ? AND DATE_FORMAT(o.created_at, '%Y-%m') = DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 1 MONTH), '%Y-%m')
+    `, [staffId]);
+
+    // Get top products by cocolumber grade - use cocolumber_logs staff_id to match
+    const [topProducts] = await pool.execute(`
+      SELECT 
+        c.size as grade,
+        COUNT(o.id) as times_sold,
+        SUM(o.quantity) as total_quantity
+      FROM orders o
+      JOIN cocolumber_logs c ON o.cocolumber_id = c.id
+      WHERE o.staff_id = ?
+      GROUP BY c.size
+      ORDER BY total_quantity DESC
+      LIMIT 5
+    `, [staffId]);
+
+    // Calculate growth percentage
+    const thisMonthRevenue = thisMonthStats[0]?.revenue || 0;
+    const lastMonthRevenue = lastMonthStats[0]?.revenue || 0;
+    const growthPercentage = lastMonthRevenue > 0 
+      ? ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue * 100).toFixed(1)
+      : 0;
+
+    res.json({
+      totalStats: totalStats[0] || {},
+      monthlySales: monthlySales || [],
+      yearlySales: yearlySales || [],
+      thisMonthStats: thisMonthStats[0] || {},
+      lastMonthRevenue: lastMonthRevenue,
+      growthPercentage,
+      topProducts: topProducts || []
+    });
+  } catch (error) {
+    console.error('Staff reports error:', error);
+    res.status(500).json({ message: 'Server error fetching reports' });
   }
 });
 

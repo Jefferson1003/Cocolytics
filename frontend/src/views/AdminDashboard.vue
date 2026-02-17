@@ -29,73 +29,28 @@
     </div>
 
     <div class="dashboard-sections">
-      <div class="section features-section">
-        <h2>🔧 Admin Features</h2>
-        <ul class="features-list" v-if="dashboardData">
-          <li v-for="feature in dashboardData.adminFeatures" :key="feature">
-            <span class="feature-icon">✅</span>
-            {{ feature }}
-          </li>
-        </ul>
-      </div>
-
-      <div class="section users-section">
-        <h2>👥 User Management</h2>
-        <div class="users-table-container">
-          <table class="users-table" v-if="users.length">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="u in users" :key="u.id">
-                <td>{{ u.name }}</td>
-                <td>{{ u.email }}</td>
-                <td>
-                  <span class="role-badge" :class="u.role">{{ u.role }}</span>
-                </td>
-                <td>
-                  <select 
-                    v-model="u.role" 
-                    @change="updateUserRole(u.id, u.role)"
-                    class="role-select"
-                    :disabled="u.id === user.id"
-                  >
-                    <option value="user">User</option>
-                    <option value="staff">Staff</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <p v-else class="no-data">Loading users...</p>
+      <div class="section quick-links-section">
+        <h2>🚀 Quick Links</h2>
+        <div class="quick-links-grid">
+          <router-link to="/admin/users" class="quick-link-card">
+            <span class="link-icon">👥</span>
+            <span class="link-text">Manage Users</span>
+          </router-link>
+          <router-link to="/admin/reports" class="quick-link-card">
+            <span class="link-icon">📊</span>
+            <span class="link-text">View Reports</span>
+          </router-link>
+          <router-link to="/admin/features" class="quick-link-card">
+            <span class="link-icon">🔧</span>
+            <span class="link-text">All Features</span>
+          </router-link>
+          <router-link to="/admin/paper-approvals" class="quick-link-card">
+            <span class="link-icon">📄</span>
+            <span class="link-text">Paper Approvals</span>
+          </router-link>
         </div>
       </div>
     </div>
-
-    <!-- Logout Confirmation Modal -->
-    <div v-if="showLogoutModal" class="modal-overlay" @click="cancelLogout">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h2>Confirm Logout</h2>
-          <button class="modal-close" @click="cancelLogout">&times;</button>
-        </div>
-        <div class="modal-body">
-          <p>Are you sure you want to log out?</p>
-        </div>
-        <div class="modal-footer">
-          <button class="btn-cancel" @click="cancelLogout">Cancel</button>
-          <button class="btn-logout" @click="confirmLogout">Logout</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="error-message" v-if="error">{{ error }}</div>
     </div>
   </div>
 </template>
@@ -113,7 +68,6 @@ export default {
     return {
       user: null,
       dashboardData: null,
-      users: [],
       error: ''
     }
   },
@@ -121,7 +75,6 @@ export default {
     const userData = localStorage.getItem('user')
     this.user = userData ? JSON.parse(userData) : null
     this.fetchDashboardData()
-    this.fetchUsers()
   },
   methods: {
     async fetchDashboardData() {
@@ -133,29 +86,6 @@ export default {
         this.dashboardData = response.data.data
       } catch (err) {
         this.error = err.response?.data?.message || 'Failed to load dashboard data'
-      }
-    },
-    async fetchUsers() {
-      try {
-        const token = localStorage.getItem('token')
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/admin/users`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        this.users = response.data.users
-      } catch (err) {
-        console.error('Failed to fetch users:', err)
-      }
-    },
-    async updateUserRole(userId, newRole) {
-      try {
-        const token = localStorage.getItem('token')
-        await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/admin/users/${userId}/role`, 
-          { role: newRole },
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-      } catch (err) {
-        this.error = err.response?.data?.message || 'Failed to update user role'
-        this.fetchUsers() // Refresh to revert changes
       }
     }
   }
@@ -335,11 +265,12 @@ export default {
   flex: 1;
   margin-left: 280px;
   padding: 40px 50px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   transition: margin-left 0.3s ease;
   width: calc(100% - 280px);
   max-width: calc(100vw - 280px);
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   background: transparent;
@@ -458,6 +389,302 @@ export default {
   font-size: 1.6rem;
   font-weight: 700;
   letter-spacing: -0.3px;
+}
+
+.quick-links-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.quick-links-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.quick-link-card {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.05) 100%);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: #e6f4ea;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.quick-link-card:hover {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.25) 0%, rgba(76, 175, 80, 0.15) 100%);
+  border-color: #4CAF50;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(76, 175, 80, 0.2);
+}
+
+.link-icon {
+  font-size: 2.5rem;
+}
+
+.link-text {
+  font-weight: 600;
+  font-size: 1.1rem;
+  text-align: center;
+  color: #e6f4ea;
+}
+
+.reports-section {
+  position: relative;
+  overflow: hidden;
+  font-family: "Space Grotesk", "Trebuchet MS", sans-serif;
+}
+
+.reports-section::before {
+  content: "";
+  position: absolute;
+  inset: -120px -80px auto auto;
+  height: 260px;
+  width: 260px;
+  background: radial-gradient(circle, rgba(76, 175, 80, 0.35) 0%, rgba(76, 175, 80, 0) 70%);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.reports-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.reports-subtitle {
+  color: #9bb4a0;
+  margin: 6px 0 0;
+  font-size: 1rem;
+}
+
+.reports-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.report-btn {
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: #4CAF50;
+  color: #0f2027;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.report-btn.outline {
+  background: transparent;
+  border: 1px solid rgba(76, 175, 80, 0.6);
+  color: #cfe9d3;
+}
+
+.report-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(76, 175, 80, 0.25);
+}
+
+.reports-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.report-card {
+  background: linear-gradient(135deg, rgba(15, 32, 39, 0.85) 0%, rgba(28, 41, 52, 0.9) 100%);
+  border: 1px solid rgba(76, 175, 80, 0.2);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 240px;
+  position: relative;
+}
+
+.report-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.report-head h3 {
+  margin: 0;
+  color: #e6f4ea;
+  font-size: 1.2rem;
+  letter-spacing: 0.2px;
+}
+
+.report-chip {
+  background: rgba(76, 175, 80, 0.2);
+  color: #bfe9c5;
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.report-chip.amber {
+  background: rgba(255, 193, 7, 0.2);
+  border-color: rgba(255, 193, 7, 0.4);
+  color: #ffdd95;
+}
+
+.report-chip.teal {
+  background: rgba(0, 188, 212, 0.2);
+  border-color: rgba(0, 188, 212, 0.4);
+  color: #8be8f5;
+}
+
+.report-chip.violet {
+  background: rgba(156, 39, 176, 0.2);
+  border-color: rgba(156, 39, 176, 0.4);
+  color: #e1a7f0;
+}
+
+.report-chip.gray {
+  background: rgba(189, 189, 189, 0.15);
+  border-color: rgba(189, 189, 189, 0.3);
+  color: #d0d0d0;
+}
+
+.report-kpi {
+  font-size: 1.6rem;
+  color: #4CAF50;
+  font-weight: 700;
+}
+
+.report-meta {
+  color: #9bb4a0;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.report-chart {
+  height: 80px;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(120deg, rgba(76, 175, 80, 0.25), rgba(15, 32, 39, 0.05));
+}
+
+.report-chart::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06),
+    rgba(255, 255, 255, 0.06) 6px,
+    transparent 6px,
+    transparent 14px
+  );
+  animation: scanline 6s linear infinite;
+}
+
+.report-chart.production {
+  background: linear-gradient(120deg, rgba(76, 175, 80, 0.4), rgba(32, 58, 67, 0.2));
+}
+
+.report-chart.inventory {
+  background: linear-gradient(120deg, rgba(255, 193, 7, 0.35), rgba(32, 58, 67, 0.2));
+}
+
+.report-chart.dispatch {
+  background: linear-gradient(120deg, rgba(33, 150, 243, 0.35), rgba(32, 58, 67, 0.2));
+}
+
+.report-chart.yield {
+  background: linear-gradient(120deg, rgba(0, 188, 212, 0.35), rgba(32, 58, 67, 0.2));
+}
+
+.report-chart.forecast {
+  background: linear-gradient(120deg, rgba(156, 39, 176, 0.35), rgba(32, 58, 67, 0.2));
+}
+
+.report-foot {
+  display: flex;
+  justify-content: space-between;
+  color: #b7c8bc;
+  font-size: 0.9rem;
+}
+
+.logs-card {
+  gap: 10px;
+}
+
+.logs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.log-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.log-pill {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 5px;
+}
+
+.log-pill.ok {
+  background: #4CAF50;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.6);
+}
+
+.log-pill.warn {
+  background: #ffc107;
+  box-shadow: 0 0 10px rgba(255, 193, 7, 0.6);
+}
+
+.log-pill.alert {
+  background: #ff6b6b;
+  box-shadow: 0 0 10px rgba(255, 107, 107, 0.6);
+}
+
+.log-title {
+  color: #e6f4ea;
+  font-weight: 600;
+}
+
+.log-time {
+  color: #9bb4a0;
+  font-size: 0.85rem;
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateX(-20%);
+  }
+  100% {
+    transform: translateX(20%);
+  }
+}
+
+@media (max-width: 1200px) {
+  .reports-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .features-list {
@@ -765,8 +992,21 @@ export default {
     grid-template-columns: 1fr 1fr;
   }
 
+  .quick-links-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .dashboard-header h1 {
     font-size: 1.5rem;
+  }
+
+  .reports-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .reports-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

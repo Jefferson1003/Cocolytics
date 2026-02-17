@@ -4,7 +4,7 @@
     
     <div class="main-content">
       <div class="profile-container">
-        <h1>🏪 {{ staffName }} - {{ profile.store_name || 'Store Profile' }}</h1>
+        <h1>🏪 {{ staffName }} - {{ profile.store_name || 'Trader Profile' }}</h1>
         
         <div v-if="successMessage" class="alert alert-success">
           <span class="alert-icon">✓</span>
@@ -17,11 +17,11 @@
         </div>
 
         <form @submit.prevent="updateProfile" class="profile-form">
-          <!-- Store Logo Upload -->
+          <!-- Trader Logo Upload -->
           <div class="form-group logo-upload">
-            <label>Store Logo</label>
+            <label>Trader Logo</label>
             <div class="logo-preview">
-              <img v-if="previewLogo" :src="previewLogo" alt="Store Logo" />
+              <img v-if="previewLogo" :src="previewLogo" alt="Trader Logo" />
               <div v-else class="default-logo">🥥</div>
             </div>
             <input 
@@ -36,24 +36,24 @@
             </button>
           </div>
 
-          <!-- Store Name -->
+          <!-- Trader Name -->
           <div class="form-group">
-            <label>Store Name *</label>
+            <label>Trader Name *</label>
             <input 
               v-model="profile.store_name" 
               type="text" 
-              placeholder="Enter your store name"
+              placeholder="Enter your trader name"
               required
               class="form-control"
             />
           </div>
 
-          <!-- Store Description -->
+          <!-- Trader Description -->
           <div class="form-group">
-            <label>Store Description</label>
-            <textarea 
-              v-model="profile.store_description" 
-              placeholder="Describe your store and products..."
+            <label>Trader Description</label>
+            <textarea
+              v-model="profile.store_description"
+              placeholder="Describe your business and products..."
               rows="4"
               class="form-control"
             ></textarea>
@@ -70,13 +70,13 @@
             />
           </div>
 
-          <!-- Store Address -->
+          <!-- Business Address -->
           <div class="form-group">
-            <label>Store Address</label>
+            <label>Business Address</label>
             <input 
               v-model="profile.store_address" 
               type="text" 
-              placeholder="Physical store address (optional)"
+              placeholder="Physical business address (optional)"
               class="form-control"
             />
           </div>
@@ -88,7 +88,7 @@
                 v-model="profile.is_active" 
                 type="checkbox"
               />
-              <span>🟢 Store is active (visible to customers)</span>
+              <span>🟢 Trader is active (visible to customers)</span>
             </label>
           </div>
 

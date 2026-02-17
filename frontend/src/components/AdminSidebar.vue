@@ -11,14 +11,14 @@
         <span class="nav-icon">📊</span>
         <span class="nav-label" v-show="sidebarOpen">Dashboard</span>
       </router-link>
-      <a href="#users" class="nav-item" title="Manage Users">
+      <router-link to="/admin/users" class="nav-item" :class="{ active: isActive('/admin/users') }" title="Manage Users">
         <span class="nav-icon">👥</span>
         <span class="nav-label" v-show="sidebarOpen">Manage Users</span>
-      </a>
-      <a href="#analytics" class="nav-item" title="Analytics">
-        <span class="nav-icon">📈</span>
-        <span class="nav-label" v-show="sidebarOpen">Analytics</span>
-      </a>
+      </router-link>
+      <router-link to="/admin/features" class="nav-item" :class="{ active: isActive('/admin/features') }" title="Admin Features">
+        <span class="nav-icon">🔧</span>
+        <span class="nav-label" v-show="sidebarOpen">Features</span>
+      </router-link>
       <router-link to="/admin/paper-approvals" class="nav-item" :class="{ active: isActive('/admin/paper-approvals') }" title="Paper Approvals">
         <span class="nav-icon">📄</span>
         <span class="nav-label" v-show="sidebarOpen">Paper Approvals</span>

@@ -9,8 +9,8 @@
             <h3>{{ item.size }}</h3>
             <p>Length: {{ item.length }} cm</p>
             <p>Quantity: {{ item.quantity }} units</p>
-            <!-- Display store information if available -->
-            <p v-if="item.store_name" class="store-name">🏪 {{ item.store_name }}</p>
+            <!-- Display trader information if available -->
+            <p v-if="item.store_name" class="store-name">👤 {{ item.store_name }}</p>
           </div>
           <div class="item-actions">
             <button @click="decrease(idx)" class="qty">−</button>

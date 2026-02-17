@@ -151,7 +151,7 @@
         </div>
       </div>
 
-      <!-- Staff Stores Section -->
+      <!-- Traders Section -->
       <StaffStoresSection />
 
       <div class="error-message" v-if="error">{{ error }}</div>

@@ -1,13 +1,13 @@
 <template>
   <div class="staff-stores-section">
     <div class="section-header">
-      <h2>🏪 Staff Stores - Shop by Seller</h2>
-      <p class="section-subtitle">Choose your favorite seller and browse their products</p>
+      <h2>🏪 Browse Traders</h2>
+      <p class="section-subtitle">Choose your favorite trader and browse their products</p>
     </div>
 
     <div v-if="loading" class="loading">
       <div class="spinner">⏳</div>
-      <p>Loading staff stores...</p>
+      <p>Loading traders...</p>
     </div>
 
     <div v-else-if="stores.length > 0" class="stores-grid">
@@ -54,15 +54,15 @@
         </div>
 
         <button class="btn-visit-store">
-          Visit Store →
+          Visit Trader →
         </button>
       </div>
     </div>
 
     <div v-else class="empty-state">
       <div class="empty-icon">🏪</div>
-      <h3>No Staff Stores Available</h3>
-      <p>Check back later for available staff stores</p>
+      <h3>No Traders Available</h3>
+      <p>Check back later for available traders</p>
     </div>
   </div>
 </template>
@@ -84,10 +84,10 @@ export default {
       this.loading = true
       try {
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/staff-stores`)
-        if (!response.ok) throw new Error('Failed to fetch staff stores')
+        if (!response.ok) throw new Error('Failed to fetch traders')
         this.stores = await response.json()
       } catch (error) {
-        console.error('Error fetching staff stores:', error)
+        console.error('Error fetching traders:', error)
         this.stores = []
       } finally {
         this.loading = false

@@ -46,6 +46,10 @@ import SellerProducts from './views/SellerProducts.vue'
 import StaffProfile from './views/StaffProfile.vue'
 import StaffStoreView from './views/StaffStoreView.vue'
 import UserDashboard from './views/UserDashboard.vue'
+import AdminReports from './views/AdminReports.vue'
+import AdminUsers from './views/AdminUsers.vue'
+import AdminFeatures from './views/AdminFeatures.vue'
+import StaffReports from './views/StaffReports.vue'
 
 // Define routes
 const routes = [
@@ -77,6 +81,18 @@ const routes = [
     path: '/admin',
     name: 'AdminDashboard',
     component: AdminDashboard,
+    meta: { requiresAuth: true, roles: ['admin'] }
+  },
+  {
+    path: '/admin/users',
+    name: 'AdminUsers',
+    component: AdminUsers,
+    meta: { requiresAuth: true, roles: ['admin'] }
+  },
+  {
+    path: '/admin/features',
+    name: 'AdminFeatures',
+    component: AdminFeatures,
     meta: { requiresAuth: true, roles: ['admin'] }
   },
   {
@@ -119,6 +135,12 @@ const routes = [
     path: '/staff/profile',
     name: 'StaffProfile',
     component: StaffProfile,
+    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
+  },
+  {
+    path: '/staff/reports',
+    name: 'StaffReports',
+    component: StaffReports,
     meta: { requiresAuth: true, roles: ['staff', 'admin'] }
   },
   {
