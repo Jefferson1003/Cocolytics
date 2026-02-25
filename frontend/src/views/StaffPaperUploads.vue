@@ -8,68 +8,70 @@
       <p>Submit separate documents for "To Cut" processing and "Transport" logistics.</p>
     </div>
 
-    <!-- TO CUT SECTION -->
-    <div class="upload-card">
-      <div class="card-title">✂️ To Cut Papers</div>
-      <div class="card-subtitle">Upload documents for cutting authorization</div>
-      
-      <div class="form-grid">
-        <div class="field">
-          <label>Document Title</label>
-          <input v-model="toCutForm.title" type="text" placeholder="e.g., Cutting Order #123" />
+    <div class="upload-grid">
+      <!-- TO CUT SECTION -->
+      <div class="upload-card">
+        <div class="card-title">✂️ To Cut Papers</div>
+        <div class="card-subtitle">Upload documents for cutting authorization</div>
+        
+        <div class="form-grid">
+          <div class="field">
+            <label>Document Title</label>
+            <input v-model="toCutForm.title" type="text" placeholder="e.g., Cutting Order #123" />
+          </div>
+          <div class="field">
+            <label>Description (optional)</label>
+            <textarea v-model="toCutForm.description" rows="3" placeholder="Details about the cutting documents..."></textarea>
+          </div>
+          <div class="field">
+            <label>Attach File (PDF, JPG, PNG)</label>
+            <input type="file" @change="onToCutFileChange" accept=".pdf,image/jpeg,image/png" />
+            <small v-if="toCutForm.fileName" class="file-name">✓ Selected: {{ toCutForm.fileName }}</small>
+          </div>
         </div>
-        <div class="field">
-          <label>Description (optional)</label>
-          <textarea v-model="toCutForm.description" rows="3" placeholder="Details about the cutting documents..."></textarea>
+
+        <div class="actions">
+          <button class="btn btn-to-cut" :disabled="uploadingToCut" @click="submitToCut">
+            <span v-if="!uploadingToCut">🔼 Upload To Cut Paper</span>
+            <span v-else>⏳ Uploading...</span>
+          </button>
         </div>
-        <div class="field">
-          <label>Attach File (PDF, JPG, PNG)</label>
-          <input type="file" @change="onToCutFileChange" accept=".pdf,image/jpeg,image/png" />
-          <small v-if="toCutForm.fileName" class="file-name">✓ Selected: {{ toCutForm.fileName }}</small>
-        </div>
+
+        <div v-if="successMessageToCut" class="alert success">✓ {{ successMessageToCut }}</div>
+        <div v-if="errorMessageToCut" class="alert error">✗ {{ errorMessageToCut }}</div>
       </div>
 
-      <div class="actions">
-        <button class="btn btn-to-cut" :disabled="uploadingToCut" @click="submitToCut">
-          <span v-if="!uploadingToCut">🔼 Upload To Cut Paper</span>
-          <span v-else>⏳ Uploading...</span>
-        </button>
-      </div>
-
-      <div v-if="successMessageToCut" class="alert success">✓ {{ successMessageToCut }}</div>
-      <div v-if="errorMessageToCut" class="alert error">✗ {{ errorMessageToCut }}</div>
-    </div>
-
-    <!-- TRANSPORT SECTION -->
-    <div class="upload-card">
-      <div class="card-title">🚚 Transport Papers</div>
-      <div class="card-subtitle">Upload documents for transport logistics</div>
-      
-      <div class="form-grid">
-        <div class="field">
-          <label>Document Title</label>
-          <input v-model="transportForm.title" type="text" placeholder="e.g., Transport Manifest #456" />
+      <!-- TRANSPORT SECTION -->
+      <div class="upload-card">
+        <div class="card-title">🚚 Transport Papers</div>
+        <div class="card-subtitle">Upload documents for transport logistics</div>
+        
+        <div class="form-grid">
+          <div class="field">
+            <label>Document Title</label>
+            <input v-model="transportForm.title" type="text" placeholder="e.g., Transport Manifest #456" />
+          </div>
+          <div class="field">
+            <label>Description (optional)</label>
+            <textarea v-model="transportForm.description" rows="3" placeholder="Details about the transport documents..."></textarea>
+          </div>
+          <div class="field">
+            <label>Attach File (PDF, JPG, PNG)</label>
+            <input type="file" @change="onTransportFileChange" accept=".pdf,image/jpeg,image/png" />
+            <small v-if="transportForm.fileName" class="file-name">✓ Selected: {{ transportForm.fileName }}</small>
+          </div>
         </div>
-        <div class="field">
-          <label>Description (optional)</label>
-          <textarea v-model="transportForm.description" rows="3" placeholder="Details about the transport documents..."></textarea>
-        </div>
-        <div class="field">
-          <label>Attach File (PDF, JPG, PNG)</label>
-          <input type="file" @change="onTransportFileChange" accept=".pdf,image/jpeg,image/png" />
-          <small v-if="transportForm.fileName" class="file-name">✓ Selected: {{ transportForm.fileName }}</small>
-        </div>
-      </div>
 
-      <div class="actions">
-        <button class="btn btn-transport" :disabled="uploadingTransport" @click="submitTransport">
-          <span v-if="!uploadingTransport">🚛 Upload Transport Paper</span>
-          <span v-else>⏳ Uploading...</span>
-        </button>
-      </div>
+        <div class="actions">
+          <button class="btn btn-transport" :disabled="uploadingTransport" @click="submitTransport">
+            <span v-if="!uploadingTransport">🚛 Upload Transport Paper</span>
+            <span v-else>⏳ Uploading...</span>
+          </button>
+        </div>
 
-      <div v-if="successMessageTransport" class="alert success">✓ {{ successMessageTransport }}</div>
-      <div v-if="errorMessageTransport" class="alert error">✗ {{ errorMessageTransport }}</div>
+        <div v-if="successMessageTransport" class="alert success">✓ {{ successMessageTransport }}</div>
+        <div v-if="errorMessageTransport" class="alert error">✗ {{ errorMessageTransport }}</div>
+      </div>
     </div>
 
     <!-- MY SUBMISSIONS LIST -->
@@ -78,13 +80,12 @@
       
       <div class="filter-tabs">
         <button 
-          v-for="filter in ['all', 'to_cut', 'transport']"
+          v-for="filter in ['to_cut', 'transport']"
           :key="filter"
           @click="activeFilter = filter"
           :class="['tab', { active: activeFilter === filter }]"
         >
-          <span v-if="filter === 'all'">📄 All Papers</span>
-          <span v-else-if="filter === 'to_cut'">✂️ To Cut</span>
+          <span v-if="filter === 'to_cut'">✂️ To Cut</span>
           <span v-else-if="filter === 'transport'">🚚 Transport</span>
         </button>
       </div>
@@ -140,7 +141,7 @@ export default {
         fileName: ''
       },
       papers: [],
-      activeFilter: 'all',
+      activeFilter: 'to_cut',
       loading: false,
       uploadingToCut: false,
       uploadingTransport: false,
@@ -152,9 +153,6 @@ export default {
   },
   computed: {
     filteredPapers() {
-      if (this.activeFilter === 'all') {
-        return this.papers
-      }
       return this.papers.filter(p => p.paper_type === this.activeFilter)
     }
   },
@@ -320,6 +318,13 @@ export default {
   margin-bottom: 20px;
 }
 
+.upload-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
 .card-title {
   color: white;
   font-size: 1.2em;
@@ -337,6 +342,12 @@ export default {
   color: white;
   margin-bottom: 16px;
   font-size: 1.2em;
+}
+
+@media (max-width: 900px) {
+  .upload-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .filter-tabs {

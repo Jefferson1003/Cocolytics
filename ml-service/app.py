@@ -22,6 +22,21 @@ base_model = tf.keras.applications.MobileNetV2(
     weights='imagenet'
 )
 
+# Try to load custom trained brown detector model
+custom_brown_detector = None
+try:
+    import os
+    if os.path.exists('brown_detector_model.h5'):
+        print("📦 Loading custom brown detector model...")
+        custom_brown_detector = tf.keras.models.load_model('brown_detector_model.h5')
+        print("✅ Custom brown detector loaded!")
+    else:
+        print("ℹ️  Custom brown detector not found (brown_detector_model.h5)")
+        print("   💡 Run: python train_brown_detector.py --train")
+except Exception as e:
+    print(f"⚠️  Could not load custom brown detector: {e}")
+    print("   Using HSV-based brown detection instead...")
+
 # ImageNet class indices for common objects
 HUMAN_CLASSES = [
     'person', 'human', 'man', 'woman', 'child', 'people',
@@ -66,38 +81,176 @@ def preprocess_image(image_data):
 
 def estimate_tree_measurements(image_pil):
     """
-    Estimate tree dimensions using computer vision
-    This is a simplified estimation - real implementation would use depth sensing
+    Estimate tree dimensions using brown color detection and computer vision
+    Returns: height (m), width (cm), volume (board feet), and quality assessment
     """
     # Convert PIL to OpenCV
     img_cv = cv2.cvtColor(np.array(image_pil), cv2.COLOR_RGB2BGR)
-    gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
+    height_px, width_px = img_cv.shape[:2]
     
-    # Simple edge detection for trunk diameter estimation
-    edges = cv2.Canny(gray, 50, 150)
-    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    print(f"📐 Image dimensions: {width_px}x{height_px} pixels")
+    
+    # Convert to HSV for better brown color detection
+    hsv = cv2.cvtColor(img_cv, cv2.COLOR_BGR2HSV)
+    
+    # Define comprehensive brown color ranges to detect ALL brown variations
+    # Brown exists primarily in H=0-40 range (includes reds, oranges, yellows, browns)
+    
+    # Range 1: Reddish-brown (red spectrum: H=0-10)
+    lower_brown1 = np.array([0, 20, 20])
+    upper_brown1 = np.array([10, 255, 255])
+    
+    # Range 2: Orange-brown (H=10-25)
+    lower_brown2 = np.array([10, 20, 20])
+    upper_brown2 = np.array([25, 255, 255])
+    
+    # Range 3: Yellow-brown (H=25-40, the brown/tan range)
+    lower_brown3 = np.array([25, 15, 15])
+    upper_brown3 = np.array([40, 255, 255])
+    
+    # Range 4: Dark browns with LOW saturation (grayish/muted browns)
+    lower_brown4 = np.array([0, 5, 10])
+    upper_brown4 = np.array([40, 80, 255])
+    
+    # Range 5: Very light/pale browns (high V, low-mid S)
+    lower_brown5 = np.array([15, 10, 100])
+    upper_brown5 = np.array([35, 100, 255])
+    
+    # Create masks for ALL brown color variations
+    mask1 = cv2.inRange(hsv, lower_brown1, upper_brown1)
+    mask2 = cv2.inRange(hsv, lower_brown2, upper_brown2)
+    mask3 = cv2.inRange(hsv, lower_brown3, upper_brown3)
+    mask4 = cv2.inRange(hsv, lower_brown4, upper_brown4)
+    mask5 = cv2.inRange(hsv, lower_brown5, upper_brown5)
+    
+    # Combine all brown masks
+    brown_mask = cv2.bitwise_or(mask1, mask2)
+    brown_mask = cv2.bitwise_or(brown_mask, mask3)
+    brown_mask = cv2.bitwise_or(brown_mask, mask4)
+    brown_mask = cv2.bitwise_or(brown_mask, mask5)
+    
+    # Apply morphological operations to clean the mask
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    brown_mask = cv2.morphologyEx(brown_mask, cv2.MORPH_CLOSE, kernel)
+    brown_mask = cv2.morphologyEx(brown_mask, cv2.MORPH_OPEN, kernel)
+    
+    print(f"🟤 Brown pixels detected: {np.count_nonzero(brown_mask)} / {brown_mask.size}")
+    
+    # Find contours on the brown mask
+    contours, _ = cv2.findContours(brown_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     if contours:
-        # Find largest contour (assumed to be the tree trunk)
+        # Find largest contour (the tree trunk)
         largest_contour = max(contours, key=cv2.contourArea)
         x, y, w, h = cv2.boundingRect(largest_contour)
         
-        # Estimate dimensions (these are rough estimates)
-        # In real implementation, you'd use camera calibration and reference objects
-        estimated_height = round(h / 20 + 8, 1)  # Map pixel height to meters
-        estimated_diameter = max(20, min(80, w // 3))  # Map width to cm
+        print(f"📍 Object location: x={x}, y={y}")
+        print(f"📏 Object size in pixels: width={w}, height={h}")
         
-        # Calculate lumber volume using Smalian's formula approximation
-        # V = (D²/4) × π × L where D is diameter in meters, L is length
-        diameter_m = estimated_diameter / 100
-        height_m = estimated_height
-        volume_cubic_m = (diameter_m ** 2 / 4) * 3.14159 * height_m
-        # Convert to board feet (1 cubic meter ≈ 424 board feet)
-        board_feet = int(volume_cubic_m * 424)
-        
-        # Quality assessment based on trunk uniformity
+        # Calculate contour area and fill ratio for quality
         contour_area = cv2.contourArea(largest_contour)
         bbox_area = w * h
+        fill_ratio = contour_area / bbox_area if bbox_area > 0 else 0
+        
+        print(f"🎯 Fill ratio: {fill_ratio:.2%}")
+        
+        # ========== MEASUREMENT CALIBRATION ==========
+        # Assumed camera field of view and typical measurement scenarios
+        # These factors map pixel dimensions to real-world measurements
+        
+        # For a typical camera at 1-3 meters distance:
+        # - 1 pixel ≈ 0.5-1 cm (depth dependent)
+        # - Use conservative scaling factors
+        
+        # Height calculation (vertical extent in image)
+        # Typical tree height 8-15m, image height ~480px
+        # So: 1 pixel ≈ 0.02m for height
+        pixel_to_meter_height = 0.02  # 1 pixel = 2 cm
+        estimated_height_m = max(3, min(20, (h * pixel_to_meter_height)))  # Clamp between 3-20m
+        
+        # Width calculation (horizontal extent - trunk diameter or log width)
+        # Typical trunk width 20-80cm, image width varies
+        # So: 1 pixel ≈ 1-2 cm for width/diameter
+        pixel_to_cm_width = 2  # 1 pixel = 2 cm
+        estimated_width_cm = max(15, min(100, (w * pixel_to_cm_width)))  # Clamp between 15-100cm
+        
+        print(f"📐 Calculated measurements:")
+        print(f"   Height: {estimated_height_m:.1f} m ({h} px × {pixel_to_meter_height})")
+        print(f"   Width:  {estimated_width_cm:.0f} cm ({w} px × {pixel_to_cm_width})")
+        
+        # ========== VOLUME ESTIMATION ==========
+        # Using Smalian's formula: V = (D²/4) × π × L
+        # Where D = diameter in meters, L = length in meters
+        
+        diameter_m = estimated_width_cm / 100  # Convert cm to m
+        length_m = estimated_height_m
+        
+        # Volume in cubic meters
+        volume_cubic_m = ((diameter_m ** 2) / 4) * 3.14159 * length_m
+        
+        # Convert to board feet (1 cubic meter ≈ 424 board feet)
+        board_feet = max(40, int(volume_cubic_m * 424))
+        
+        print(f"📦 Volume calculation:")
+        print(f"   Diameter: {diameter_m:.3f} m")
+        print(f"   Length:   {length_m:.2f} m")
+        print(f"   Volume:   {volume_cubic_m:.4f} m³")
+        print(f"   Board feet: {board_feet}")
+        
+        # ========== QUALITY ASSESSMENT ==========
+        # Based on contour uniformity and fill ratio
+        if fill_ratio > 0.75:
+            quality = "Premium"
+            quality_score = 90
+        elif fill_ratio > 0.60:
+            quality = "Grade A"
+            quality_score = 80
+        elif fill_ratio > 0.45:
+            quality = "Grade B"
+            quality_score = 70
+        else:
+            quality = "Grade C"
+            quality_score = 60
+        
+        print(f"🏆 Quality: {quality} ({quality_score}/100)")
+        
+        return {
+            'height': str(round(estimated_height_m, 1)),
+            'width': str(int(estimated_width_cm)),
+            'diameter': str(int(estimated_width_cm)),  # Same as width for display
+            'estimatedLumber': str(board_feet),
+            'quality': quality,
+            'quality_score': quality_score,
+            'measurements': {
+                'height_m': round(estimated_height_m, 2),
+                'width_cm': int(estimated_width_cm),
+                'volume_cubic_m': round(volume_cubic_m, 4),
+                'board_feet': board_feet,
+                'fill_ratio': round(fill_ratio, 2),
+                'pixels_detected': np.count_nonzero(brown_mask)
+            }
+        }
+    
+    else:
+        print("⚠️  No contours found in brown mask")
+    
+    # Default values if detection fails
+    return {
+        'height': '10.5',
+        'width': '42',
+        'diameter': '42',
+        'estimatedLumber': '95',
+        'quality': 'Grade A',
+        'quality_score': 80,
+        'measurements': {
+            'height_m': 10.5,
+            'width_cm': 42,
+            'volume_cubic_m': 0.0,
+            'board_feet': 95,
+            'fill_ratio': 0,
+            'pixels_detected': 0
+        }
+    }
         uniformity = contour_area / bbox_area if bbox_area > 0 else 0
         
         if uniformity > 0.7:
@@ -125,21 +278,44 @@ def estimate_tree_measurements(image_pil):
 def is_wood_like(image_pil):
     """
     Heuristic for stacked lumber/planks:
-    - Dominant brown/orange tones
+    - Detects ALL brown color variations (light, dark, medium, reddish, yellowish, orange, etc.)
     - Strong straight-edge density
     """
     img_cv = cv2.cvtColor(np.array(image_pil), cv2.COLOR_RGB2BGR)
     hsv = cv2.cvtColor(img_cv, cv2.COLOR_BGR2HSV)
 
-    # Brown/orange color mask (two ranges to cover light/dark wood)
-    lower_brown1 = np.array([5, 40, 40])
-    upper_brown1 = np.array([25, 255, 255])
-    lower_brown2 = np.array([0, 20, 20])
-    upper_brown2 = np.array([15, 200, 200])
+    # Comprehensive brown color masks covering ALL brown variations
+    # Range 1: Reddish-brown (H=0-10)
+    lower_brown1 = np.array([0, 20, 20])
+    upper_brown1 = np.array([10, 255, 255])
+    
+    # Range 2: Orange-brown (H=10-25)
+    lower_brown2 = np.array([10, 20, 20])
+    upper_brown2 = np.array([25, 255, 255])
+    
+    # Range 3: Yellow-brown (H=25-40)
+    lower_brown3 = np.array([25, 15, 15])
+    upper_brown3 = np.array([40, 255, 255])
+    
+    # Range 4: Dark/muted browns (low saturation)
+    lower_brown4 = np.array([0, 5, 10])
+    upper_brown4 = np.array([40, 80, 255])
+    
+    # Range 5: Light/pale browns (high value, low-mid saturation)
+    lower_brown5 = np.array([15, 10, 100])
+    upper_brown5 = np.array([35, 100, 255])
 
+    # Combine all brown detection masks
     mask1 = cv2.inRange(hsv, lower_brown1, upper_brown1)
     mask2 = cv2.inRange(hsv, lower_brown2, upper_brown2)
+    mask3 = cv2.inRange(hsv, lower_brown3, upper_brown3)
+    mask4 = cv2.inRange(hsv, lower_brown4, upper_brown4)
+    mask5 = cv2.inRange(hsv, lower_brown5, upper_brown5)
+    
     mask = cv2.bitwise_or(mask1, mask2)
+    mask = cv2.bitwise_or(mask, mask3)
+    mask = cv2.bitwise_or(mask, mask4)
+    mask = cv2.bitwise_or(mask, mask5)
 
     brown_ratio = float(np.count_nonzero(mask)) / float(mask.size)
 
@@ -149,6 +325,33 @@ def is_wood_like(image_pil):
     edge_ratio = float(np.count_nonzero(edges)) / float(edges.size)
 
     return brown_ratio > 0.15 and edge_ratio > 0.05
+
+def detect_brown_with_custom_model(image_pil):
+    """
+    Use trained custom brown detector model if available
+    Returns: is_brown (bool), confidence (float 0-1)
+    """
+    if custom_brown_detector is None:
+        return None, None
+    
+    try:
+        # Preprocess image for model
+        img_array = np.array(image_pil.resize((224, 224))) / 255.0
+        img_batch = np.expand_dims(img_array, axis=0)
+        
+        # Predict
+        prediction = custom_brown_detector.predict(img_batch, verbose=0)[0][0]
+        
+        # Brown if prediction > 0.5
+        is_brown = prediction > 0.5
+        confidence = prediction if is_brown else (1 - prediction)
+        
+        print(f"🤖 Custom model: Brown detected={is_brown}, Confidence={confidence:.2%}")
+        
+        return is_brown, float(confidence)
+    except Exception as e:
+        print(f"⚠️  Custom model error: {e}")
+        return None, None
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -179,7 +382,6 @@ def predict():
         # Log predictions for debugging
         print(f"🔍 Top predictions: {detected_classes[:3]}")
         print(f"📊 Confidence scores: {confidences[:3]}")
-        
         # Check for human detection
         human_detected = any(
             any(human_class in class_name for human_class in HUMAN_CLASSES)
@@ -192,7 +394,14 @@ def predict():
             for class_name in detected_classes
         )
         
-        # Heuristic for stacked lumber/planks
+        # Try custom brown detector model FIRST if available
+        custom_brown_detected = None
+        custom_brown_confidence = 0
+        if custom_brown_detector is not None:
+            custom_brown_detected, custom_brown_confidence = detect_brown_with_custom_model(image_pil)
+            print(f"🤖 Custom brown detector: {custom_brown_detected} (confidence: {custom_brown_confidence:.2%})")
+        
+        # Heuristic for stacked lumber/planks (fallback)
         wood_like = is_wood_like(image_pil)
         
         print(f"👤 Human detected: {human_detected}")
@@ -210,17 +419,42 @@ def predict():
                 ]
             })
         
-        elif wood_detected or wood_like:
-            # If wood detected, treat as cocolumber and provide measurements
+        # Check custom model FIRST, then fallback to other detection methods
+        elif custom_brown_detected is True and custom_brown_confidence > 0.6:
+            # Custom trained model detected brown with high confidence
             measurements = estimate_tree_measurements(image_pil)
+            print(f"✅ Using custom brown detector results")
             
             return jsonify({
                 'detectedClass': 'cocolumber',
-            'confidence': int((max_confidence * 100) if wood_detected else 65),
+                'confidence': int(custom_brown_confidence * 100),
                 'height': measurements['height'],
+                'width': measurements['width'],
                 'diameter': measurements['diameter'],
                 'estimatedLumber': measurements['estimatedLumber'],
                 'quality': measurements['quality'],
+                'detectionMethod': 'custom_model',
+                'rawPredictions': [
+                    {'class': pred[1], 'confidence': float(pred[2])}
+                    for pred in decoded_predictions[:3]
+                ]
+            })
+        
+        elif wood_detected or wood_like:
+            # If wood detected by MobileNetV2 or heuristic, treat as cocolumber and provide measurements
+            measurements = estimate_tree_measurements(image_pil)
+            detection_method = 'mobilenet' if wood_detected else 'hsv_heuristic'
+            print(f"✅ Using {detection_method} detection results")
+            
+            return jsonify({
+                'detectedClass': 'cocolumber',
+                'confidence': int((max_confidence * 100) if wood_detected else 65),
+                'height': measurements['height'],
+                'width': measurements['width'],
+                'diameter': measurements['diameter'],
+                'estimatedLumber': measurements['estimatedLumber'],
+                'quality': measurements['quality'],
+                'detectionMethod': detection_method,
                 'rawPredictions': [
                     {'class': pred[1], 'confidence': float(pred[2])}
                     for pred in decoded_predictions[:3]

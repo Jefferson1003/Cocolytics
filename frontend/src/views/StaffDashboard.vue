@@ -179,10 +179,17 @@ export default {
       try {
         this.loadingSellers = true
         const token = localStorage.getItem('token')
+        const userData = localStorage.getItem('user')
+        const currentUser = userData ? JSON.parse(userData) : null
+        const currentUserId = currentUser?.id
         const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/sellers`, {
           headers: { Authorization: `Bearer ${token}` }
         })
-        this.sellers = response.data.data.filter(seller => seller.product_count > 0)
+        this.sellers = response.data.data.filter(seller => {
+          const hasProducts = seller.product_count > 0
+          const isNotCurrentUser = currentUserId ? String(seller.staff_id) !== String(currentUserId) : true
+          return hasProducts && isNotCurrentUser
+        })
       } catch (err) {
         console.log('Failed to load sellers')
       } finally {

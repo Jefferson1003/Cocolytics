@@ -4,7 +4,7 @@
 
     <div class="dashboard-container">
       <div class="scanner-header">
-        <h1>� Coco Lumber Estimator</h1>
+        <h1>🟤 Brown Object Scanner</h1>
       </div>
 
       <div class="scanner-wrapper">
@@ -31,7 +31,7 @@
             <img v-if="capturedImage" :src="capturedImage" alt="Captured" class="captured-image" />
             <div v-if="!showCamera && !capturedImage" class="placeholder">
               <span class="placeholder-icon">📹</span>
-              <p>Camera Preview</p>
+              <p>Point camera at brown objects</p>
             </div>
             <canvas ref="canvas" style="display: none;"></canvas>
           </div>
@@ -63,6 +63,9 @@
               </template>
 
               <template v-if="capturedImage">
+                <button class="btn-action btn-detect" @click="startDetection">
+                  🟢 Start Detection
+                </button>
                 <button class="btn-action btn-retake" @click="retakeImage">
                   🔄 Retake
                 </button>
@@ -94,15 +97,19 @@
             <h3>🔍 Detection Results</h3>
             <div class="results-grid">
               <div class="result-item">
-                <span class="result-label">Tree Detected:</span>
+                <span class="result-label">Brown Detected:</span>
                 <span class="result-value">{{ scanResults.treeDetected ? 'Yes ✓' : 'No ✗' }}</span>
               </div>
-              <div class="result-item">
-                <span class="result-label">Tree Height:</span>
-                <span class="result-value">{{ scanResults.height }} meters</span>
+              <div class="result-item result-highlight">
+                <span class="result-label">Height (m):</span>
+                <span class="result-value">{{ scanResults.height }}</span>
+              </div>
+              <div class="result-item result-highlight">
+                <span class="result-label">Width (cm):</span>
+                <span class="result-value">{{ scanResults.width || scanResults.diameter }}</span>
               </div>
               <div class="result-item">
-                <span class="result-label">Trunk Diameter:</span>
+                <span class="result-label">Diameter:</span>
                 <span class="result-value">{{ scanResults.diameter }} cm</span>
               </div>
               <div class="result-item">
@@ -170,15 +177,19 @@
             <h3>🔍 Detection Results</h3>
             <div class="results-grid">
               <div class="result-item">
-                <span class="result-label">Tree Detected:</span>
+                <span class="result-label">Brown Detected:</span>
                 <span class="result-value">{{ scanResults.treeDetected ? 'Yes ✓' : 'No ✗' }}</span>
               </div>
-              <div class="result-item">
-                <span class="result-label">Tree Height:</span>
-                <span class="result-value">{{ scanResults.height }} meters</span>
+              <div class="result-item result-highlight">
+                <span class="result-label">Height (m):</span>
+                <span class="result-value">{{ scanResults.height }}</span>
+              </div>
+              <div class="result-item result-highlight">
+                <span class="result-label">Width (cm):</span>
+                <span class="result-value">{{ scanResults.width || scanResults.diameter }}</span>
               </div>
               <div class="result-item">
-                <span class="result-label">Trunk Diameter:</span>
+                <span class="result-label">Diameter:</span>
                 <span class="result-value">{{ scanResults.diameter }} cm</span>
               </div>
               <div class="result-item">
@@ -225,6 +236,7 @@ export default {
       scanResults: {
         treeDetected: false,
         height: '0',
+        width: '0',
         diameter: '0',
         estimatedLumber: '0',
         quality: 'N/A',
@@ -363,6 +375,7 @@ export default {
         this.scanResults = {
           treeDetected: false,
           height: 'Analyzing...',
+          width: 'Analyzing...',
           diameter: 'Analyzing...',
           estimatedLumber: 'Analyzing...',
           quality: 'Analyzing...',
@@ -416,71 +429,33 @@ export default {
           return
         }
         
-        // Check detection result
-        const detectedClass = (result.detectedClass || '').toLowerCase()
-        
-        // Check if it's a human
-        if (detectedClass.includes('human') || detectedClass.includes('person') || 
-            detectedClass.includes('man') || detectedClass.includes('woman') ||
-            detectedClass.includes('child') || detectedClass.includes('people')) {
-          this.detectionError = '⚠️ This is human, not cocolumber!'
-          this.scanResults = {
-            treeDetected: false,
-            height: '0',
-            diameter: '0',
-            estimatedLumber: '0',
-            quality: 'N/A',
-            confidence: '0'
-          }
-          alert('⚠️ Human detected! This is not cocolumber.')
-          return
-        }
-        
-        // Check if it's cocolumber, wood, or tree
-        if (detectedClass.includes('cocolumber') || 
-            detectedClass.includes('coconut') || 
-            detectedClass.includes('wood') || 
-            detectedClass.includes('tree') || 
-            detectedClass.includes('timber') ||
-            detectedClass.includes('lumber') ||
-            detectedClass.includes('log') ||
-            detectedClass.includes('bark') ||
-            detectedClass.includes('trunk')) {
-          
-          // Valid cocolumber detected - use ML results
+        // Simple brown detection - ML service already analyzes HSV color
+        // Just check if measurements were returned successfully
+        if (result.height && result.width && result.diameter) {
+          // Brown object detected - use ML measurements
           this.scanResults = {
             treeDetected: true,
             height: result.height || '0',
-            diameter: result.diameter || '0',
+            width: result.width || '0',
+            diameter: result.diameter || result.width || '0',
             estimatedLumber: result.estimatedLumber || '0',
             quality: result.quality || 'N/A',
             confidence: result.confidence || '0'
           }
-          alert('✅ Cocolumber detected successfully!')
-        } else if (detectedClass.includes('not_cocolumber')) {
-          // ML service explicitly rejected as non-cocolumber
-          this.detectionError = '⚠️ Only cocolumber/wood/logs/trees can be scanned!'
-          this.scanResults = {
-            treeDetected: false,
-            height: '0',
-            diameter: '0',
-            estimatedLumber: '0',
-            quality: 'N/A',
-            confidence: '0'
-          }
-          alert('⚠️ Only cocolumber/wood/logs/trees can be scanned! This appears to be something else.')
+          alert('✅ Brown object detected!')
         } else {
-          // Other object detected - not cocolumber
-          this.detectionError = `⚠️ This is ${result.detectedClass || 'unknown object'}, not cocolumber!`
+          // No brown object detected
+          this.detectionError = '⚠️ No brown object detected in image!'
           this.scanResults = {
             treeDetected: false,
             height: '0',
+            width: '0',
             diameter: '0',
             estimatedLumber: '0',
             quality: 'N/A',
             confidence: '0'
           }
-          alert(`⚠️ Only cocolumber/wood/logs/trees can be scanned! Detected: ${result.detectedClass || 'Unknown object'}.`)
+          alert('⚠️ No brown object detected. Please scan a brown object.')
         }
         
       } catch (error) {
@@ -492,6 +467,7 @@ export default {
         this.scanResults = {
           treeDetected: false,
           height: '0',
+          width: '0',
           diameter: '0',
           estimatedLumber: '0',
           quality: 'N/A',
@@ -852,6 +828,12 @@ export default {
   background: white;
   border-radius: 8px;
   border: 1px solid #ddd;
+}
+
+.result-item.result-highlight {
+  background: #f0f8ff;
+  border: 2px solid #2196F3;
+  box-shadow: 0 0 8px rgba(33, 150, 243, 0.2);
 }
 
 .result-label {

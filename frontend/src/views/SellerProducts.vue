@@ -19,6 +19,11 @@
               <span class="meta-item">📦 {{ products.length }} Products</span>
               <span class="meta-item">👤 Available Now</span>
             </div>
+            <div class="store-actions">
+              <button @click="messageTrader" class="btn-message-trader-banner">
+                💬 Message Trader
+              </button>
+            </div>
           </div>
           <button @click="$router.push('/sellers')" class="btn-back-float">← All Traders</button>
         </div>
@@ -94,9 +99,25 @@
               </div>
             </div>
             
-            <button @click="addToCart(product)" class="btn-add-cart" :disabled="product.stock === 0">
-              <span v-if="product.stock > 0">🛒 Add to Cart</span>
-              <span v-else>⛔ Out of Stock</span>
+            <div v-if="product.stock > 0" class="cart-controls">
+              <div class="quantity-selector">
+                <button @click="decreaseQuantity(product.id)" class="qty-btn" :disabled="getProductQuantity(product.id) <= 1">−</button>
+                <input 
+                  type="number" 
+                  :value="getProductQuantity(product.id)"
+                  @input="setProductQuantity(product.id, $event.target.value, product.stock)"
+                  min="1"
+                  :max="product.stock"
+                  class="qty-input"
+                />
+                <button @click="increaseQuantity(product.id, product.stock)" class="qty-btn" :disabled="getProductQuantity(product.id) >= product.stock">+</button>
+              </div>
+              <button @click="addToCart(product)" class="btn-add-cart">
+                🛒 Add to Cart
+              </button>
+            </div>
+            <button v-else class="btn-add-cart" disabled>
+              ⛔ Out of Stock
             </button>
           </div>
         </div>
@@ -125,6 +146,7 @@
 </template>
 
 <script>
+import axios from 'axios'
 import UserNavbar from '../components/UserNavbar.vue'
 import StaffSidebar from '../components/StaffSidebar.vue'
 
@@ -142,7 +164,8 @@ export default {
       successMessage: '',
       errorMessage: '',
       token: null,
-      searchQuery: ''
+      searchQuery: '',
+      productQuantities: {}
     }
   },
   computed: {
@@ -176,17 +199,116 @@ export default {
         const data = await response.json()
         
         this.products = data
+        // Initialize quantities for all products
+        data.forEach(product => {
+          this.productQuantities[product.id] = 1
+        })
         if (data.length > 0) {
           this.seller = {
+            staff_id: data[0].staff_id,
             store_name: data[0].store_name || `${data[0].staff_name}'s Trader`,
             staff_name: data[0].staff_name,
-            store_description: 'Quality coconut products'
+            store_logo: data[0].store_logo,
+            contact_number: data[0].contact_number,
+            store_description: data[0].store_description || 'Quality coconut products'
           }
         }
       } catch (error) {
         console.error('Error fetching products:', error)
       } finally {
         this.loading = false
+      }
+    },
+    async messageTrader() {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) {
+          this.errorMessage = 'Please login first'
+          setTimeout(() => {
+            this.$router.push('/login')
+          }, 2000)
+          return
+        }
+
+        // Get user info to verify they are staff/admin
+        const userData = localStorage.getItem('user')
+        const user = userData ? JSON.parse(userData) : null
+        
+        if (!user || !['staff', 'admin'].includes(user.role)) {
+          this.errorMessage = 'Only traders (staff) can message other traders'
+          setTimeout(() => this.errorMessage = '', 5000)
+          return
+        }
+
+        if (!this.seller || !this.seller.staff_id) {
+          this.errorMessage = 'Trader information not available'
+          setTimeout(() => this.errorMessage = '', 3000)
+          return
+        }
+
+        console.log('Starting chat with trader:', this.seller.staff_id)
+
+        // Create or get existing conversation
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_BASE_URL}/api/chat/conversations`,
+          { recipient_id: this.seller.staff_id },
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+
+        console.log('Chat conversation created/retrieved:', response.data)
+
+        // Navigate to chat page with conversation selected
+        this.$router.push({
+          path: '/chat',
+          query: { conversation: response.data.conversation_id }
+        })
+      } catch (error) {
+        console.error('Error starting chat:', error)
+        console.error('Error details:', error.response)
+        
+        let errorMsg = 'Failed to start chat. '
+        
+        if (error.response) {
+          // Server responded with error
+          if (error.response.status === 403) {
+            errorMsg = 'You do not have permission to message traders. Only staff/admin can chat.'
+          } else if (error.response.status === 401) {
+            errorMsg = 'Please login again. Your session may have expired.'
+          } else if (error.response.status === 404) {
+            errorMsg = 'Trader not found or not available for chat.'
+          } else {
+            errorMsg = error.response.data?.message || errorMsg + 'Please try again.'
+          }
+        } else if (error.request) {
+          // Request made but no response
+          errorMsg = 'Cannot connect to server. Please check if the backend is running.'
+        } else {
+          errorMsg = error.message || errorMsg + 'Please try again.'
+        }
+        
+        this.errorMessage = errorMsg
+        setTimeout(() => this.errorMessage = '', 5000)
+      }
+    },
+    getProductQuantity(productId) {
+      return this.productQuantities[productId] || 1
+    },
+    setProductQuantity(productId, value, maxStock) {
+      let qty = parseInt(value)
+      if (isNaN(qty) || qty < 1) qty = 1
+      if (qty > maxStock) qty = maxStock
+      this.productQuantities[productId] = qty
+    },
+    increaseQuantity(productId, maxStock) {
+      const current = this.getProductQuantity(productId)
+      if (current < maxStock) {
+        this.productQuantities[productId] = current + 1
+      }
+    },
+    decreaseQuantity(productId) {
+      const current = this.getProductQuantity(productId)
+      if (current > 1) {
+        this.productQuantities[productId] = current - 1
       }
     },
     addToCart(product) {
@@ -205,14 +327,16 @@ export default {
       }
 
       try {
+        const quantityToAdd = this.getProductQuantity(product.id)
         let cart = localStorage.getItem('cartItems')
         cart = cart ? JSON.parse(cart) : []
 
         const existingItem = cart.find(item => item.id === product.id)
         
         if (existingItem) {
-          if (existingItem.quantity < product.stock) {
-            existingItem.quantity += 1
+          const newQuantity = existingItem.quantity + quantityToAdd
+          if (newQuantity <= product.stock) {
+            existingItem.quantity = newQuantity
           } else {
             this.errorMessage = 'Cannot add more than available stock'
             setTimeout(() => this.errorMessage = '', 3000)
@@ -223,7 +347,7 @@ export default {
             id: product.id,
             size: product.size,
             length: product.length,
-            quantity: 1,
+            quantity: quantityToAdd,
             staff_id: product.staff_id,
             store_name: product.store_name || this.seller?.store_name
           })
@@ -231,7 +355,9 @@ export default {
 
         localStorage.setItem('cartItems', JSON.stringify(cart))
         
-        this.successMessage = `✓ Added ${product.size} to cart!`
+        this.successMessage = `✓ Added ${quantityToAdd} x ${product.size} to cart!`
+        // Reset quantity to 1 after adding
+        this.productQuantities[product.id] = 1
         setTimeout(() => {
           this.successMessage = ''
         }, 3000)
@@ -346,6 +472,7 @@ export default {
   display: flex;
   gap: 25px;
   flex-wrap: wrap;
+  margin-bottom: 20px;
 }
 
 .meta-item {
@@ -356,6 +483,29 @@ export default {
   background: rgba(255, 255, 255, 0.15);
   border-radius: 8px;
   backdrop-filter: blur(10px);
+}
+
+.store-actions {
+  margin-top: 15px;
+}
+
+.btn-message-trader-banner {
+  padding: 14px 32px;
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4);
+}
+
+.btn-message-trader-banner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(33, 150, 243, 0.6);
+  background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
 }
 
 .btn-back-float {
@@ -577,6 +727,77 @@ export default {
 
 .stock-value {
   color: #4CAF50;
+}
+
+.cart-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.qty-btn {
+  width: 36px;
+  height: 36px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.3em;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.qty-btn:hover:not(:disabled) {
+  background: #5568d3;
+  transform: scale(1.05);
+}
+
+.qty-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.qty-input {
+  width: 60px;
+  padding: 8px;
+  background: #1a1a2e;
+  color: #fff;
+  border: 2px solid #667eea;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.qty-input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.qty-input[type=number] {
+  -moz-appearance: textfield;
 }
 
 .btn-add-cart {

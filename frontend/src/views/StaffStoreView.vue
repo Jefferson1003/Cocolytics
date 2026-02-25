@@ -102,7 +102,19 @@
                 <span class="spec-value">{{ product.length }} cm</span>
               </p>
               
-              <div class="product-actions">
+              <div class="cart-controls">
+                <div class="quantity-selector">
+                  <button @click="decreaseQuantity(product.id)" class="qty-btn" :disabled="getProductQuantity(product.id) <= 1">−</button>
+                  <input 
+                    type="number" 
+                    :value="getProductQuantity(product.id)"
+                    @input="setProductQuantity(product.id, $event.target.value, product.stock)"
+                    min="1"
+                    :max="product.stock"
+                    class="qty-input"
+                  />
+                  <button @click="increaseQuantity(product.id, product.stock)" class="qty-btn" :disabled="getProductQuantity(product.id) >= product.stock">+</button>
+                </div>
                 <button @click="addToCart(product)" class="btn-add-cart">
                   🛒 Add to Cart
                 </button>
@@ -146,7 +158,8 @@ export default {
       loading: true,
       successMessage: '',
       errorMessage: '',
-      token: null
+      token: null,
+      productQuantities: {}
     }
   },
   mounted() {
@@ -163,6 +176,10 @@ export default {
         const data = await response.json()
         this.storeInfo = data.store_info
         this.products = data.products
+        // Initialize quantities for all products
+        this.products.forEach(product => {
+          this.productQuantities[product.id] = 1
+        })
       } catch (error) {
         console.error('Error fetching trader data:', error)
         this.errorMessage = 'Failed to load trader. Please try again.'
@@ -170,6 +187,27 @@ export default {
         this.products = []
       } finally {
         this.loading = false
+      }
+    },
+    getProductQuantity(productId) {
+      return this.productQuantities[productId] || 1
+    },
+    setProductQuantity(productId, value, maxStock) {
+      let qty = parseInt(value)
+      if (isNaN(qty) || qty < 1) qty = 1
+      if (qty > maxStock) qty = maxStock
+      this.productQuantities[productId] = qty
+    },
+    increaseQuantity(productId, maxStock) {
+      const current = this.getProductQuantity(productId)
+      if (current < maxStock) {
+        this.productQuantities[productId] = current + 1
+      }
+    },
+    decreaseQuantity(productId) {
+      const current = this.getProductQuantity(productId)
+      if (current > 1) {
+        this.productQuantities[productId] = current - 1
       }
     },
     addToCart(product) {
@@ -185,14 +223,16 @@ export default {
       }
 
       try {
+        const quantityToAdd = this.getProductQuantity(product.id)
         let cart = localStorage.getItem('cartItems')
         cart = cart ? JSON.parse(cart) : []
 
         const existingItem = cart.find(item => item.id === product.id)
         
         if (existingItem) {
-          if (existingItem.quantity < product.stock) {
-            existingItem.quantity += 1
+          const newQuantity = existingItem.quantity + quantityToAdd
+          if (newQuantity <= product.stock) {
+            existingItem.quantity = newQuantity
           } else {
             this.errorMessage = 'Cannot add more than available stock'
             setTimeout(() => this.errorMessage = '', 3000)
@@ -203,7 +243,7 @@ export default {
             id: product.id,
             size: product.size,
             length: product.length,
-            quantity: 1,
+            quantity: quantityToAdd,
             staff_id: product.staff_id,
             store_name: product.store_name
           })
@@ -211,7 +251,9 @@ export default {
 
         localStorage.setItem('cartItems', JSON.stringify(cart))
         
-        this.successMessage = `✓ Added ${product.size} to cart!`
+        this.successMessage = `✓ Added ${quantityToAdd} x ${product.size} to cart!`
+        // Reset quantity to 1 after adding
+        this.productQuantities[product.id] = 1
         setTimeout(() => {
           this.successMessage = ''
         }, 3000)
@@ -496,17 +538,89 @@ export default {
   margin-top: auto;
 }
 
+.cart-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-top: auto;
+}
+
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.qty-btn {
+  width: 36px;
+  height: 36px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.3em;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.qty-btn:hover:not(:disabled) {
+  background: #5568d3;
+  transform: scale(1.05);
+}
+
+.qty-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.qty-input {
+  width: 60px;
+  padding: 8px;
+  background: #1a1a2e;
+  color: #fff;
+  border: 2px solid #667eea;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.qty-input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.qty-input[type=number] {
+  -moz-appearance: textfield;
+}
+
 .btn-add-cart {
-  flex: 1;
+  width: 100%;
   background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
   color: white;
   border: none;
-  padding: 10px 12px;
+  padding: 12px;
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 0.9em;
+  font-size: 0.95em;
 }
 
 .btn-add-cart:hover {

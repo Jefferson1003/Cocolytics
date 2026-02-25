@@ -49,6 +49,7 @@ import AdminUsers from './views/AdminUsers.vue'
 import AdminFeatures from './views/AdminFeatures.vue'
 import StaffReports from './views/StaffReports.vue'
 import NotificationsPage from './views/NotificationsPage.vue'
+import TraderChat from './views/TraderChat.vue'
 
 // Define routes
 const routes = [
@@ -177,6 +178,12 @@ const routes = [
     name: 'Notifications',
     component: NotificationsPage,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/chat',
+    name: 'TraderChat',
+    component: TraderChat,
+    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
   }
 ]
 

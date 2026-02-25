@@ -58,6 +58,14 @@
           <span class="menu-icon">🏪</span>
           <span class="menu-label">Browse Sellers</span>
         </router-link>
+        <router-link to="/cart" class="menu-item" @click="showMenu = false">
+          <span class="menu-icon">🛒</span>
+          <span class="menu-label">My Cart</span>
+        </router-link>
+        <router-link to="/chat" class="menu-item" @click="showMenu = false">
+          <span class="menu-icon">💬</span>
+          <span class="menu-label">Trader Chat</span>
+        </router-link>
         <router-link to="/staff/profile" class="menu-item" @click="showMenu = false">
           <span class="menu-icon">👤</span>
           <span class="menu-label">My Profile</span>

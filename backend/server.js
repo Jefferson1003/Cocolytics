@@ -62,6 +62,27 @@ pool.getConnection()
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
     );
 
+    // Ensure paper_type column exists (for older databases)
+    const [paperTypeCol] = await pool.execute(
+      `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE table_schema = DATABASE() AND table_name = 'paper_uploads' AND column_name = 'paper_type'`
+    );
+    if (paperTypeCol[0].count === 0) {
+      await pool.execute(
+        `ALTER TABLE paper_uploads
+         ADD COLUMN paper_type ENUM('to_cut', 'transport') DEFAULT 'to_cut' AFTER file_path`
+      );
+    }
+
+    // Ensure index on paper_type exists
+    const [paperTypeIdx] = await pool.execute(
+      `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.STATISTICS
+       WHERE table_schema = DATABASE() AND table_name = 'paper_uploads' AND index_name = 'idx_paper_type'`
+    );
+    if (paperTypeIdx[0].count === 0) {
+      await pool.execute('ALTER TABLE paper_uploads ADD INDEX idx_paper_type (paper_type)');
+    }
+
     
     // Create stock_transactions table for tracking stock movements
     await pool.execute(
@@ -260,6 +281,73 @@ pool.getConnection()
     }
 
     console.log('✅ Notifications system tables initialized');
+
+    // ==================== CHAT SYSTEM SETUP ====================
+    // Create chat_conversations table
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS chat_conversations (
+        id INT NOT NULL AUTO_INCREMENT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        last_message_at TIMESTAMP NULL,
+        PRIMARY KEY (id),
+        KEY idx_last_message (last_message_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+
+    // Create conversation_participants table
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS conversation_participants (
+        id INT NOT NULL AUTO_INCREMENT,
+        conversation_id INT NOT NULL,
+        user_id INT NOT NULL,
+        joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_read_at TIMESTAMP NULL,
+        PRIMARY KEY (id),
+        UNIQUE KEY unique_conversation_user (conversation_id, user_id),
+        KEY idx_user_id (user_id),
+        KEY idx_conversation_id (conversation_id),
+        CONSTRAINT fk_conv_participant_conv FOREIGN KEY (conversation_id) REFERENCES chat_conversations(id) ON DELETE CASCADE,
+        CONSTRAINT fk_conv_participant_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+
+    // Create chat_messages table
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS chat_messages (
+        id INT NOT NULL AUTO_INCREMENT,
+        conversation_id INT NOT NULL,
+        sender_id INT NOT NULL,
+        message_text TEXT NOT NULL,
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY idx_conversation_id (conversation_id),
+        KEY idx_sender_id (sender_id),
+        KEY idx_created_at (created_at),
+        CONSTRAINT fk_message_conversation FOREIGN KEY (conversation_id) REFERENCES chat_conversations(id) ON DELETE CASCADE,
+        CONSTRAINT fk_message_sender FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+
+    // Add indexes for better performance
+    const [msgConvIdx] = await pool.execute(
+      `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.STATISTICS
+       WHERE table_schema = DATABASE() AND table_name = 'chat_messages' AND index_name = 'idx_messages_conversation_created'`
+    );
+    if (msgConvIdx[0].count === 0) {
+      await pool.execute('CREATE INDEX idx_messages_conversation_created ON chat_messages(conversation_id, created_at)');
+    }
+
+    const [msgUnreadIdx] = await pool.execute(
+      `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.STATISTICS
+       WHERE table_schema = DATABASE() AND table_name = 'chat_messages' AND index_name = 'idx_unread_messages'`
+    );
+    if (msgUnreadIdx[0].count === 0) {
+      await pool.execute('CREATE INDEX idx_unread_messages ON chat_messages(conversation_id, is_read)');
+    }
+
+    console.log('✅ Chat system tables initialized');
   } catch (error) {
     console.error('❌ Failed to ensure tables:', error.message);
   }
@@ -1916,6 +2004,14 @@ app.get('/api/staff/reports', authenticateToken, authorizeRoles('staff', 'admin'
 // ==================== NOTIFICATIONS ROUTES ====================
 const notificationRoutes = require('./routes/notifications')(NotificationService, pool);
 app.use('/api/notifications', authenticateToken, notificationRoutes);
+
+// ==================== CHAT ROUTES ====================
+const chatRoutes = require('./routes/chat');
+// Add database pool to request object for chat routes
+app.use('/api/chat', authenticateToken, authorizeRoles('staff', 'admin'), (req, res, next) => {
+  req.db = pool;
+  next();
+}, chatRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

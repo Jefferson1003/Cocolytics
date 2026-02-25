@@ -14,13 +14,13 @@
       </div>
 
       <div v-else-if="sellers.length > 0" class="sellers-grid">
-        <div v-for="seller in sellers" :key="seller.staff_id" class="seller-card" @click="viewSellerProducts(seller.staff_id)">
-          <div class="seller-logo">
+        <div v-for="seller in sellers" :key="seller.staff_id" class="seller-card">
+          <div class="seller-logo" @click="viewSellerProducts(seller.staff_id)">
             <img v-if="seller.store_logo" :src="getImageUrl(seller.store_logo)" :alt="seller.store_name" />
             <div v-else class="default-logo">🥥</div>
           </div>
           
-          <div class="seller-info">
+          <div class="seller-info" @click="viewSellerProducts(seller.staff_id)">
             <h3>{{ seller.store_name || `${seller.staff_name}'s Trader` }}</h3>
             <p class="seller-description">{{ seller.store_description || 'Quality coconut products' }}</p>
             
@@ -41,9 +41,14 @@
             </div>
           </div>
           
-          <button class="btn-view-store">
-            View Trader →
-          </button>
+          <div class="seller-actions">
+            <button @click="messageTrader(seller.staff_id)" class="btn-message-trader">
+              💬 Message
+            </button>
+            <button @click="viewSellerProducts(seller.staff_id)" class="btn-view-store">
+              View Products →
+            </button>
+          </div>
         </div>
       </div>
 
@@ -53,10 +58,23 @@
         <p>Check back later for available traders</p>
       </div>
     </div>
+
+    <!-- Success Message -->
+    <div v-if="successMessage" class="alert alert-success">
+      <span class="alert-icon">✓</span>
+      {{ successMessage }}
+    </div>
+
+    <!-- Error Message -->
+    <div v-if="errorMessage" class="alert alert-error">
+      <span class="alert-icon">✕</span>
+      {{ errorMessage }}
+    </div>
   </div>
 </template>
 
 <script>
+import axios from 'axios'
 import UserNavbar from '../components/UserNavbar.vue'
 import StaffSidebar from '../components/StaffSidebar.vue'
 
@@ -70,7 +88,9 @@ export default {
     return {
       sellers: [],
       loading: false,
-      token: null
+      token: null,
+      successMessage: '',
+      errorMessage: ''
     }
   },
   mounted() {
@@ -81,10 +101,17 @@ export default {
     async fetchSellers() {
       this.loading = true
       try {
+        const userData = localStorage.getItem('user')
+        const currentUser = userData ? JSON.parse(userData) : null
+        const currentUserId = currentUser?.id
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/sellers`)
         if (!response.ok) throw new Error('Failed to fetch sellers')
         const data = await response.json()
-        this.sellers = data.filter(s => s.product_count > 0) // Only show sellers with products
+        this.sellers = data.filter(s => {
+          const hasProducts = s.product_count > 0
+          const isNotCurrentUser = currentUserId ? String(s.staff_id) !== String(currentUserId) : true
+          return hasProducts && isNotCurrentUser
+        }) // Only show sellers with products and exclude current user
       } catch (error) {
         console.error('Error fetching sellers:', error)
       } finally {
@@ -93,6 +120,77 @@ export default {
     },
     viewSellerProducts(sellerId) {
       this.$router.push(`/sellers/${sellerId}`)
+    },
+    async messageTrader(traderId) {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) {
+          this.errorMessage = 'Please login first'
+          setTimeout(() => {
+            this.$router.push('/login')
+          }, 2000)
+          return
+        }
+
+        // Get user info to verify they are staff/admin
+        const userData = localStorage.getItem('user')
+        const user = userData ? JSON.parse(userData) : null
+        
+        if (!user || !['staff', 'admin'].includes(user.role)) {
+          this.errorMessage = 'Only traders (staff) can message other traders'
+          setTimeout(() => this.errorMessage = '', 5000)
+          return
+        }
+
+        if (!traderId) {
+          this.errorMessage = 'Invalid trader ID'
+          setTimeout(() => this.errorMessage = '', 3000)
+          return
+        }
+
+        console.log('Starting chat with trader:', traderId)
+
+        // Create or get existing conversation
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_BASE_URL}/api/chat/conversations`,
+          { recipient_id: traderId },
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+
+        console.log('Chat conversation created/retrieved:', response.data)
+
+        // Navigate to chat page with conversation selected
+        this.$router.push({
+          path: '/chat',
+          query: { conversation: response.data.conversation_id }
+        })
+      } catch (error) {
+        console.error('Error starting chat:', error)
+        console.error('Error details:', error.response)
+        
+        let errorMsg = 'Failed to start chat. '
+        
+        if (error.response) {
+          // Server responded with error
+          if (error.response.status === 403) {
+            errorMsg = 'You do not have permission to message traders. Only staff/admin can chat.'
+          } else if (error.response.status === 401) {
+            errorMsg = 'Please login again. Your session may have expired.'
+          } else if (error.response.status === 404) {
+            errorMsg = 'Trader not found or not available for chat.'
+          } else {
+            errorMsg = error.response.data?.message || errorMsg + 'Please try again.'
+          }
+        } else if (error.request) {
+          // Request made but no response
+          errorMsg = 'Cannot connect to server. Please check if the backend is running.'
+        } else {
+          errorMsg = error.message || errorMsg + 'Please try again.'
+        }
+        
+        this.errorMessage = errorMsg
+        setTimeout(() => this.errorMessage = '', 5000)
+      }
     },
     getImageUrl(imagePath) {
       if (!imagePath) return ''
@@ -171,7 +269,6 @@ export default {
   padding: 30px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
-  cursor: pointer;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -196,6 +293,7 @@ export default {
   justify-content: center;
   box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
   border: 3px solid rgba(76, 175, 80, 0.2);
+  cursor: pointer;
 }
 
 .seller-logo img {
@@ -212,6 +310,7 @@ export default {
 .seller-info {
   text-align: center;
   flex-grow: 1;
+  cursor: pointer;
 }
 
 .seller-info h3 {
@@ -271,14 +370,41 @@ export default {
   font-size: 1.2em;
 }
 
-.btn-view-store {
+.seller-actions {
+  display: flex;
+  gap: 10px;
   width: 100%;
-  padding: 15px;
+}
+
+.btn-message-trader {
+  flex: 0 0 auto;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+  white-space: nowrap;
+}
+
+.btn-message-trader:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(33, 150, 243, 0.5);
+  background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+}
+
+.btn-view-store {
+  flex: 1;
+  padding: 12px;
   background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
   color: white;
   border: none;
   border-radius: 10px;
-  font-size: 1.15em;
+  font-size: 1em;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -317,6 +443,51 @@ export default {
   font-size: 1.2em;
 }
 
+/* Alert Messages */
+.alert {
+  position: fixed;
+  top: 100px;
+  right: 30px;
+  padding: 18px 25px;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  animation: slideIn 0.3s ease-out;
+  backdrop-filter: blur(10px);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.alert-success {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.95) 0%, rgba(56, 142, 60, 0.95) 100%);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.alert-error {
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.95) 0%, rgba(211, 47, 47, 0.95) 100%);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.alert-icon {
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
 @media (max-width: 768px) {
   .sellers-grid {
     grid-template-columns: 1fr;
@@ -328,6 +499,20 @@ export default {
 
   .header p {
     font-size: 1.1em;
+  }
+
+  .alert {
+    top: 70px;
+    right: 15px;
+    left: 15px;
+  }
+
+  .seller-actions {
+    flex-direction: column;
+  }
+
+  .btn-message-trader {
+    flex: 1;
   }
 }
 </style>

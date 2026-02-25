@@ -201,9 +201,16 @@ export default {
     async fetchSellers() {
       this.loadingSellers = true
       try {
+        const userData = localStorage.getItem('user')
+        const currentUser = userData ? JSON.parse(userData) : null
+        const currentUserId = currentUser?.id
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/sellers`)
         if (response.ok) {
-          this.sellers = await response.json()
+          const data = await response.json()
+          this.sellers = data.filter(seller => {
+            const isNotCurrentUser = currentUserId ? String(seller.staff_id) !== String(currentUserId) : true
+            return isNotCurrentUser
+          })
         }
       } catch (error) {
         console.error('Error fetching sellers:', error)

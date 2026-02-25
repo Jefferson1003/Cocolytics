@@ -8,7 +8,18 @@
           <div class="item-info">
             <h3>{{ item.size }}</h3>
             <p>Length: {{ item.length }} cm</p>
-            <p>Quantity: {{ item.quantity }} units</p>
+            <div class="quantity-control">
+              <label>Quantity:</label>
+              <input 
+                type="number" 
+                v-model.number="item.quantity"
+                @input="updateQuantity(idx, $event)"
+                @blur="validateQuantity(idx)"
+                min="1"
+                class="qty-input"
+              />
+              <span class="unit-label">units</span>
+            </div>
             <!-- Display trader information if available -->
             <p v-if="item.store_name" class="store-name">👤 {{ item.store_name }}</p>
           </div>
@@ -29,8 +40,8 @@
       <div v-else class="empty-cart">
         <div class="empty-icon">🛒</div>
         <h3>Your cart is empty</h3>
-        <p>Add some coconuts to your cart from the orders page!</p>
-        <router-link to="/user/orders" class="btn-shop">Browse Products</router-link>
+        <p>Add products to your cart from the traders list.</p>
+        <router-link to="/sellers" class="btn-shop">Browse Traders</router-link>
       </div>
 
       <div v-if="successMessage" class="alert success">{{ successMessage }}</div>
@@ -94,6 +105,20 @@ export default {
         this.save()
       }
     },
+    updateQuantity(index, event) {
+      let value = parseInt(event.target.value)
+      if (isNaN(value) || value < 1) {
+        value = 1
+      }
+      this.cartItems[index].quantity = value
+      this.save()
+    },
+    validateQuantity(index) {
+      if (!this.cartItems[index].quantity || this.cartItems[index].quantity < 1) {
+        this.cartItems[index].quantity = 1
+        this.save()
+      }
+    },
     async placeOrder() {
       if (this.cartItems.length === 0) return
       
@@ -128,7 +153,7 @@ export default {
         
         setTimeout(() => {
           this.successMessage = ''
-          this.$router.push('/user/orders')
+          this.$router.push('/sellers')
         }, 2000)
       } catch (err) {
         console.error('Cart place error:', err)
@@ -145,6 +170,13 @@ export default {
 .cart-page { max-width: 900px; margin: 40px auto; padding: 20px; }
 .cart-item { display:flex; justify-content:space-between; background:#242442; color:#fff; padding:12px; border-radius:8px; margin-bottom:12px }
 .item-info { flex: 1; }
+.quantity-control { display:flex; align-items:center; gap:8px; margin:8px 0; }
+.quantity-control label { font-weight:500; }
+.qty-input { width:70px; padding:6px 8px; background:#1a1a2e; color:#fff; border:1px solid #667eea; border-radius:6px; font-size:1em; text-align:center; }
+.qty-input:focus { outline:none; border-color:#4CAF50; box-shadow:0 0 0 2px rgba(76,175,80,0.2); }
+.qty-input::-webkit-outer-spin-button, .qty-input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.qty-input[type=number] { -moz-appearance:textfield; }
+.unit-label { color:#999; font-size:0.9em; }
 .store-name { color:#4CAF50; font-size:0.9em; margin-top:8px; font-weight:600; }
 .item-actions { display:flex; gap:8px; align-items:center }
 .qty { background:#667eea; border:none; color:#fff; padding:6px 10px; border-radius:6px; cursor:pointer }

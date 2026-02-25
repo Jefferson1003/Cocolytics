@@ -88,6 +88,7 @@ async function initializeDatabase() {
         title VARCHAR(150) NOT NULL,
         description TEXT,
         file_path VARCHAR(255) NOT NULL,
+        paper_type ENUM('to_cut', 'transport') DEFAULT 'to_cut',
         status ENUM('pending','approved','rejected') DEFAULT 'pending',
         reviewed_by INT DEFAULT NULL,
         review_note VARCHAR(255) DEFAULT NULL,
@@ -97,6 +98,7 @@ async function initializeDatabase() {
         KEY user_id (user_id),
         KEY reviewed_by (reviewed_by),
         KEY idx_status (status),
+        KEY idx_paper_type (paper_type),
         CONSTRAINT paper_uploads_ibfk_1 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
         CONSTRAINT paper_uploads_ibfk_2 FOREIGN KEY (reviewed_by) REFERENCES users (id) ON DELETE SET NULL
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

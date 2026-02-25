@@ -9,52 +9,79 @@
       </div>
 
       <div class="list-card">
-        <!-- Filter Tabs -->
-        <div class="filter-tabs">
-          <button 
-            v-for="filter in ['all', 'to_cut', 'transport']"
-            :key="filter"
-            @click="activeFilter = filter"
-            :class="['tab', { active: activeFilter === filter }]"
-          >
-            <span v-if="filter === 'all'">📄 All Pending</span>
-            <span v-else-if="filter === 'to_cut'">✂️ To Cut</span>
-            <span v-else-if="filter === 'transport'">🚚 Transport</span>
-          </button>
-        </div>
-
         <div v-if="loading" class="loading">Loading pending papers...</div>
-        <div v-else-if="filteredPapers.length === 0" class="empty">No {{ filterLabel }} submissions to review.</div>
-        <div v-else class="list">
-          <div v-for="paper in filteredPapers" :key="paper.id" class="list-item">
-            <div class="paper-header">
-              <div class="paper-type-badge">
-                <span v-if="paper.paper_type === 'to_cut'" class="badge badge-to-cut">✂️ TO CUT</span>
-                <span v-else-if="paper.paper_type === 'transport'" class="badge badge-transport">🚚 TRANSPORT</span>
+        <div v-else class="approvals-grid">
+          <div class="approval-section">
+            <div class="section-title">✂️ To Cut</div>
+            <div v-if="toCutPapers.length === 0" class="empty">No To Cut submissions to review.</div>
+            <div v-else class="list">
+              <div v-for="paper in toCutPapers" :key="paper.id" class="list-item">
+                <div class="paper-header">
+                  <div class="paper-type-badge">
+                    <span class="badge badge-to-cut">✂️ TO CUT</span>
+                  </div>
+                  <h4>{{ paper.title }}</h4>
+                </div>
+                <div class="info">
+                  <p v-if="paper.description" class="description">{{ paper.description }}</p>
+                  <p class="meta">
+                    Submitted by <strong>{{ paper.uploader_name }}</strong> ({{ paper.uploader_email }})
+                    • {{ formatDate(paper.created_at) }}
+                  </p>
+                  <a :href="getFileUrl(paper.file_path)" target="_blank" rel="noopener" class="file-link">📎 View File</a>
+                  <textarea
+                    v-model="reviewNotes[paper.id]"
+                    rows="2"
+                    placeholder="Optional review note..."
+                    class="note"
+                  ></textarea>
+                </div>
+                <div class="actions">
+                  <button class="btn approve" :disabled="actionLoading[paper.id]" @click="approve(paper.id)">
+                    ✅ Approve
+                  </button>
+                  <button class="btn reject" :disabled="actionLoading[paper.id]" @click="reject(paper.id)">
+                    ❌ Reject
+                  </button>
+                </div>
               </div>
-              <h4>{{ paper.title }}</h4>
             </div>
-            <div class="info">
-              <p v-if="paper.description" class="description">{{ paper.description }}</p>
-              <p class="meta">
-                Submitted by <strong>{{ paper.uploader_name }}</strong> ({{ paper.uploader_email }})
-                • {{ formatDate(paper.created_at) }}
-              </p>
-              <a :href="getFileUrl(paper.file_path)" target="_blank" rel="noopener" class="file-link">📎 View File</a>
-              <textarea
-                v-model="reviewNotes[paper.id]"
-                rows="2"
-                placeholder="Optional review note..."
-                class="note"
-              ></textarea>
-            </div>
-            <div class="actions">
-              <button class="btn approve" :disabled="actionLoading[paper.id]" @click="approve(paper.id)">
-                ✅ Approve
-              </button>
-              <button class="btn reject" :disabled="actionLoading[paper.id]" @click="reject(paper.id)">
-                ❌ Reject
-              </button>
+          </div>
+
+          <div class="approval-section">
+            <div class="section-title">🚚 Transport</div>
+            <div v-if="transportPapers.length === 0" class="empty">No Transport submissions to review.</div>
+            <div v-else class="list">
+              <div v-for="paper in transportPapers" :key="paper.id" class="list-item">
+                <div class="paper-header">
+                  <div class="paper-type-badge">
+                    <span class="badge badge-transport">🚚 TRANSPORT</span>
+                  </div>
+                  <h4>{{ paper.title }}</h4>
+                </div>
+                <div class="info">
+                  <p v-if="paper.description" class="description">{{ paper.description }}</p>
+                  <p class="meta">
+                    Submitted by <strong>{{ paper.uploader_name }}</strong> ({{ paper.uploader_email }})
+                    • {{ formatDate(paper.created_at) }}
+                  </p>
+                  <a :href="getFileUrl(paper.file_path)" target="_blank" rel="noopener" class="file-link">📎 View File</a>
+                  <textarea
+                    v-model="reviewNotes[paper.id]"
+                    rows="2"
+                    placeholder="Optional review note..."
+                    class="note"
+                  ></textarea>
+                </div>
+                <div class="actions">
+                  <button class="btn approve" :disabled="actionLoading[paper.id]" @click="approve(paper.id)">
+                    ✅ Approve
+                  </button>
+                  <button class="btn reject" :disabled="actionLoading[paper.id]" @click="reject(paper.id)">
+                    ❌ Reject
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -76,7 +103,6 @@ export default {
   data() {
     return {
       pendingPapers: [],
-      activeFilter: 'all',
       loading: false,
       actionLoading: {},
       reviewNotes: {},
@@ -85,17 +111,11 @@ export default {
     }
   },
   computed: {
-    filteredPapers() {
-      if (this.activeFilter === 'all') {
-        return this.pendingPapers
-      }
-      return this.pendingPapers.filter(p => p.paper_type === this.activeFilter)
+    toCutPapers() {
+      return this.pendingPapers.filter(p => p.paper_type === 'to_cut')
     },
-    filterLabel() {
-      if (this.activeFilter === 'all') return 'pending'
-      if (this.activeFilter === 'to_cut') return 'To Cut'
-      if (this.activeFilter === 'transport') return 'Transport'
-      return 'pending'
+    transportPapers() {
+      return this.pendingPapers.filter(p => p.paper_type === 'transport')
     }
   },
   mounted() {
@@ -250,35 +270,26 @@ export default {
   background: rgba(76, 175, 80, 0.6);
 }
 
-.filter-tabs {
+
+.approvals-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  flex: 1;
+  align-items: stretch;
+}
+
+.approval-section {
   display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
 }
 
-.tab {
-  padding: 10px 18px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.7);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.95em;
-  font-weight: 500;
-}
-
-.tab:hover {
-  border-color: rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.tab.active {
-  background: linear-gradient(135deg, #27ae60 0%, #219150 100%);
-  border-color: #27ae60;
-  color: white;
-  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+.section-title {
+  font-size: 1.2em;
+  font-weight: 700;
+  color: #fff;
 }
 
 .list {
@@ -473,6 +484,10 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .approvals-grid {
+    grid-template-columns: 1fr;
+  }
+
   .list-item {
     grid-template-columns: 1fr;
     gap: 12px;
