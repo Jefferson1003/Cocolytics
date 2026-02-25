@@ -33,7 +33,6 @@ import Register from './views/Register.vue'
 import AdminDashboard from './views/AdminDashboard.vue'
 import StaffDashboard from './views/StaffDashboard.vue'
 import AddCocolumber from './views/AddCocolumber.vue'
-import UserOrders from './views/UserOrders.vue'
 import Cart from './views/Cart.vue'
 import StaffOrders from './views/StaffOrders.vue'
 import CameraScanner from './views/CameraScanner.vue'
@@ -45,11 +44,11 @@ import SellersList from './views/SellersList.vue'
 import SellerProducts from './views/SellerProducts.vue'
 import StaffProfile from './views/StaffProfile.vue'
 import StaffStoreView from './views/StaffStoreView.vue'
-import UserDashboard from './views/UserDashboard.vue'
 import AdminReports from './views/AdminReports.vue'
 import AdminUsers from './views/AdminUsers.vue'
 import AdminFeatures from './views/AdminFeatures.vue'
 import StaffReports from './views/StaffReports.vue'
+import NotificationsPage from './views/NotificationsPage.vue'
 
 // Define routes
 const routes = [
@@ -150,44 +149,34 @@ const routes = [
     meta: { requiresAuth: true, roles: ['admin'] }
   },
   {
-    path: '/user/orders',
-    name: 'UserOrders',
-    component: UserOrders,
-    meta: { requiresAuth: true, roles: ['user', 'staff', 'admin'] }
-  },
-  {
-    path: '/orders',
-    redirect: '/user/orders'
-  },
-  {
     path: '/cart',
     name: 'Cart',
     component: Cart,
-    meta: { requiresAuth: true, roles: ['user', 'staff', 'admin'] }
+    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
   },
   {
     path: '/sellers',
     name: 'SellersList',
     component: SellersList,
-    meta: { requiresAuth: true, roles: ['user', 'staff', 'admin'] }
+    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
   },
   {
     path: '/sellers/:sellerId',
     name: 'SellerProducts',
     component: SellerProducts,
-    meta: { requiresAuth: true, roles: ['user', 'staff', 'admin'] }
+    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
   },
   {
     path: '/staff-store/:staffId',
     name: 'StaffStoreView',
     component: StaffStoreView,
-    meta: { requiresAuth: true, roles: ['user', 'staff', 'admin'] }
+    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
   },
   {
-    path: '/user/dashboard',
-    name: 'UserDashboard',
-    component: UserDashboard,
-    meta: { requiresAuth: true, roles: ['user', 'staff', 'admin'] }
+    path: '/notifications',
+    name: 'Notifications',
+    component: NotificationsPage,
+    meta: { requiresAuth: true }
   }
 ]
 
@@ -213,10 +202,8 @@ router.beforeEach((to, from, next) => {
     // Redirect based on role
     if (user?.role === 'admin') {
       next('/admin')
-    } else if (user?.role === 'staff') {
-      next('/staff')
     } else {
-      next('/')
+      next('/staff')
     }
   }
   // Check role-based access
@@ -227,10 +214,8 @@ router.beforeEach((to, from, next) => {
       // Redirect to appropriate dashboard based on role
       if (user?.role === 'admin') {
         next('/admin')
-      } else if (user?.role === 'staff') {
-        next('/staff')
       } else {
-        next('/')
+        next('/staff')
       }
     }
   }

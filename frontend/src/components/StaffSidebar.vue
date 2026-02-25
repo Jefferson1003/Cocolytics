@@ -54,9 +54,13 @@
           <span class="menu-icon">📷</span>
           <span class="menu-label">Camera Scanner</span>
         </router-link>
-        <router-link to="/staff/profile" class="menu-item" @click="showMenu = false">
+        <router-link to="/sellers" class="menu-item" @click="showMenu = false">
           <span class="menu-icon">🏪</span>
-          <span class="menu-label">Trader Profile</span>
+          <span class="menu-label">Browse Sellers</span>
+        </router-link>
+        <router-link to="/staff/profile" class="menu-item" @click="showMenu = false">
+          <span class="menu-icon">👤</span>
+          <span class="menu-label">My Profile</span>
         </router-link>
         <button @click="logout" class="menu-item logout-item">
           <span class="menu-icon">🚪</span>

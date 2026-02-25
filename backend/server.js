@@ -8,6 +8,9 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
 
+// Import Notification Service
+const NotificationService = require('./services/notificationService');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'cocolytics-secret-key-2026';
@@ -43,6 +46,7 @@ pool.getConnection()
         title VARCHAR(150) NOT NULL,
         description TEXT,
         file_path VARCHAR(255) NOT NULL,
+        paper_type ENUM('to_cut', 'transport') DEFAULT 'to_cut',
         status ENUM('pending','approved','rejected') DEFAULT 'pending',
         reviewed_by INT DEFAULT NULL,
         review_note VARCHAR(255) DEFAULT NULL,
@@ -52,10 +56,12 @@ pool.getConnection()
         KEY user_id (user_id),
         KEY reviewed_by (reviewed_by),
         KEY idx_status (status),
+        KEY idx_paper_type (paper_type),
         CONSTRAINT paper_uploads_ibfk_1 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
         CONSTRAINT paper_uploads_ibfk_2 FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
     );
+
     
     // Create stock_transactions table for tracking stock movements
     await pool.execute(
@@ -157,10 +163,125 @@ pool.getConnection()
     if (staffProfileIdx[0].count === 0) {
       await pool.execute('ALTER TABLE staff_profiles ADD UNIQUE KEY unique_staff_id (staff_id)');
     }
+
+    // ==================== NOTIFICATIONS SYSTEM SETUP ====================
+    // Create notifications table
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS notifications (
+        id INT NOT NULL AUTO_INCREMENT,
+        user_id INT NOT NULL,
+        alert_type ENUM('LOW_STOCK', 'DRYING_DELAY', 'DAILY_SUMMARY', 'ORDER_UPDATE', 'SYSTEM') NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        related_product_id INT,
+        related_order_id INT,
+        severity ENUM('info', 'warning', 'critical') DEFAULT 'info',
+        is_read BOOLEAN DEFAULT FALSE,
+        read_at DATETIME,
+        role_target ENUM('all', 'admin', 'staff', 'user') DEFAULT 'all',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY user_id (user_id),
+        KEY alert_type (alert_type),
+        KEY is_read (is_read),
+        KEY created_at (created_at),
+        KEY role_target (role_target),
+        CONSTRAINT notifications_ibfk_1 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        CONSTRAINT notifications_ibfk_2 FOREIGN KEY (related_product_id) REFERENCES cocolumber_logs(id) ON DELETE SET NULL,
+        CONSTRAINT notifications_ibfk_3 FOREIGN KEY (related_order_id) REFERENCES orders(id) ON DELETE SET NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+
+    // Create alert_rules table
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS alert_rules (
+        id INT NOT NULL AUTO_INCREMENT,
+        rule_type ENUM('LOW_STOCK', 'DRYING_DELAY', 'DAILY_SUMMARY') NOT NULL,
+        threshold_value INT,
+        description VARCHAR(255),
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY rule_type (rule_type),
+        KEY is_active (is_active)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+
+    // Create drying_logs table
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS drying_logs (
+        id INT NOT NULL AUTO_INCREMENT,
+        product_id INT NOT NULL,
+        batch_number VARCHAR(100),
+        start_date DATETIME NOT NULL,
+        expected_end_date DATETIME NOT NULL,
+        actual_end_date DATETIME,
+        status ENUM('in_progress', 'completed', 'delayed') DEFAULT 'in_progress',
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY product_id (product_id),
+        KEY status (status),
+        KEY expected_end_date (expected_end_date),
+        CONSTRAINT drying_logs_ibfk_1 FOREIGN KEY (product_id) REFERENCES cocolumber_logs(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+
+    // Create notification_preferences table
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS notification_preferences (
+        id INT NOT NULL AUTO_INCREMENT,
+        user_id INT NOT NULL,
+        LOW_STOCK_ENABLED BOOLEAN DEFAULT TRUE,
+        DRYING_DELAY_ENABLED BOOLEAN DEFAULT TRUE,
+        DAILY_SUMMARY_ENABLED BOOLEAN DEFAULT TRUE,
+        ORDER_UPDATE_ENABLED BOOLEAN DEFAULT TRUE,
+        summary_time TIME DEFAULT '09:00:00',
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        UNIQUE KEY user_id (user_id),
+        CONSTRAINT notif_pref_ibfk_1 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+
+    // Insert default alert rules if not exists
+    const [rules] = await pool.execute(`SELECT COUNT(*) as count FROM alert_rules`);
+    if (rules[0].count === 0) {
+      await pool.execute(
+        `INSERT INTO alert_rules (rule_type, threshold_value, description) VALUES
+        ('LOW_STOCK', 10, 'Alert when product stock falls below 10 units'),
+        ('DRYING_DELAY', 1, 'Alert when drying process exceeds expected end date by 1 day'),
+        ('DAILY_SUMMARY', 0, 'Send daily summary of all activities')`
+      );
+      console.log('✅ Default alert rules created');
+    }
+
+    console.log('✅ Notifications system tables initialized');
   } catch (error) {
     console.error('❌ Failed to ensure tables:', error.message);
   }
 })();
+
+// Initialize Notification Service
+const notificationService = new NotificationService(pool);
+
+// Setup automatic alert checks every 30 minutes
+setInterval(async () => {
+  console.log('⏰ Running scheduled alert checks...');
+  await notificationService.checkAllAlerts();
+}, 30 * 60 * 1000); // 30 minutes
+
+// Setup daily summary generation at 9 AM
+setInterval(async () => {
+  const now = new Date();
+  if (now.getHours() === 9 && now.getMinutes() === 0) {
+    console.log('📊 Running daily summary generation...');
+    await notificationService.createDailySummaries();
+  }
+}, 60 * 1000); // Check every minute
 
 // Middleware
 app.use(cors());
@@ -1080,23 +1201,31 @@ app.get('/api/warehouse/dispatches', authenticateToken, authorizeRoles('staff', 
 
 // ==================== PAPER UPLOAD ROUTES ====================
 
-// Create paper upload (staff/admin)
+// Create paper upload (staff/admin) - with paper_type
 app.post('/api/papers', authenticateToken, authorizeRoles('staff', 'admin'), paperUpload.single('paper'), async (req, res) => {
   try {
-    const { title, description } = req.body;
+    const { title, description, paper_type } = req.body;
 
-    if (!title || !req.file) {
+    if (!title || !req.file || !paper_type) {
       if (req.file) {
         fs.unlinkSync(req.file.path);
       }
-      return res.status(400).json({ message: 'Title and file are required' });
+      return res.status(400).json({ message: 'Title, file, and paper type (to_cut or transport) are required' });
+    }
+
+    // Validate paper type
+    if (!['to_cut', 'transport'].includes(paper_type)) {
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(400).json({ message: 'Paper type must be "to_cut" or "transport"' });
     }
 
     const filePath = `/uploads/${req.file.filename}`;
 
     const [result] = await pool.execute(
-      'INSERT INTO paper_uploads (user_id, title, description, file_path, status) VALUES (?, ?, ?, ?, ?)',
-      [req.user.id, title, description || null, filePath, 'pending']
+      'INSERT INTO paper_uploads (user_id, title, description, file_path, paper_type, status) VALUES (?, ?, ?, ?, ?, ?)',
+      [req.user.id, title, description || null, filePath, paper_type, 'pending']
     );
 
     res.json({
@@ -1105,6 +1234,7 @@ app.post('/api/papers', authenticateToken, authorizeRoles('staff', 'admin'), pap
       title,
       description: description || null,
       file_path: filePath,
+      paper_type,
       status: 'pending'
     });
   } catch (error) {
@@ -1608,7 +1738,7 @@ app.get('/api/sellers/:staffId/products', async (req, res) => {
 // Get staff profile
 app.get('/api/staff/profile', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
   try {
-    const [profile] = await pool.query(`
+    const [profile] = await pool.execute(`
       SELECT sp.*, u.name as staff_name FROM staff_profiles sp
       JOIN users u ON sp.staff_id = u.id
       WHERE sp.staff_id = ?
@@ -1616,7 +1746,7 @@ app.get('/api/staff/profile', authenticateToken, authorizeRoles('staff', 'admin'
     
     if (profile.length === 0) {
       // Return default profile if not exists
-      const [user] = await pool.query('SELECT name FROM users WHERE id = ?', [req.user.id]);
+      const [user] = await pool.execute('SELECT name FROM users WHERE id = ?', [req.user.id]);
       return res.json({
         staff_name: user[0]?.name || 'Staff',
         store_name: user[0]?.name + "'s Store" || 'My Store',
@@ -1642,39 +1772,38 @@ app.put('/api/staff/profile', authenticateToken, authorizeRoles('staff', 'admin'
     const store_logo = req.file ? `/uploads/${req.file.filename}` : null;
 
     // Check if profile exists
-    const [existing] = await pool.query(
+    const [existing] = await pool.execute(
       'SELECT * FROM staff_profiles WHERE staff_id = ?',
       [req.user.id]
     );
 
     if (existing.length === 0) {
       // Insert new profile
-      await pool.query(`
+      await pool.execute(`
         INSERT INTO staff_profiles 
         (staff_id, store_name, store_description, store_logo, contact_number, store_address, is_active)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-      `, [req.user.id, store_name, store_description, store_logo, contact_number, store_address, is_active]);
+      `, [req.user.id, store_name, store_description, store_logo, contact_number, store_address, is_active ? 1 : 0]);
     } else {
       // Update existing profile
-      const updateFields = {
-        store_name,
-        store_description,
-        contact_number,
-        store_address,
-        is_active
-      };
+      let updateQuery = `
+        UPDATE staff_profiles 
+        SET store_name = ?, store_description = ?, contact_number = ?, store_address = ?, is_active = ?
+      `;
+      let updateParams = [store_name, store_description, contact_number, store_address, is_active ? 1 : 0];
       
       if (store_logo) {
-        updateFields.store_logo = store_logo;
+        updateQuery = `
+          UPDATE staff_profiles 
+          SET store_name = ?, store_description = ?, contact_number = ?, store_address = ?, is_active = ?, store_logo = ?
+        `;
+        updateParams = [store_name, store_description, contact_number, store_address, is_active ? 1 : 0, store_logo];
       }
-
-      const updateQuery = `
-        UPDATE staff_profiles 
-        SET ${Object.keys(updateFields).map(key => `${key} = ?`).join(', ')}
-        WHERE staff_id = ?
-      `;
       
-      await pool.query(updateQuery, [...Object.values(updateFields), req.user.id]);
+      updateQuery += ' WHERE staff_id = ?';
+      updateParams.push(req.user.id);
+      
+      await pool.execute(updateQuery, updateParams);
     }
 
     res.json({ message: 'Profile updated successfully' });
@@ -1783,6 +1912,10 @@ app.get('/api/staff/reports', authenticateToken, authorizeRoles('staff', 'admin'
     res.status(500).json({ message: 'Server error fetching reports' });
   }
 });
+
+// ==================== NOTIFICATIONS ROUTES ====================
+const notificationRoutes = require('./routes/notifications')(NotificationService, pool);
+app.use('/api/notifications', authenticateToken, notificationRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

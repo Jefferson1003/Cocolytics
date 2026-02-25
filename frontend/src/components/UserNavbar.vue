@@ -35,21 +35,13 @@
           <span class="menu-icon">🏠</span>
           <span class="menu-label">Home</span>
         </router-link>
-        <router-link to="/sellers" class="menu-item" @click="showMenu = false">
-          <span class="menu-icon">🏪</span>
-          <span class="menu-label">Browse Sellers</span>
-        </router-link>
         <router-link to="/about" class="menu-item" @click="showMenu = false">
           <span class="menu-icon">ℹ️</span>
           <span class="menu-label">About</span>
         </router-link>
-        <router-link to="/user/orders" class="menu-item" @click="showMenu = false">
-          <span class="menu-icon">📦</span>
-          <span class="menu-label">My Orders</span>
-        </router-link>
-        <router-link to="/cart" class="menu-item" @click="showMenu = false">
-          <span class="menu-icon">🛒</span>
-          <span class="menu-label">Shopping Cart</span>
+        <router-link to="/notifications" class="menu-item" @click="showMenu = false">
+          <span class="menu-icon">🔔</span>
+          <span class="menu-label">Notifications</span>
         </router-link>
         <button v-if="deferredPrompt" @click="installApp" class="menu-item install-item">
           <span class="menu-icon">📥</span>

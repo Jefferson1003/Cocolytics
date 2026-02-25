@@ -4,19 +4,25 @@
     
     <div class="main-content">
       <div class="profile-container">
-        <h1>🏪 {{ staffName }} - {{ profile.store_name || 'Trader Profile' }}</h1>
+        <h1>🏪 {{ staffName }} - {{ profile.store_name || 'My Store' }}</h1>
         
-        <div v-if="successMessage" class="alert alert-success">
-          <span class="alert-icon">✓</span>
-          {{ successMessage }}
+        <div v-if="loading" class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading profile...</p>
         </div>
 
-        <div v-if="errorMessage" class="alert alert-error">
-          <span class="alert-icon">✗</span>
-          {{ errorMessage }}
-        </div>
+        <template v-else>
+          <div v-if="successMessage" class="alert alert-success">
+            <span class="alert-icon">✓</span>
+            {{ successMessage }}
+          </div>
 
-        <form @submit.prevent="updateProfile" class="profile-form">
+          <div v-if="errorMessage" class="alert alert-error">
+            <span class="alert-icon">✗</span>
+            {{ errorMessage }}
+          </div>
+
+          <form @submit.prevent="updateProfile" class="profile-form">
           <!-- Trader Logo Upload -->
           <div class="form-group logo-upload">
             <label>Trader Logo</label>
@@ -100,6 +106,7 @@
             </button>
           </div>
         </form>
+        </template>
       </div>
     </div>
   </div>
@@ -123,38 +130,53 @@ export default {
         store_address: '',
         is_active: true
       },
+      user: null,
       staffName: '',
       previewLogo: '',
       logoFile: null,
       successMessage: '',
       errorMessage: '',
       saving: false,
+      loading: true,
       token: null
     }
   },
   mounted() {
     this.token = localStorage.getItem('token')
+    const userData = localStorage.getItem('user')
+    if (userData) {
+      this.user = JSON.parse(userData)
+    }
     this.fetchProfile()
   },
   methods: {
     async fetchProfile() {
+      this.loading = true
+      this.errorMessage = ''
+      
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/staff/profile`, {
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+        const response = await fetch(`${apiBaseUrl}/api/staff/profile`, {
           headers: {
             'Authorization': `Bearer ${this.token}`
           }
         })
         
-        if (response.ok) {
-          const data = await response.json()
-          this.profile = { ...this.profile, ...data }
-          this.staffName = data.staff_name || ''
-          if (data.store_logo) {
-            this.previewLogo = this.getImageUrl(data.store_logo)
-          }
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status} ${response.statusText}`)
+        }
+        
+        const data = await response.json()
+        this.profile = { ...this.profile, ...data }
+        this.staffName = data.staff_name || this.user?.name || 'Staff'
+        if (data.store_logo) {
+          this.previewLogo = this.getImageUrl(data.store_logo)
         }
       } catch (error) {
         console.error('Error fetching profile:', error)
+        this.errorMessage = `Failed to load profile: ${error.message}`
+      } finally {
+        this.loading = false
       }
     },
     onLogoChange(event) {
@@ -185,7 +207,8 @@ export default {
           formData.append('store_logo', this.logoFile)
         }
 
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/staff/profile`, {
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+        const response = await fetch(`${apiBaseUrl}/api/staff/profile`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${this.token}`
@@ -195,7 +218,7 @@ export default {
 
         if (!response.ok) {
           const error = await response.json()
-          throw new Error(error.message || 'Failed to update profile')
+          throw new Error(error.message || `Error: ${response.status} ${response.statusText}`)
         }
 
         this.successMessage = '✓ Profile updated successfully!'
@@ -205,7 +228,8 @@ export default {
         await this.fetchProfile()
         this.logoFile = null
       } catch (error) {
-        this.errorMessage = error.message
+        console.error('Error updating profile:', error)
+        this.errorMessage = `Failed to update profile: ${error.message}`
         setTimeout(() => this.errorMessage = '', 5000)
       } finally {
         this.saving = false
@@ -214,8 +238,9 @@ export default {
     getImageUrl(imagePath) {
       if (!imagePath) return ''
       if (imagePath.startsWith('http')) return imagePath
-      if (imagePath.startsWith('/')) return `${import.meta.env.VITE_API_BASE_URL}${imagePath}`
-      return `${import.meta.env.VITE_API_BASE_URL}/uploads/${imagePath}`
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+      if (imagePath.startsWith('/')) return `${apiBaseUrl}${imagePath}`
+      return `${apiBaseUrl}/uploads/${imagePath}`
     }
   }
 }
@@ -401,6 +426,32 @@ textarea.form-control {
 .btn-submit:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: white;
+  font-size: 1.1em;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 @media (max-width: 768px) {

@@ -1,6 +1,6 @@
 <template>
-  <div class="user-layout">
-    <UserNavbar />
+  <div class="staff-layout">
+    <StaffSidebar />
     
     <div class="store-dashboard-container">
       <!-- Trader Banner -->
@@ -126,11 +126,13 @@
 
 <script>
 import UserNavbar from '../components/UserNavbar.vue'
+import StaffSidebar from '../components/StaffSidebar.vue'
 
 export default {
   name: 'SellerProducts',
   components: {
-    UserNavbar
+    UserNavbar,
+    StaffSidebar
   },
   data() {
     return {
@@ -256,7 +258,7 @@ export default {
 </script>
 
 <style scoped>
-.user-layout {
+.staff-layout {
   min-height: 100vh;
   background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
   background-attachment: fixed;

@@ -73,6 +73,57 @@
       </div>
     </div>
 
+    <!-- Browse Sellers Section -->
+    <div class="browse-sellers-section">
+      <h2>🛍️ Browse Traders</h2>
+      <p class="section-subtitle">Buy products from trusted coconut traders</p>
+
+      <div v-if="loadingSellers" class="loading">
+        <div class="loading-spinner">⏳</div>
+        <p>Loading traders...</p>
+      </div>
+
+      <div v-else-if="sellers.length > 0" class="sellers-grid">
+        <div v-for="seller in sellers" :key="seller.staff_id" class="seller-card">
+          <div class="seller-logo">
+            <img v-if="seller.store_logo" :src="getImageUrl(seller.store_logo)" :alt="seller.store_name" />
+            <div v-else class="default-logo">🥥</div>
+          </div>
+          
+          <div class="seller-info">
+            <h3>{{ seller.store_name || `${seller.staff_name}'s Store` }}</h3>
+            <p class="seller-description">{{ seller.store_description || 'Quality coconut products' }}</p>
+            
+            <div class="seller-stats">
+              <div class="stat">
+                <span class="stat-icon">📦</span>
+                <span class="stat-value">{{ seller.product_count }} Products</span>
+              </div>
+              <div class="stat">
+                <span class="stat-icon">📊</span>
+                <span class="stat-value">{{ seller.total_stock }} In Stock</span>
+              </div>
+            </div>
+            
+            <div class="seller-contact" v-if="seller.contact_number">
+              <span class="contact-icon">📞</span>
+              <span>{{ seller.contact_number }}</span>
+            </div>
+          </div>
+          
+          <button @click="viewSellerProducts(seller.staff_id)" class="btn-view-store">
+            View Store →
+          </button>
+        </div>
+      </div>
+
+      <div v-else class="empty-state">
+        <div class="empty-icon">🏪</div>
+        <h3>No Traders Available</h3>
+        <p>Check back later for available traders</p>
+      </div>
+    </div>
+
     <div class="error-message" v-if="error">{{ error }}</div>
     </div>
   </div>
@@ -91,13 +142,18 @@ export default {
     return {
       user: null,
       dashboardData: null,
-      error: ''
+      error: '',
+      sellers: [],
+      loadingSellers: false
     }
   },
   created() {
     const userData = localStorage.getItem('user')
     this.user = userData ? JSON.parse(userData) : null
     this.fetchDashboardData()
+  },
+  mounted() {
+    this.fetchSellers()
   },
   methods: {
     async fetchDashboardData() {
@@ -118,6 +174,29 @@ export default {
         month: 'short',
         day: 'numeric'
       })
+    },
+    async fetchSellers() {
+      try {
+        this.loadingSellers = true
+        const token = localStorage.getItem('token')
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/sellers`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        this.sellers = response.data.data.filter(seller => seller.product_count > 0)
+      } catch (err) {
+        console.log('Failed to load sellers')
+      } finally {
+        this.loadingSellers = false
+      }
+    },
+    viewSellerProducts(sellerId) {
+      this.$router.push(`/sellers/${sellerId}`)
+    },
+    getImageUrl(imagePath) {
+      if (!imagePath) return '/images/placeholder.png'
+      if (imagePath.startsWith('http')) return imagePath
+      if (imagePath.startsWith('/')) return imagePath
+      return `/uploads/${imagePath}`
     }
   }
 }
@@ -476,6 +555,204 @@ export default {
 @media (max-width: 480px) {
   .actions-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Browse Sellers Section */
+.browse-sellers-section {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 32px 24px;
+  margin-top: 32px;
+  backdrop-filter: blur(10px);
+  color: white;
+}
+
+.browse-sellers-section h2 {
+  font-size: 1.6em;
+  margin-bottom: 8px;
+  color: white;
+}
+
+.section-subtitle {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 24px;
+  font-size: 0.95em;
+}
+
+.sellers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.seller-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+}
+
+.seller-card:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.1) 100%);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.seller-logo {
+  width: 100%;
+  height: 120px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.seller-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.default-logo {
+  font-size: 2.5em;
+}
+
+.seller-info {
+  flex: 1;
+}
+
+.seller-info h3 {
+  font-size: 1.1em;
+  margin: 0 0 8px 0;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.seller-description {
+  font-size: 0.9em;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.seller-stats {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stat {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 8px 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9em;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.stat-icon {
+  font-size: 1.1em;
+}
+
+.stat-value {
+  font-weight: 500;
+}
+
+.seller-contact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9em;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 8px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.contact-icon {
+  font-size: 1.1em;
+}
+
+.btn-view-store {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95em;
+  text-decoration: none;
+}
+
+.btn-view-store:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-view-store:active {
+  transform: scale(0.98);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.empty-icon {
+  font-size: 3em;
+  margin-bottom: 12px;
+}
+
+.empty-state h3 {
+  color: white;
+  margin: 12px 0 8px 0;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 0.95em;
+}
+
+@media (max-width: 768px) {
+  .sellers-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .browse-sellers-section {
+    padding: 24px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sellers-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .browse-sellers-section h2 {
+    font-size: 1.3em;
   }
 }
 </style>

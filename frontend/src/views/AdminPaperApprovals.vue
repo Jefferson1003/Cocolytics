@@ -5,38 +5,62 @@
     <div class="dashboard-container">
       <div class="page-header">
         <h2>📄 Paper Approvals</h2>
-        <p>Review and approve uploaded documents.</p>
+        <p>Review and approve uploaded documents for "To Cut" and "Transport".</p>
       </div>
 
       <div class="list-card">
-      <div v-if="loading" class="loading">Loading pending papers...</div>
-      <div v-else-if="pendingPapers.length === 0" class="empty">No pending submissions.</div>
-      <div v-else class="list">
-        <div v-for="paper in pendingPapers" :key="paper.id" class="list-item">
-          <div class="info">
-            <h4>{{ paper.title }}</h4>
-            <p v-if="paper.description">{{ paper.description }}</p>
-            <p class="meta">
-              Submitted by {{ paper.uploader_name }} ({{ paper.uploader_email }})
-              • {{ formatDate(paper.created_at) }}
-            </p>
-            <a :href="getFileUrl(paper.file_path)" target="_blank" rel="noopener">View File</a>
-            <textarea
-              v-model="reviewNotes[paper.id]"
-              rows="2"
-              placeholder="Optional review note"
-              class="note"
-            ></textarea>
-          </div>
-          <div class="actions">
-            <button class="btn approve" :disabled="actionLoading[paper.id]" @click="approve(paper.id)">Approve</button>
-            <button class="btn reject" :disabled="actionLoading[paper.id]" @click="reject(paper.id)">Reject</button>
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+          <button 
+            v-for="filter in ['all', 'to_cut', 'transport']"
+            :key="filter"
+            @click="activeFilter = filter"
+            :class="['tab', { active: activeFilter === filter }]"
+          >
+            <span v-if="filter === 'all'">📄 All Pending</span>
+            <span v-else-if="filter === 'to_cut'">✂️ To Cut</span>
+            <span v-else-if="filter === 'transport'">🚚 Transport</span>
+          </button>
+        </div>
+
+        <div v-if="loading" class="loading">Loading pending papers...</div>
+        <div v-else-if="filteredPapers.length === 0" class="empty">No {{ filterLabel }} submissions to review.</div>
+        <div v-else class="list">
+          <div v-for="paper in filteredPapers" :key="paper.id" class="list-item">
+            <div class="paper-header">
+              <div class="paper-type-badge">
+                <span v-if="paper.paper_type === 'to_cut'" class="badge badge-to-cut">✂️ TO CUT</span>
+                <span v-else-if="paper.paper_type === 'transport'" class="badge badge-transport">🚚 TRANSPORT</span>
+              </div>
+              <h4>{{ paper.title }}</h4>
+            </div>
+            <div class="info">
+              <p v-if="paper.description" class="description">{{ paper.description }}</p>
+              <p class="meta">
+                Submitted by <strong>{{ paper.uploader_name }}</strong> ({{ paper.uploader_email }})
+                • {{ formatDate(paper.created_at) }}
+              </p>
+              <a :href="getFileUrl(paper.file_path)" target="_blank" rel="noopener" class="file-link">📎 View File</a>
+              <textarea
+                v-model="reviewNotes[paper.id]"
+                rows="2"
+                placeholder="Optional review note..."
+                class="note"
+              ></textarea>
+            </div>
+            <div class="actions">
+              <button class="btn approve" :disabled="actionLoading[paper.id]" @click="approve(paper.id)">
+                ✅ Approve
+              </button>
+              <button class="btn reject" :disabled="actionLoading[paper.id]" @click="reject(paper.id)">
+                ❌ Reject
+              </button>
+            </div>
           </div>
         </div>
+        <div v-if="errorMessage" class="alert error">{{ errorMessage }}</div>
+        <div v-if="successMessage" class="alert success">{{ successMessage }}</div>
       </div>
-      <div v-if="errorMessage" class="alert error">{{ errorMessage }}</div>
-      <div v-if="successMessage" class="alert success">{{ successMessage }}</div>
-    </div>
     </div>
   </div>
 </template>
@@ -52,11 +76,26 @@ export default {
   data() {
     return {
       pendingPapers: [],
+      activeFilter: 'all',
       loading: false,
       actionLoading: {},
       reviewNotes: {},
       errorMessage: '',
       successMessage: ''
+    }
+  },
+  computed: {
+    filteredPapers() {
+      if (this.activeFilter === 'all') {
+        return this.pendingPapers
+      }
+      return this.pendingPapers.filter(p => p.paper_type === this.activeFilter)
+    },
+    filterLabel() {
+      if (this.activeFilter === 'all') return 'pending'
+      if (this.activeFilter === 'to_cut') return 'To Cut'
+      if (this.activeFilter === 'transport') return 'Transport'
+      return 'pending'
     }
   },
   mounted() {
@@ -68,7 +107,8 @@ export default {
       this.errorMessage = ''
       try {
         const token = localStorage.getItem('token')
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/papers/pending`, {
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+        const response = await fetch(`${apiBaseUrl}/api/papers/pending`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         if (!response.ok) throw new Error('Failed to load pending papers')
@@ -91,7 +131,8 @@ export default {
       this.actionLoading = { ...this.actionLoading, [id]: true }
       try {
         const token = localStorage.getItem('token')
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/papers/${id}/${action}`, {
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+        const response = await fetch(`${apiBaseUrl}/api/papers/${id}/${action}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -102,7 +143,7 @@ export default {
         const result = await response.json()
         if (!response.ok) throw new Error(result.message || 'Action failed')
 
-        this.successMessage = `Paper ${action}d successfully.`
+        this.successMessage = `Paper ${action}ed successfully.`
         this.pendingPapers = this.pendingPapers.filter(p => p.id !== id)
       } catch (error) {
         this.errorMessage = error.message
@@ -117,7 +158,8 @@ export default {
     getFileUrl(path) {
       if (!path) return '#'
       if (path.startsWith('http')) return path
-      return `${import.meta.env.VITE_API_BASE_URL}${path}`
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+      return `${apiBaseUrl}${path}`
     }
   }
 }
@@ -208,6 +250,37 @@ export default {
   background: rgba(76, 175, 80, 0.6);
 }
 
+.filter-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  padding: 10px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95em;
+  font-weight: 500;
+}
+
+.tab:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tab.active {
+  background: linear-gradient(135deg, #27ae60 0%, #219150 100%);
+  border-color: #27ae60;
+  color: white;
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+}
+
 .list {
   display: flex;
   flex-direction: column;
@@ -234,6 +307,39 @@ export default {
   border-color: rgba(76, 175, 80, 0.3);
 }
 
+.paper-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.paper-type-badge {
+  flex-shrink: 0;
+}
+
+.badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.75em;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badge-to-cut {
+  background: rgba(102, 126, 234, 0.3);
+  color: #667eea;
+  border: 1px solid rgba(102, 126, 234, 0.5);
+}
+
+.badge-transport {
+  background: rgba(245, 87, 108, 0.3);
+  color: #f5576c;
+  border: 1px solid rgba(245, 87, 108, 0.5);
+}
+
 .info {
   flex: 1;
   min-width: 0;
@@ -246,9 +352,11 @@ export default {
   font-weight: 600;
 }
 
-.info p {
-  font-size: 1.05em;
-  line-height: 1.6;
+.description {
+  color: #ccc;
+  font-size: 1em;
+  line-height: 1.5;
+  margin: 8px 0;
 }
 
 .meta {
@@ -257,7 +365,7 @@ export default {
   margin-top: 8px;
 }
 
-.info a {
+.file-link {
   color: #4CAF50;
   text-decoration: none;
   font-weight: 500;
@@ -269,7 +377,7 @@ export default {
   transition: all 0.3s ease;
 }
 
-.info a:hover {
+.file-link:hover {
   background: rgba(76, 175, 80, 0.2);
   transform: translateX(4px);
 }
@@ -362,5 +470,21 @@ export default {
   text-align: center;
   padding: 40px;
   font-size: 1.1em;
+}
+
+@media (max-width: 768px) {
+  .list-item {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .actions {
+    flex-direction: row;
+    min-width: auto;
+  }
+
+  .paper-header {
+    flex-wrap: wrap;
+  }
 }
 </style>
