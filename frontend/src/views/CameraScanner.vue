@@ -29,6 +29,7 @@
           <div class="display-area">
             <video v-if="showCamera && !capturedImage" ref="video" autoplay playsinline class="camera-feed"></video>
             <img v-if="capturedImage" :src="capturedImage" alt="Captured" class="captured-image" />
+            <canvas ref="overlayCanvas" class="overlay-canvas" @click="handleCalibrationClick"></canvas>
             <div v-if="!showCamera && !capturedImage" class="placeholder">
               <span class="placeholder-icon">📹</span>
               <p>Point camera at brown objects</p>
@@ -52,6 +53,7 @@
                 @click="openCamera">
                 🎥 Start Camera
               </button>
+              <button v-if="showCamera" class="btn-action btn-calibrate" @click="startCalibration">📏 Calibrate</button>
               
               <template v-if="showCamera && !capturedImage">
                 <button class="btn-action btn-detect" @click="startDetection">
@@ -233,6 +235,13 @@ export default {
       selectedCamera: 'environment',
       detectionStarted: false,
       detectionError: '',
+      // Realtime / OpenCV related
+      realTimeDetection: false,
+      openCvReady: false,
+      PIXEL_TO_CM: 0.1,
+      calibrationMode: false,
+      calibrationPoints: [],
+      detectionIntervalRef: null,
       scanResults: {
         treeDetected: false,
         height: '0',
@@ -243,6 +252,35 @@ export default {
         confidence: '0'
       }
     }
+  },
+  mounted() {
+    // Load OpenCV.js dynamically if not present
+    if (window.cv && window.cv.imread) {
+      this.openCvReady = true
+      return
+    }
+
+    const script = document.createElement('script')
+    script.src = 'https://docs.opencv.org/4.x/opencv.js'
+    script.async = true
+    script.onload = () => {
+      // Wait for OpenCV to initialize
+      const checkReady = () => {
+        if (window.cv && window.cv.onRuntimeInitialized) {
+          window.cv.onRuntimeInitialized = () => {
+            this.openCvReady = true
+            console.log('OpenCV.js loaded')
+          }
+        } else if (window.cv && window.cv.imread) {
+          this.openCvReady = true
+          console.log('OpenCV.js ready')
+        } else {
+          setTimeout(checkReady, 200)
+        }
+      }
+      checkReady()
+    }
+    document.body.appendChild(script)
   },
   methods: {
     async openCamera() {
@@ -353,25 +391,41 @@ export default {
       }
     },
     async startDetection() {
-      this.detectionStarted = true
-      this.detectionError = ''
-      
-      try {
-        // Get the image data (either from camera or upload)
-        const imageData = this.capturedImage || this.uploadedImage
-        
-        console.log('Starting detection...')
-        console.log('Captured Image:', this.capturedImage ? 'Available (' + this.capturedImage.length + ' chars)' : 'Not available')
-        console.log('Uploaded Image:', this.uploadedImage ? 'Available (' + this.uploadedImage.length + ' chars)' : 'Not available')
-        console.log('Using image data:', imageData ? 'Yes (' + imageData.length + ' chars)' : 'No')
-        
-        if (!imageData) {
-          this.detectionError = 'No image to analyze. Please capture or upload an image first.'
-          console.error('No image data available')
+      // If camera is active and no captured image, toggle realtime detection
+      if (this.showCamera && !this.capturedImage) {
+        if (!this.openCvReady) {
+          this.detectionError = 'OpenCV not loaded yet. Please wait.'
           return
         }
-        
-        // Show loading state
+
+        if (!this.realTimeDetection) {
+          // Start realtime processing
+          this.realTimeDetection = true
+          this.detectionStarted = true
+          this.detectionError = ''
+          // ensure overlay canvas matches video size
+          this.$nextTick(() => {
+            this.setupOverlaySize()
+            this.detectionIntervalRef = setInterval(this.processFrame, 400)
+          })
+        } else {
+          // Stop realtime
+          this.stopRealtimeDetection()
+        }
+
+        return
+      }
+
+      // Fallback: existing uploaded/captured image path (send to backend)
+      this.detectionStarted = true
+      this.detectionError = ''
+      try {
+        const imageData = this.capturedImage || this.uploadedImage
+        if (!imageData) {
+          this.detectionError = 'No image to analyze. Please capture or upload an image first.'
+          return
+        }
+
         this.scanResults = {
           treeDetected: false,
           height: 'Analyzing...',
@@ -381,14 +435,10 @@ export default {
           quality: 'Analyzing...',
           confidence: 'Analyzing...'
         }
-        
-        // Send image to backend API for ML detection
+
         const token = localStorage.getItem('token')
         const apiUrl = `${import.meta.env.VITE_API_BASE_URL}/api/staff/detect-cocolumber`
-        
-        console.log('Sending to API:', apiUrl)
-        console.log('Image size:', imageData.length, 'bytes')
-        
+
         let response, result
         try {
           response = await fetch(apiUrl, {
@@ -399,40 +449,20 @@ export default {
             },
             body: JSON.stringify({ image: imageData })
           })
-          
-          // Log response status and headers
-          console.log('Response status:', response.status)
-          console.log('Response headers:', response.headers.get('content-type'))
-          
-          // Get response text first to debug HTML errors
+
           const responseText = await response.text()
-          console.log('Response text (first 200 chars):', responseText.substring(0, 200))
-          
-          // Try to parse as JSON
-          try {
-            result = JSON.parse(responseText)
-          } catch (parseError) {
-            console.error('JSON parse error:', parseError)
-            this.detectionError = '❌ Server error. Please check if backend is running on port 3000.'
-            return
-          }
+          try { result = JSON.parse(responseText) } catch (e) { this.detectionError = 'Server error (invalid JSON)'; return }
         } catch (fetchError) {
-          console.error('Fetch error:', fetchError)
-          this.detectionError = '❌ Connection failed. Check if backend and ML services are running.'
+          this.detectionError = 'Connection failed. Check if backend/ML services are running.'
           return
         }
-        
-        console.log('Detection result:', result) // Debug log
-        
+
         if (!response.ok) {
-          this.detectionError = `❌ Detection failed: ${result.message || result.error || 'Unknown error'}`
+          this.detectionError = `Detection failed: ${result.message || result.error || 'Unknown error'}`
           return
         }
-        
-        // Simple brown detection - ML service already analyzes HSV color
-        // Just check if measurements were returned successfully
+
         if (result.height && result.width && result.diameter) {
-          // Brown object detected - use ML measurements
           this.scanResults = {
             treeDetected: true,
             height: result.height || '0',
@@ -444,35 +474,12 @@ export default {
           }
           alert('✅ Brown object detected!')
         } else {
-          // No brown object detected
           this.detectionError = '⚠️ No brown object detected in image!'
-          this.scanResults = {
-            treeDetected: false,
-            height: '0',
-            width: '0',
-            diameter: '0',
-            estimatedLumber: '0',
-            quality: 'N/A',
-            confidence: '0'
-          }
+          this.scanResults = { treeDetected: false, height: '0', width: '0', diameter: '0', estimatedLumber: '0', quality: 'N/A', confidence: '0' }
           alert('⚠️ No brown object detected. Please scan a brown object.')
         }
-        
       } catch (error) {
-        console.error('Detection error:', error)
-        this.detectionError = `❌ Detection failed: ${error.message}`
-        alert(`❌ Detection failed: ${error.message}. Make sure ML service is running.`)
-        
-        // Reset results
-        this.scanResults = {
-          treeDetected: false,
-          height: '0',
-          width: '0',
-          diameter: '0',
-          estimatedLumber: '0',
-          quality: 'N/A',
-          confidence: '0'
-        }
+        this.detectionError = `Detection failed: ${error.message}`
       }
     },
     downloadUploadedImage() {
@@ -485,6 +492,10 @@ export default {
   beforeUnmount() {
     if (this.stream) {
       this.stream.getTracks().forEach(track => track.stop())
+    }
+    if (this.detectionIntervalRef) {
+      clearInterval(this.detectionIntervalRef)
+      this.detectionIntervalRef = null
     }
   }
 }
@@ -768,6 +779,20 @@ export default {
 .btn-download:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+}
+
+.btn-calibrate {
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+  color: white;
+}
+
+.overlay-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
 }
 
 .error-message {
