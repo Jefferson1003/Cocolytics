@@ -178,7 +178,7 @@ export default {
       this.loading = true
       try {
         const token = localStorage.getItem('token')
-        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
         const response = await fetch(`${apiBaseUrl}/api/papers/mine`, {
           headers: { Authorization: `Bearer ${token}` }
         })
@@ -214,7 +214,7 @@ export default {
       this[loadingKey] = true
       try {
         const token = localStorage.getItem('token')
-        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
         const formData = new FormData()
         formData.append('title', form.title)
         formData.append('description', form.description)
@@ -265,7 +265,7 @@ export default {
     getFileUrl(path) {
       if (!path) return '#'
       if (path.startsWith('http')) return path
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
       return `${apiBaseUrl}${path}`
     }
   }

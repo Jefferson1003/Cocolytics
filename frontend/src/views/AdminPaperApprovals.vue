@@ -127,7 +127,7 @@ export default {
       this.errorMessage = ''
       try {
         const token = localStorage.getItem('token')
-        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
         const response = await fetch(`${apiBaseUrl}/api/papers/pending`, {
           headers: { Authorization: `Bearer ${token}` }
         })
@@ -151,7 +151,7 @@ export default {
       this.actionLoading = { ...this.actionLoading, [id]: true }
       try {
         const token = localStorage.getItem('token')
-        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
         const response = await fetch(`${apiBaseUrl}/api/papers/${id}/${action}`, {
           method: 'PUT',
           headers: {
@@ -178,7 +178,7 @@ export default {
     getFileUrl(path) {
       if (!path) return '#'
       if (path.startsWith('http')) return path
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
       return `${apiBaseUrl}${path}`
     }
   }

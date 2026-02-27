@@ -874,7 +874,8 @@ export default {
 @media (max-width: 768px) {
   .dashboard-container {
     margin-left: 0;
-    padding: 20px;
+    padding: 76px 16px 20px;
+    width: 100%;
   }
 
   .scanner-header h1 {
@@ -883,6 +884,10 @@ export default {
 
   .tab-content {
     padding: 20px;
+  }
+
+  .scanner-results {
+    padding: 16px;
   }
 
   .display-area {
@@ -898,7 +903,22 @@ export default {
   }
 
   .results-grid {
-    grid-template-columns: 1frpx;
+    grid-template-columns: 1fr;
+  }
+
+  .result-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .result-label,
+  .result-value {
+    word-break: break-word;
+  }
+
+  .result-value {
+    align-self: flex-end;
   }
 
   .display-area {

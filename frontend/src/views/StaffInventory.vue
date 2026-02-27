@@ -265,16 +265,21 @@
         </div>
       </div>
     </div>
+
+    <!-- Floating Chat Box -->
+    <ChatBox />
   </div>
 </template>
 
 <script>
 import StaffSidebar from '../components/StaffSidebar.vue'
+import ChatBox from '../components/ChatBox.vue'
 
 export default {
   name: 'StaffInventory',
   components: {
-    StaffSidebar
+    StaffSidebar,
+    ChatBox
   },
   data() {
     return {

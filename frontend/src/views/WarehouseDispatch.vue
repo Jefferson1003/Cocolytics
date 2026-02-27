@@ -677,7 +677,24 @@ export default {
 @media (max-width: 768px) {
   .dashboard-container {
     margin-left: 0;
+    width: 100%;
+    max-width: 100vw;
+    padding: 76px 16px 20px;
+    height: auto;
+  }
+
+  .dispatch-form-section,
+  .dispatch-history-section {
     padding: 20px;
+  }
+
+  .header h1 {
+    font-size: 2em;
+    word-break: break-word;
+  }
+
+  .header p {
+    font-size: 1em;
   }
 
   .form-row {

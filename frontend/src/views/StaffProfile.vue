@@ -155,7 +155,7 @@ export default {
       this.errorMessage = ''
       
       try {
-        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
         const response = await fetch(`${apiBaseUrl}/api/staff/profile`, {
           headers: {
             'Authorization': `Bearer ${this.token}`
@@ -207,7 +207,7 @@ export default {
           formData.append('store_logo', this.logoFile)
         }
 
-        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
         const response = await fetch(`${apiBaseUrl}/api/staff/profile`, {
           method: 'PUT',
           headers: {
@@ -238,7 +238,7 @@ export default {
     getImageUrl(imagePath) {
       if (!imagePath) return ''
       if (imagePath.startsWith('http')) return imagePath
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
       if (imagePath.startsWith('/')) return `${apiBaseUrl}${imagePath}`
       return `${apiBaseUrl}/uploads/${imagePath}`
     }
