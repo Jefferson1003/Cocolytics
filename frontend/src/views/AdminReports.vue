@@ -479,24 +479,80 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .admin-layout {
+    padding-top: 60px;
+  }
+
   .dashboard-container {
-    margin-left: 0;
-    padding: 20px;
-    width: 100%;
-    max-width: 100vw;
+    margin-left: 0 !important;
+    padding: 20px 16px;
+    width: 100% !important;
+    max-width: 100vw !important;
+  }
+
+  .dashboard-header {
+    margin-bottom: 20px;
   }
   
   .dashboard-header h1 {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
+  }
+
+  .dashboard-header p {
+    font-size: 1rem;
+  }
+
+  .dashboard-sections {
+    gap: 16px;
+  }
+
+  .section {
+    padding: 20px 16px;
   }
 
   .reports-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
+  }
+
+  .reports-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .reports-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .reports-actions {
+    width: 100%;
+  }
+
+  .report-btn {
+    flex: 1;
+    min-width: 0;
   }
 
   .reports-grid {
     grid-template-columns: 1fr;
+  }
+
+  .report-card {
+    padding: 16px;
+  }
+
+  .report-head h3 {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .dashboard-header p {
+    font-size: 0.9rem;
   }
 }
 </style>

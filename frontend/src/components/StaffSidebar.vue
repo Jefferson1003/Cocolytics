@@ -7,9 +7,12 @@
       </button>
       <div class="brand-logo">
         <span class="brand-icon">👔</span>
-        <span class="brand-name">Staff Portal</span>
+        <span class="brand-name">Trader Portal</span>
       </div>
     </div>
+    <button @click="logout" class="header-logout-btn" aria-label="Logout">
+      🚪 Logout
+    </button>
   </header>
 
   <!-- Mobile Menu Overlay -->
@@ -17,58 +20,30 @@
     <div class="menu-content" @click.stop>
       <div class="menu-header">
         <div class="user-info">
-          <div class="user-avatar">S</div>
+          <div class="user-avatar">T</div>
           <div class="user-details">
-            <h3>Staff Member</h3>
-            <p>Staff Portal</p>
+            <h3>Trader Member</h3>
+            <p>Trader Portal</p>
           </div>
         </div>
         <button class="menu-close" @click="showMenu = false">&times;</button>
       </div>
       <nav class="menu-nav">
-        <router-link to="/staff" class="menu-item" @click="showMenu = false">
-          <span class="menu-icon">🚚</span>
-          <span class="menu-label">Warehouse Dispatch</span>
-        </router-link>
-        <router-link to="/staff/inventory" class="menu-item" @click="showMenu = false">
-          <span class="menu-icon">📦</span>
-          <span class="menu-label">Inventory</span>
-        </router-link>
-        <router-link to="/staff/add-cocolumber" class="menu-item" @click="showMenu = false">
-          <span class="menu-icon">➕</span>
-          <span class="menu-label">Add Product</span>
-        </router-link>
-        <router-link to="/staff/reports" class="menu-item" @click="showMenu = false">
-          <span class="menu-icon">📊</span>
-          <span class="menu-label">My Reports</span>
-        </router-link>
-        <router-link to="/staff/orders" class="menu-item" @click="showMenu = false">
-          <span class="menu-icon">📋</span>
-          <span class="menu-label">Orders</span>
-        </router-link>
-        <router-link to="/staff/paper-uploads" class="menu-item" @click="showMenu = false">
-          <span class="menu-icon">📄</span>
-          <span class="menu-label">Upload Papers</span>
-        </router-link>
-        <router-link to="/staff/camera-scanner" class="menu-item" @click="showMenu = false">
-          <span class="menu-icon">📷</span>
-          <span class="menu-label">Camera Scanner</span>
-        </router-link>
-        <router-link to="/sellers" class="menu-item" @click="showMenu = false">
-          <span class="menu-icon">🏪</span>
-          <span class="menu-label">Browse Sellers</span>
-        </router-link>
-        <router-link to="/cart" class="menu-item" @click="showMenu = false">
-          <span class="menu-icon">🛒</span>
-          <span class="menu-label">My Cart</span>
-        </router-link>
-        <router-link to="/chat" class="menu-item" @click="showMenu = false">
-          <span class="menu-icon">💬</span>
-          <span class="menu-label">Trader Chat</span>
-        </router-link>
         <router-link to="/staff/profile" class="menu-item" @click="showMenu = false">
           <span class="menu-icon">👤</span>
           <span class="menu-label">My Profile</span>
+        </router-link>
+        <router-link to="/marketplace" class="menu-item" @click="showMenu = false">
+          <span class="menu-icon">🏪</span>
+          <span class="menu-label">Marketplace</span>
+        </router-link>
+        <router-link to="/operations" class="menu-item" @click="showMenu = false">
+          <span class="menu-icon">⚙️</span>
+          <span class="menu-label">Operations</span>
+        </router-link>
+        <router-link to="/orders/tracking" class="menu-item" @click="showMenu = false">
+          <span class="menu-icon">📦</span>
+          <span class="menu-label">Order Tracking</span>
         </router-link>
         <button @click="logout" class="menu-item logout-item">
           <span class="menu-icon">🚪</span>
@@ -179,6 +154,23 @@ export default {
 .brand-name {
   font-size: 1.2em;
   font-weight: 700;
+}
+
+.header-logout-btn {
+  background: rgba(231, 76, 60, 0.2);
+  border: 1px solid rgba(231, 76, 60, 0.5);
+  color: white;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 0.85em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.header-logout-btn:active {
+  background: rgba(231, 76, 60, 0.35);
+  transform: scale(0.98);
 }
 
 /* Menu Overlay */

@@ -1,0 +1,58 @@
+===============================================
+  📱 USE THESE URLS ON YOUR PHONE RIGHT NOW
+===============================================
+
+Your server is RUNNING on port 5174!
+
+TRY THESE URLS ON YOUR PHONE (try all 3):
+
+1. http://192.168.68.101:5174/login
+2. http://192.168.25.35:5174/login  
+3. http://192.168.25.36:5174/login
+
+Most likely to work: #1 (192.168.68.101)
+
+
+IMPORTANT STEPS:
+===============================================
+
+1. Make sure your PHONE and LAPTOP are on the SAME WiFi
+   - Check WiFi name on both devices
+   - Must match exactly!
+
+2. On your phone:
+   - Open Chrome or Safari browser
+   - Type one of the URLs above
+   - Start with http://192.168.68.101:5174/login
+
+3. If you see "Can't reach this page":
+   - Run this file as Administrator:
+     allow-port-5174.bat
+   - Right-click → "Run as administrator"
+   - Then try the URLs again
+
+
+TROUBLESHOOTING:
+===============================================
+
+Problem: "This site can't be reached"
+Fix: Run allow-port-5174.bat as Administrator
+
+Problem: Page loads but API errors
+Fix: Backend is running (already checked ✓)
+
+Problem: Still not working
+Fix: Check BOTH devices are on same WiFi:
+   - On laptop: Open Settings → Network & Internet → WiFi
+   - On phone: Settings → WiFi
+   - Names must match!
+
+
+QUICK TEST:
+===============================================
+
+Test on your laptop first:
+  http://192.168.68.101:5174/login
+
+If it works on laptop, it should work on phone!
+(as long as same WiFi)

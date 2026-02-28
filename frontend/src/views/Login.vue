@@ -71,7 +71,7 @@
       </form>
 
       <div class="auth-footer">
-        <p>Don't have an account? <router-link to="/register">Sign up</router-link></p>
+        <p>Account creation is managed by administrator.</p>
       </div>
     </div>
   </div>
@@ -116,7 +116,9 @@ export default {
         } else if (role === 'staff') {
           this.$router.push('/staff')
         } else {
-          this.$router.push('/')
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+          this.error = 'Only trader and admin accounts are allowed.'
         }
       } catch (err) {
         this.error = err.response?.data?.message || 'Login failed. Please try again.'

@@ -1,0 +1,93 @@
+📱 HOW TO ACCESS ON YOUR PHONE
+================================
+
+STEP 1: Find Your Computer's IP
+--------------------------------
+Run this command in Command Prompt:
+    ipconfig
+
+Look for this line:
+    IPv4 Address. . . . . : 192.168.x.x
+
+Write down the IP address (something like 192.168.1.100)
+
+
+STEP 2: Start the Dev Server
+-----------------------------
+Option A - Use the script:
+    START_MOBILE.bat
+
+Option B - Manual:
+    cd frontend
+    npm run dev
+
+Look for this line in the output:
+    ➜  Network: http://192.168.x.x:5173/login
+
+
+STEP 3: Open on Your Phone
+---------------------------
+1. Connect phone to SAME WiFi as your computer
+2. Open phone browser (Chrome, Safari, etc.)
+3. Type the Network URL from Step 2
+4. You should see the login page!
+
+
+TROUBLESHOOTING
+===============
+
+Problem: "Can't be reached" or "Connection refused"
+Solution 1: Allow in Firewall
+    - Run allow-firewall.bat as Administrator
+    OR
+    - Open PowerShell as Administrator and run:
+      New-NetFirewallRule -DisplayName "Vite Dev Server" -Direction Inbound -LocalPort 5173 -Protocol TCP -Action Allow
+
+Solution 2: Check WiFi
+    - Phone and computer MUST be on same WiFi network
+    - Not mobile data, not guest WiFi
+
+Solution 3: Restart Everything
+    - Stop server (Ctrl+C)
+    - Run: npm run dev
+    - Restart phone browser
+
+Solution 4: Check Backend
+    - Backend must be running on port 3000
+    - Open another terminal:
+      cd backend
+      node server.js
+
+
+QUICK TEST
+==========
+1. On your computer, open browser and go to:
+   http://localhost:5173/login
+   
+   Should work? ✓ Good!
+
+2. Find your IP:
+   ipconfig
+   
+   Write it down: 192.168.___.___
+
+3. On your computer, open browser and go to:
+   http://192.168.___.___:5173/login
+   
+   Should work? ✓ Good! Now try on phone with same URL.
+
+
+ALTERNATIVE: USE QR CODE
+========================
+1. Start the dev server
+2. Click the 📱 button (bottom-right of screen)
+3. Scan the QR code with your phone camera
+4. Should open automatically!
+
+
+NEED MORE HELP?
+===============
+See these files:
+- MOBILE_ACCESS_QUICK_FIX.md
+- FIX_CANT_REACH.md
+- QR_CODE_GUIDE.md

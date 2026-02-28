@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <UserNavbar
-      v-if="isAuthenticated && !isAdminRoute && !isStaffRoute"
+      v-if="showUserNavbar"
       :deferredPrompt="deferredPrompt"
     />
 
@@ -12,6 +12,25 @@
     <footer class="simple-footer" v-if="isAuthenticated">
       <p>&copy; 2026 Cocolytics. All rights reserved.</p>
     </footer>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container">
+      <div
+        v-for="toast in toasts"
+        :key="toast.id"
+        class="toast-notification"
+        :class="toast.type"
+        @click="dismissToast(toast.id)"
+      >
+        <div class="toast-icon">{{ toast.icon }}</div>
+        <div class="toast-content">
+          <div class="toast-title">{{ toast.title }}</div>
+          <div class="toast-message">{{ toast.message }}</div>
+        </div>
+        <button class="toast-close" @click.stop="dismissToast(toast.id)">&times;</button>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -27,15 +46,29 @@ export default {
     return {
       deferredPrompt: null,
       isAuthenticated: false,
-      user: null
+      user: null,
+      toasts: [],
+      lastNotificationCheck: null,
+      notificationCheckInterval: null
     }
   },
   computed: {
+    showUserNavbar() {
+      return this.isAuthenticated && this.user?.role === 'user'
+    },
     isAdminRoute() {
       return this.$route.path.startsWith('/admin')
     },
     isStaffRoute() {
       return this.$route.path.startsWith('/staff')
+    },
+    isLoginPage() {
+      return this.$route.path === '/login'
+    },
+    apiBaseUrl() {
+      return import.meta.env.VITE_API_BASE_URL
+        ? `${import.meta.env.VITE_API_BASE_URL}/api`
+        : '/api';
     }
   },
   created() {
@@ -55,6 +88,27 @@ export default {
       console.log('App was installed successfully!')
       this.deferredPrompt = null
     })
+
+    // Start checking for new notifications if authenticated
+    if (this.isAuthenticated) {
+      this.startNotificationPolling()
+    }
+  },
+  beforeUnmount() {
+    if (this.notificationCheckInterval) {
+      clearInterval(this.notificationCheckInterval)
+    }
+  },
+  watch: {
+    isAuthenticated(newVal) {
+      if (newVal) {
+        this.startNotificationPolling()
+      } else {
+        if (this.notificationCheckInterval) {
+          clearInterval(this.notificationCheckInterval)
+        }
+      }
+    }
   },
   methods: {
     checkAuth() {
@@ -62,6 +116,75 @@ export default {
       const userData = localStorage.getItem('user')
       this.isAuthenticated = !!token
       this.user = userData ? JSON.parse(userData) : null
+    },
+    startNotificationPolling() {
+      // Check immediately
+      this.checkNewNotifications()
+      
+      // Then check every 10 seconds for new notifications
+      this.notificationCheckInterval = setInterval(() => {
+        this.checkNewNotifications()
+      }, 10000)
+    },
+    async checkNewNotifications() {
+      if (!this.isAuthenticated) return
+
+      try {
+        const token = localStorage.getItem('token')
+        const response = await fetch(
+          `${this.apiBaseUrl}/notifications?limit=5&offset=0`,
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        )
+        
+        if (!response.ok) return
+        
+        const data = await response.json()
+        const notifications = data.data || []
+
+        // Filter for new MESSAGE notifications
+        const newMessages = notifications.filter(notif => {
+          const notifTime = new Date(notif.created_at).getTime()
+          return notif.alert_type === 'MESSAGE' && 
+                 !notif.is_read &&
+                 (!this.lastNotificationCheck || notifTime > this.lastNotificationCheck)
+        })
+
+        // Show toasts for new messages
+        newMessages.forEach(notif => {
+          this.showToast({
+            title: notif.title,
+            message: notif.message,
+            type: 'message',
+            icon: '💬'
+          })
+        })
+
+        // Update last check timestamp
+        if (notifications.length > 0) {
+          const latestTime = Math.max(...notifications.map(n => new Date(n.created_at).getTime()))
+          if (!this.lastNotificationCheck || latestTime > this.lastNotificationCheck) {
+            this.lastNotificationCheck = latestTime
+          }
+        }
+      } catch (error) {
+        console.error('Error checking notifications:', error)
+      }
+    },
+    showToast({ title, message, type = 'info', icon = '🔔', duration = 5000 }) {
+      const id = Date.now() + Math.random()
+      const toast = { id, title, message, type, icon }
+      this.toasts.push(toast)
+
+      // Auto-dismiss after duration
+      setTimeout(() => {
+        this.dismissToast(id)
+      }, duration)
+    },
+    dismissToast(id) {
+      const index = this.toasts.findIndex(t => t.id === id)
+      if (index > -1) {
+        this.toasts.splice(index, 1)
+      }
     }
   }
 }
@@ -176,5 +299,126 @@ input, textarea, select {
 
 *::-webkit-scrollbar {
   display: none;
+}
+
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  top: 70px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+  width: calc(100% - 40px);
+}
+
+.toast-notification {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  animation: slideIn 0.3s ease-out;
+  cursor: pointer;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.toast-notification:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+}
+
+.toast-notification.message {
+  border-left: 4px solid #4CAF50;
+}
+
+.toast-notification.info {
+  border-left: 4px solid #2196F3;
+}
+
+.toast-notification.warning {
+  border-left: 4px solid #FF9800;
+}
+
+.toast-notification.error {
+  border-left: 4px solid #F44336;
+}
+
+.toast-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.toast-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-title {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.toast-message {
+  color: #666;
+  font-size: 13px;
+  word-wrap: break-word;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.toast-close:hover {
+  color: #333;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .toast-container {
+    top: 60px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+    width: calc(100% - 20px);
+  }
+  
+  .toast-notification {
+    padding: 12px;
+  }
+  
+  .toast-title {
+    font-size: 13px;
+  }
+  
+  .toast-message {
+    font-size: 12px;
+  }
 }
 </style>

@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "mobile": "echo 'Open http://localhost:5173/login on your mobile device'",
+    "ngrok": "npx ngrok@latest http 5173",
+    "mobile:share": "node ../mobile-share.js"
   },
   "dependencies": {
     "axios": "^1.6.2",

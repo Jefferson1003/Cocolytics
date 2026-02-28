@@ -433,29 +433,64 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .admin-layout {
+    padding-top: 60px;
+  }
+
   .dashboard-container {
-    margin-left: 0;
-    padding: 20px;
-    width: 100%;
-    max-width: 100vw;
+    margin-left: 0 !important;
+    padding: 20px 16px;
+    width: 100% !important;
+    max-width: 100vw !important;
+  }
+
+  .dashboard-header {
+    margin-bottom: 20px;
   }
 
   .dashboard-header h1 {
     font-size: 1.8rem;
   }
 
+  .dashboard-header p {
+    font-size: 1rem;
+  }
+
   .section-header {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
+  }
+
+  .section-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .filter-bar,
+  .category-select {
+    width: 100%;
+  }
+
+  .features-section {
+    border-radius: 12px;
   }
 
   .feature-card {
     flex-direction: column;
     gap: 12px;
+    padding: 16px;
   }
 
   .feature-icon {
     font-size: 2rem;
+  }
+
+  .feature-body h3 {
+    font-size: 1.1rem;
+  }
+
+  .feature-body p {
+    font-size: 0.9rem;
   }
 
   .feature-action {
@@ -463,8 +498,23 @@ export default {
     justify-content: flex-start;
   }
 
+  .system-info h2 {
+    font-size: 1.3rem;
+  }
+
   .info-grid {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .dashboard-header p {
+    font-size: 0.9rem;
   }
 }
 </style>

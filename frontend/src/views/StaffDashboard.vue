@@ -50,6 +50,11 @@
           <h3>Manage Orders</h3>
           <p>View and update order status</p>
         </router-link>
+        <router-link to="/notifications" class="action-card">
+          <span class="action-icon">🔔</span>
+          <h3>Notifications</h3>
+          <p>View alerts and order updates</p>
+        </router-link>
         <div class="action-card">
           <span class="action-icon">📊</span>
           <h3>View Reports</h3>

@@ -198,6 +198,7 @@ export default {
       userRole: 'user',
       filterTabs: [
         { label: 'All', value: 'all' },
+        { label: '💬 Messages', value: 'MESSAGE' },
         { label: '⚠️ Low Stock', value: 'LOW_STOCK' },
         { label: '⏱️ Drying Delays', value: 'DRYING_DELAY' },
         { label: '📋 Summaries', value: 'DAILY_SUMMARY' },
@@ -451,6 +452,7 @@ export default {
     },
     formatAlertType(type) {
       const typeMap = {
+        'MESSAGE': '💬 Message',
         'LOW_STOCK': '📦 Low Stock',
         'DRYING_DELAY': '⏱️ Drying Delay',
         'DAILY_SUMMARY': '📋 Summary',

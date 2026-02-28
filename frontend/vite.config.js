@@ -9,14 +9,30 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'Cocolytics',
+        name: 'Cocolytics Trader Portal',
         short_name: 'Cocolytics',
-        description: 'Cocolytics Analytics Application',
+        description: 'Cocolytics Trader Analytics & Management',
         theme_color: '#4CAF50',
         background_color: '#ffffff',
         display: 'standalone',
+        orientation: 'portrait-primary',
         scope: '/',
-        start_url: '/',
+        start_url: '/login',
+        categories: ['business', 'productivity'],
+        screenshots: [
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            form_factor: 'narrow'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            form_factor: 'wide'
+          }
+        ],
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -55,7 +71,10 @@ export default defineConfig({
     })
   ],
   server: {
+    host: '0.0.0.0', // Listen on all network interfaces (allows mobile access)
     port: 5173,
+    open: '/login',
+    strictPort: false,
     allowedHosts: ['faultlessly-busying-paola.ngrok-free.dev'],
     proxy: {
       '/api': {
@@ -65,6 +84,14 @@ export default defineConfig({
       '/uploads': {
         target: 'http://localhost:3000',
         changeOrigin: true
+      }
+    }
+  },
+  build: {
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true
       }
     }
   }

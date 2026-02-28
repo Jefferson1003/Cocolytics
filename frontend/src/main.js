@@ -29,7 +29,6 @@ ChartJS.register(
 import Home from './views/Home.vue'
 import About from './views/About.vue'
 import Login from './views/Login.vue'
-import Register from './views/Register.vue'
 import AdminDashboard from './views/AdminDashboard.vue'
 import StaffDashboard from './views/StaffDashboard.vue'
 import AddCocolumber from './views/AddCocolumber.vue'
@@ -50,6 +49,11 @@ import AdminFeatures from './views/AdminFeatures.vue'
 import StaffReports from './views/StaffReports.vue'
 import NotificationsPage from './views/NotificationsPage.vue'
 import TraderChat from './views/TraderChat.vue'
+import Marketplace from './views/Marketplace.vue'
+import Communications from './views/Communications.vue'
+import Operations from './views/Operations.vue'
+import OrderTracking from './views/OrderTracking.vue'
+import SellerOrders from './views/SellerOrders.vue'
 
 // Define routes
 const routes = [
@@ -69,12 +73,6 @@ const routes = [
     path: '/login', 
     name: 'Login', 
     component: Login,
-    meta: { guest: true }
-  },
-  { 
-    path: '/register', 
-    name: 'Register', 
-    component: Register,
     meta: { guest: true }
   },
   {
@@ -109,8 +107,8 @@ const routes = [
   },
   {
     path: '/staff/orders',
-    name: 'StaffOrders',
-    component: StaffOrders,
+    name: 'SellerOrders',
+    component: SellerOrders,
     meta: { requiresAuth: true, roles: ['staff', 'admin'] }
   },
   {
@@ -153,6 +151,12 @@ const routes = [
     path: '/cart',
     name: 'Cart',
     component: Cart,
+    meta: { requiresAuth: true, roles: ['staff'] }
+  },
+  {
+    path: '/marketplace',
+    name: 'Marketplace',
+    component: Marketplace,
     meta: { requiresAuth: true, roles: ['staff', 'admin'] }
   },
   {
@@ -177,12 +181,30 @@ const routes = [
     path: '/notifications',
     name: 'Notifications',
     component: NotificationsPage,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
   },
   {
     path: '/chat',
     name: 'TraderChat',
     component: TraderChat,
+    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
+  },
+  {
+    path: '/communications',
+    name: 'Communications',
+    component: Communications,
+    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
+  },
+  {
+    path: '/operations',
+    name: 'Operations',
+    component: Operations,
+    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
+  },
+  {
+    path: '/orders/tracking',
+    name: 'OrderTracking',
+    component: OrderTracking,
     meta: { requiresAuth: true, roles: ['staff', 'admin'] }
   }
 ]
@@ -199,6 +221,14 @@ router.beforeEach((to, from, next) => {
   const userData = localStorage.getItem('user')
   const isAuthenticated = !!token
   const user = userData ? JSON.parse(userData) : null
+  const allowedRoles = ['staff', 'admin']
+
+  if (isAuthenticated && user && !allowedRoles.includes(user.role)) {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    next('/login')
+    return
+  }
 
   // If route requires auth and user is not authenticated
   if (to.meta.requiresAuth && !isAuthenticated) {
@@ -236,11 +266,24 @@ const app = createApp(App)
 app.use(router)
 app.mount('#app')
 
-// Register service worker for PWA
+// Register service worker only in production.
+// In development, unregister existing workers/caches so mobile hot reload works reliably.
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      console.log('Service worker registration failed')
+  if (import.meta.env.PROD) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        console.log('Service worker registration failed')
+      })
     })
-  })
+  } else {
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      registrations.forEach((registration) => registration.unregister())
+    })
+
+    if ('caches' in window) {
+      caches.keys().then((keys) => {
+        keys.forEach((key) => caches.delete(key))
+      })
+    }
+  }
 }

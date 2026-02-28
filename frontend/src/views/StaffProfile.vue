@@ -6,23 +6,37 @@
       <div class="profile-container">
         <h1>🏪 {{ staffName }} - {{ profile.store_name || 'My Store' }}</h1>
         
-        <div v-if="loading" class="loading-state">
-          <div class="spinner"></div>
-          <p>Loading profile...</p>
+        <!-- Tab Navigation -->
+        <div class="tabs-header">
+          <button 
+            v-for="tab in tabs" 
+            :key="tab.value"
+            @click="activeTab = tab.value"
+            :class="['tab-btn', { active: activeTab === tab.value }]"
+          >
+            {{ tab.icon }} {{ tab.label }}
+          </button>
         </div>
 
-        <template v-else>
-          <div v-if="successMessage" class="alert alert-success">
-            <span class="alert-icon">✓</span>
-            {{ successMessage }}
+        <!-- Profile Tab -->
+        <div v-if="activeTab === 'profile'" class="tab-content">
+          <div v-if="loading" class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading profile...</p>
           </div>
 
-          <div v-if="errorMessage" class="alert alert-error">
-            <span class="alert-icon">✗</span>
-            {{ errorMessage }}
-          </div>
+          <template v-else>
+            <div v-if="successMessage" class="alert alert-success">
+              <span class="alert-icon">✓</span>
+              {{ successMessage }}
+            </div>
 
-          <form @submit.prevent="updateProfile" class="profile-form">
+            <div v-if="errorMessage" class="alert alert-error">
+              <span class="alert-icon">✗</span>
+              {{ errorMessage }}
+            </div>
+
+            <form @submit.prevent="updateProfile" class="profile-form">
           <!-- Trader Logo Upload -->
           <div class="form-group logo-upload">
             <label>Trader Logo</label>
@@ -106,7 +120,125 @@
             </button>
           </div>
         </form>
-        </template>
+            </template>
+        </div>
+
+        <!-- Documents Tab -->
+        <div v-if="activeTab === 'documents'" class="tab-content">
+          <div v-if="docsLoading" class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading documents...</p>
+          </div>
+
+          <template v-else>
+            <div class="upload-grid">
+              <!-- TO CUT SECTION -->
+              <div class="upload-card">
+                <div class="card-title">✂️ To Cut Papers</div>
+                <div class="card-subtitle">Upload documents for cutting authorization</div>
+                
+                <div class="form-grid">
+                  <div class="field">
+                    <label>Document Title</label>
+                    <input v-model="toCutForm.title" type="text" placeholder="e.g., Cutting Order #123" />
+                  </div>
+                  <div class="field">
+                    <label>Description (optional)</label>
+                    <textarea v-model="toCutForm.description" rows="3" placeholder="Details about the cutting documents..."></textarea>
+                  </div>
+                  <div class="field">
+                    <label>Attach File (PDF, JPG, PNG)</label>
+                    <input type="file" @change="onToCutFileChange" accept=".pdf,image/jpeg,image/png" />
+                    <small v-if="toCutForm.fileName" class="file-name">✓ Selected: {{ toCutForm.fileName }}</small>
+                  </div>
+                </div>
+
+                <div class="actions">
+                  <button class="btn btn-to-cut" :disabled="uploadingToCut" @click="submitToCut">
+                    <span v-if="!uploadingToCut">🔼 Upload To Cut Paper</span>
+                    <span v-else>⏳ Uploading...</span>
+                  </button>
+                </div>
+
+                <div v-if="successMessageToCut" class="alert success">✓ {{ successMessageToCut }}</div>
+                <div v-if="errorMessageToCut" class="alert error">✗ {{ errorMessageToCut }}</div>
+              </div>
+
+              <!-- TRANSPORT SECTION -->
+              <div class="upload-card">
+                <div class="card-title">🚚 Transport Papers</div>
+                <div class="card-subtitle">Upload documents for transport logistics</div>
+                
+                <div class="form-grid">
+                  <div class="field">
+                    <label>Document Title</label>
+                    <input v-model="transportForm.title" type="text" placeholder="e.g., Transport Manifest #456" />
+                  </div>
+                  <div class="field">
+                    <label>Description (optional)</label>
+                    <textarea v-model="transportForm.description" rows="3" placeholder="Details about the transport documents..."></textarea>
+                  </div>
+                  <div class="field">
+                    <label>Attach File (PDF, JPG, PNG)</label>
+                    <input type="file" @change="onTransportFileChange" accept=".pdf,image/jpeg,image/png" />
+                    <small v-if="transportForm.fileName" class="file-name">✓ Selected: {{ transportForm.fileName }}</small>
+                  </div>
+                </div>
+
+                <div class="actions">
+                  <button class="btn btn-transport" :disabled="uploadingTransport" @click="submitTransport">
+                    <span v-if="!uploadingTransport">🚛 Upload Transport Paper</span>
+                    <span v-else>⏳ Uploading...</span>
+                  </button>
+                </div>
+
+                <div v-if="successMessageTransport" class="alert success">✓ {{ successMessageTransport }}</div>
+                <div v-if="errorMessageTransport" class="alert error">✗ {{ errorMessageTransport }}</div>
+              </div>
+            </div>
+
+            <!-- MY SUBMISSIONS LIST -->
+            <div class="list-card">
+              <h3>📋 My Paper Submissions</h3>
+              
+              <div class="filter-tabs">
+                <button 
+                  v-for="filter in ['to_cut', 'transport']"
+                  :key="filter"
+                  @click="docsFilter = filter"
+                  :class="['tab', { active: docsFilter === filter }]"
+                >
+                  <span v-if="filter === 'to_cut'">✂️ To Cut</span>
+                  <span v-else-if="filter === 'transport'">🚚 Transport</span>
+                </button>
+              </div>
+
+              <div v-if="docsLoading" class="loading">Loading submissions...</div>
+              <div v-else-if="filteredPapers.length === 0" class="empty">No submissions found.</div>
+              <div v-else class="list">
+                <div v-for="paper in filteredPapers" :key="paper.id" class="list-item">
+                  <div class="paper-type">
+                    <span v-if="paper.paper_type === 'to_cut'" class="badge badge-to-cut">✂️ TO CUT</span>
+                    <span v-else-if="paper.paper_type === 'transport'" class="badge badge-transport">🚚 TRANSPORT</span>
+                  </div>
+                  <div class="info">
+                    <h4>{{ paper.title }}</h4>
+                    <p v-if="paper.description" class="description">{{ paper.description }}</p>
+                    <div class="meta">
+                      <span class="date">📅 {{ formatDate(paper.created_at) }}</span>
+                      <a :href="getFileUrl(paper.file_path)" target="_blank" rel="noopener" class="file-link">📎 View File</a>
+                    </div>
+                  </div>
+                  <div class="status-section">
+                    <span :class="['status', 'status-' + paper.status]">{{ formatStatus(paper.status) }}</span>
+                    <p v-if="paper.review_note" class="review-note">{{ paper.review_note }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+
       </div>
     </div>
   </div>
@@ -122,6 +254,12 @@ export default {
   },
   data() {
     return {
+      activeTab: 'profile',
+      tabs: [
+        { label: 'Profile', value: 'profile', icon: '👤' },
+        { label: 'Documents', value: 'documents', icon: '📄' }
+      ],
+      // Profile tab data
       profile: {
         store_name: '',
         store_description: '',
@@ -138,7 +276,34 @@ export default {
       errorMessage: '',
       saving: false,
       loading: true,
-      token: null
+      token: null,
+      // Documents tab data
+      toCutForm: {
+        title: '',
+        description: '',
+        file: null,
+        fileName: ''
+      },
+      transportForm: {
+        title: '',
+        description: '',
+        file: null,
+        fileName: ''
+      },
+      papers: [],
+      docsFilter: 'to_cut',
+      docsLoading: false,
+      uploadingToCut: false,
+      uploadingTransport: false,
+      successMessageToCut: '',
+      errorMessageToCut: '',
+      successMessageTransport: '',
+      errorMessageTransport: ''
+    }
+  },
+  computed: {
+    filteredPapers() {
+      return this.papers.filter(p => p.paper_type === this.docsFilter)
     }
   },
   mounted() {
@@ -148,8 +313,10 @@ export default {
       this.user = JSON.parse(userData)
     }
     this.fetchProfile()
+    this.fetchMyPapers()
   },
   methods: {
+    // Profile methods
     async fetchProfile() {
       this.loading = true
       this.errorMessage = ''
@@ -241,6 +408,110 @@ export default {
       const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
       if (imagePath.startsWith('/')) return `${apiBaseUrl}${imagePath}`
       return `${apiBaseUrl}/uploads/${imagePath}`
+    },
+    // Documents methods
+    async fetchMyPapers() {
+      this.docsLoading = true
+      try {
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
+        const response = await fetch(`${apiBaseUrl}/api/papers/mine`, {
+          headers: { Authorization: `Bearer ${this.token}` }
+        })
+        if (!response.ok) throw new Error('Failed to load submissions')
+        this.papers = await response.json()
+        this.papers.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      } catch (error) {
+        console.error('Error:', error)
+      } finally {
+        this.docsLoading = false
+      }
+    },
+    onToCutFileChange(event) {
+      const file = event.target.files[0]
+      if (file) {
+        this.toCutForm.file = file
+        this.toCutForm.fileName = file.name
+      }
+    },
+    onTransportFileChange(event) {
+      const file = event.target.files[0]
+      if (file) {
+        this.transportForm.file = file
+        this.transportForm.fileName = file.name
+      }
+    },
+    async submitToCut() {
+      return this.submitPaper(this.toCutForm, 'to_cut', 'uploadingToCut', 'successMessageToCut', 'errorMessageToCut')
+    },
+    async submitTransport() {
+      return this.submitPaper(this.transportForm, 'transport', 'uploadingTransport', 'successMessageTransport', 'errorMessageTransport')
+    },
+    async submitPaper(form, paperType, loadingKey, successKey, errorKey) {
+      this[successKey] = ''
+      this[errorKey] = ''
+
+      if (!form.title.trim()) {
+        this[errorKey] = 'Title is required.'
+        return
+      }
+      if (!form.file) {
+        this[errorKey] = 'Please attach a file.'
+        return
+      }
+
+      this[loadingKey] = true
+      try {
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
+        const formData = new FormData()
+        formData.append('title', form.title)
+        formData.append('description', form.description)
+        formData.append('paper_type', paperType)
+        formData.append('paper', form.file)
+
+        const response = await fetch(`${apiBaseUrl}/api/papers`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${this.token}` },
+          body: formData
+        })
+
+        const result = await response.json()
+        if (!response.ok) throw new Error(result.message || 'Upload failed')
+
+        this[successKey] = `${paperType === 'to_cut' ? 'To Cut' : 'Transport'} paper submitted for approval!`
+        
+        // Reset form
+        form.title = ''
+        form.description = ''
+        form.file = null
+        form.fileName = ''
+        
+        setTimeout(() => this[successKey] = '', 3000)
+        this.fetchMyPapers()
+      } catch (error) {
+        console.error('Error:', error)
+        this[errorKey] = error.message || 'Upload failed. Please try again.'
+      } finally {
+        this[loadingKey] = false
+      }
+    },
+    formatDate(dateString) {
+      if (!dateString) return '—'
+      const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }
+      return new Date(dateString).toLocaleDateString('en-US', options)
+    },
+    formatStatus(status) {
+      const statusMap = {
+        pending: '⏳ Pending',
+        approved: '✅ Approved',
+        rejected: '❌ Rejected'
+      }
+      return statusMap[status] || status
+    },
+    getFileUrl(path) {
+      if (!path) return '#'
+      if (path.startsWith('http')) return path
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
+      return `${apiBaseUrl}${path}`
     }
   }
 }
@@ -257,10 +528,12 @@ export default {
   flex: 1;
   padding: 40px;
   margin-left: 250px;
+  max-height: 100vh;
+  overflow-y: auto;
 }
 
 .profile-container {
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
 }
 
@@ -268,7 +541,48 @@ export default {
   color: white;
   font-size: 2.5em;
   font-weight: 700;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
+}
+
+/* Tab Navigation */
+.tabs-header {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 25px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  border: 2px solid transparent;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.tab-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.tab-btn.active {
+  background: white;
+  color: #667eea;
+  border-bottom-color: white;
+}
+
+.tab-content {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .alert {
@@ -454,6 +768,298 @@ textarea.form-control {
   100% { transform: rotate(360deg); }
 }
 
+/* Documents Tab Styles */
+.upload-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.upload-card,
+.list-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+  color: #333;
+  font-size: 1.2em;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.card-subtitle {
+  color: #777;
+  font-size: 0.9em;
+  margin-bottom: 16px;
+}
+
+.list-card h3 {
+  color: #333;
+  margin-bottom: 16px;
+  font-size: 1.2em;
+}
+
+
+.filter-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  padding: 8px 16px;
+  border: 1px solid #e0e0e0;
+  background: #f5f5f5;
+  color: #333;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 0.9em;
+}
+
+.tab:hover {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.tab.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  color: white;
+}
+
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field label {
+  color: #333;
+  font-weight: 500;
+  font-size: 0.95em;
+}
+
+.field input[type="text"],
+.field textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #f9f9f9;
+  color: #333;
+  font-family: inherit;
+  font-size: 1em;
+}
+
+.field input[type="text"]:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.field input[type="file"] {
+  padding: 10px;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  background: #f9f9f9;
+  color: #333;
+  font-size: 0.9em;
+}
+
+.file-name {
+  color: #4CAF50;
+  font-size: 0.85em;
+  margin-top: 4px;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.btn {
+  padding: 14px 32px;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1em;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-to-cut {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.btn-transport {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.alert.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.alert.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.loading,
+.empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+  font-size: 0.95em;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.list-item {
+  background: #f9f9f9;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  border-left: 4px solid #667eea;
+}
+
+.paper-type {
+  flex-shrink: 0;
+}
+
+.badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.75em;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badge-to-cut {
+  background: rgba(102, 126, 234, 0.2);
+  color: #667eea;
+  border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+.badge-transport {
+  background: rgba(245, 87, 108, 0.2);
+  color: #f5576c;
+  border: 1px solid rgba(245, 87, 108, 0.3);
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.info h4 {
+  color: #333;
+  margin: 0 0 8px 0;
+  font-size: 1em;
+}
+
+.description {
+  color: #666;
+  margin: 4px 0;
+  font-size: 0.9em;
+  line-height: 1.4;
+}
+
+.meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 0.85em;
+  color: #999;
+}
+
+.file-link {
+  color: #667eea;
+  text-decoration: none;
+}
+
+.file-link:hover {
+  text-decoration: underline;
+}
+
+.status-section {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.status {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.8em;
+  font-weight: 600;
+  white-space: nowrap;
+  margin-bottom: 8px;
+}
+
+.status-pending {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
+
+.status-approved {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+}
+
+.status-rejected {
+  background: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+}
+
+.review-note {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border-left: 2px solid #ccc;
+  font-size: 0.8em;
+  color: #666;
+  border-radius: 4px;
+}
+
 @media (max-width: 768px) {
   .main-content {
     margin-left: 0;
@@ -466,6 +1072,33 @@ textarea.form-control {
 
   .profile-form {
     padding: 25px;
+  }
+
+  .upload-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .list-item {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .status-section {
+    text-align: left;
+  }
+
+  .tabs-header {
+    gap: 5px;
+  }
+
+  .tab-btn {
+    padding: 10px 16px;
+    font-size: 0.9em;
+  }
+
+  .field input[type="text"],
+  .field textarea {
+    font-size: 16px;
   }
 }
 </style>

@@ -251,29 +251,6 @@ def estimate_tree_measurements(image_pil):
             'pixels_detected': 0
         }
     }
-        uniformity = contour_area / bbox_area if bbox_area > 0 else 0
-        
-        if uniformity > 0.7:
-            quality = "Premium"
-        elif uniformity > 0.5:
-            quality = "Grade A"
-        else:
-            quality = "Grade B"
-        
-        return {
-            'height': str(estimated_height),
-            'diameter': str(estimated_diameter),
-            'estimatedLumber': str(board_feet),
-            'quality': quality
-        }
-    
-    # Default values if detection fails
-    return {
-        'height': '10.5',
-        'diameter': '42',
-        'estimatedLumber': '95',
-        'quality': 'Grade A'
-    }
 
 def is_wood_like(image_pil):
     """

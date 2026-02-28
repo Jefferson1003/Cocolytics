@@ -1,7 +1,9 @@
 const express = require('express');
-const router = express.Router();
 
-// ==================== TRADER CHAT ROUTES ====================
+module.exports = (notificationService, pool) => {
+  const router = express.Router();
+
+  // ==================== TRADER CHAT ROUTES ====================
 
 /**
  * Get all conversations for the current user
@@ -22,6 +24,10 @@ router.get('/conversations', async (req, res) => {
            AND cm.sender_id != ? 
            AND cm.is_read = FALSE
         ) as unread_count,
+        (SELECT COUNT(*)
+         FROM chat_messages cm
+         WHERE cm.conversation_id = c.id
+        ) as message_count,
         (SELECT cm.message_text 
          FROM chat_messages cm 
          WHERE cm.conversation_id = c.id 
@@ -75,6 +81,7 @@ router.get('/conversations', async (req, res) => {
         last_message: conv.last_message,
         last_message_time: conv.last_message_time || conv.updated_at,
         unread_count: conv.unread_count || 0,
+        message_count: conv.message_count || 0,
         participants
       };
     });
@@ -94,19 +101,20 @@ router.post('/conversations', async (req, res) => {
   try {
     const userId = req.user.id;
     const { recipient_id } = req.body;
+    const recipientId = parseInt(recipient_id, 10);
 
-    if (!recipient_id) {
+    if (!recipient_id || Number.isNaN(recipientId)) {
       return res.status(400).json({ message: 'Recipient ID is required' });
     }
 
-    if (userId === parseInt(recipient_id)) {
+    if (userId === recipientId) {
       return res.status(400).json({ message: 'Cannot create conversation with yourself' });
     }
 
     // Check if recipient exists and is a staff member
     const [recipientCheck] = await req.db.execute(
       'SELECT id, name, role FROM users WHERE id = ? AND role IN ("staff", "admin")',
-      [recipient_id]
+      [recipientId]
     );
 
     if (recipientCheck.length === 0) {
@@ -117,14 +125,13 @@ router.post('/conversations', async (req, res) => {
     const [existingConv] = await req.db.execute(`
       SELECT c.id 
       FROM chat_conversations c
-      INNER JOIN conversation_participants cp1 ON c.id = cp1.conversation_id
-      INNER JOIN conversation_participants cp2 ON c.id = cp2.conversation_id
-      WHERE cp1.user_id = ? AND cp2.user_id = ?
+      INNER JOIN conversation_participants cp ON c.id = cp.conversation_id
+      WHERE cp.user_id IN (?, ?)
       GROUP BY c.id
-      HAVING COUNT(DISTINCT cp1.user_id) = 2
-        AND (SELECT COUNT(*) FROM conversation_participants WHERE conversation_id = c.id) = 2
+      HAVING COUNT(DISTINCT cp.user_id) = 2
+        AND COUNT(*) = 2
       LIMIT 1
-    `, [userId, recipient_id]);
+    `, [userId, recipientId]);
 
     if (existingConv.length > 0) {
       // Return existing conversation
@@ -145,7 +152,7 @@ router.post('/conversations', async (req, res) => {
     // Add both participants
     await req.db.execute(
       'INSERT INTO conversation_participants (conversation_id, user_id) VALUES (?, ?), (?, ?)',
-      [conversationId, userId, conversationId, recipient_id]
+      [conversationId, userId, conversationId, recipientId]
     );
 
     res.json({ 
@@ -280,6 +287,36 @@ router.post('/messages', async (req, res) => {
       LEFT JOIN staff_profiles sp ON u.id = sp.staff_id
       WHERE cm.id = ?
     `, [result.insertId]);
+
+    // Get recipients (all participants except the sender) to send notifications
+    const [recipients] = await req.db.execute(`
+      SELECT cp.user_id, u.name, u.role
+      FROM conversation_participants cp
+      JOIN users u ON cp.user_id = u.id
+      WHERE cp.conversation_id = ? AND cp.user_id != ?
+    `, [conversation_id, userId]);
+
+    // Create notifications for each recipient
+    const senderDisplayName = newMessage[0].sender_store_name || newMessage[0].sender_name;
+    const messagePreview = message_text.length > 50 
+      ? message_text.substring(0, 50) + '...' 
+      : message_text;
+
+    for (const recipient of recipients) {
+      try {
+        await notificationService.createNotification({
+          user_id: recipient.user_id,
+          alert_type: 'MESSAGE',
+          title: `💬 New message from ${senderDisplayName}`,
+          message: messagePreview,
+          severity: 'info',
+          role_target: recipient.role || 'all'
+        });
+      } catch (notifError) {
+        console.error('Error creating notification for recipient:', recipient.user_id, notifError);
+        // Don't fail the message send if notification fails
+      }
+    }
 
     res.json({ 
       success: true, 
@@ -420,4 +457,5 @@ router.delete('/conversations/:conversationId', async (req, res) => {
   }
 });
 
-module.exports = router;
+  return router;
+};

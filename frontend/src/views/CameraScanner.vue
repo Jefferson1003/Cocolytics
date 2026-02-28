@@ -8,6 +8,22 @@
       </div>
 
       <div class="scanner-wrapper">
+        <!-- Status Banner -->
+        <div v-if="detectionStarted && scanResults.treeDetected" class="detection-status success">
+          <span class="status-icon">✅</span>
+          <div class="status-info">
+            <strong>Brown Detected!</strong>
+            <p>Cocolumber dimensions calculated successfully</p>
+          </div>
+        </div>
+        <div v-else-if="detectionStarted && !scanResults.treeDetected && !detectionError" class="detection-status scanning">
+          <span class="status-icon">🔍</span>
+          <div class="status-info">
+            <strong>Scanning...</strong>
+            <p>Looking for brown objects</p>
+          </div>
+        </div>
+
         <!-- Tabs -->
         <div class="tabs-container">
           <button 
@@ -145,6 +161,7 @@
                 ref="fileInput" 
                 @change="handleFileSelect"
                 accept="image/jpeg,image/jpg,image/png,image/gif"
+                capture="environment"
                 style="display: none;">
               <span class="upload-icon">📁</span>
               <p>Click to browse or drag & drop</p>
@@ -284,23 +301,74 @@ export default {
   },
   methods: {
     async openCamera() {
+      this.uploadError = ''
       this.showCamera = true
       this.capturedImage = null
       this.cameraError = ''
+
+      if (this.stream) {
+        this.stream.getTracks().forEach(track => track.stop())
+        this.stream = null
+      }
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        this.cameraError = 'Camera is not supported in this browser. Using upload camera instead.'
+        this.activeTab = 'upload'
+        await this.$nextTick()
+        if (this.$refs.fileInput) this.$refs.fileInput.click()
+        return
+      }
+
+      if (!window.isSecureContext) {
+        this.cameraError = 'Real-time camera needs HTTPS on mobile. Switched to upload camera mode.'
+        this.activeTab = 'upload'
+        this.showCamera = false
+        await this.$nextTick()
+        if (this.$refs.fileInput) this.$refs.fileInput.click()
+        return
+      }
       
       try {
-        this.stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: this.selectedCamera }
-        })
+        const constraints = [
+          { video: { facingMode: { ideal: this.selectedCamera }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+          { video: { facingMode: this.selectedCamera }, audio: false },
+          { video: true, audio: false }
+        ]
+
+        let stream = null
+        for (const constraint of constraints) {
+          try {
+            stream = await navigator.mediaDevices.getUserMedia(constraint)
+            break
+          } catch (error) {
+            stream = null
+          }
+        }
+
+        if (!stream) throw new Error('Could not start camera stream')
+        this.stream = stream
         
         await this.$nextTick()
         
         if (this.$refs.video) {
           this.$refs.video.srcObject = this.stream
+          if (typeof this.$refs.video.play === 'function') {
+            try { await this.$refs.video.play() } catch (e) {}
+          }
         }
       } catch (err) {
         console.error('Camera access error:', err)
-        this.cameraError = 'Unable to access camera. Please ensure camera permissions are granted.'
+        if (err?.name === 'NotAllowedError') {
+          this.cameraError = 'Camera permission denied. Allow camera access in browser settings and try again.'
+        } else if (err?.name === 'NotFoundError') {
+          this.cameraError = 'No camera found on this device.'
+        } else {
+          this.cameraError = 'Unable to access camera. Switched to upload camera mode.'
+        }
+        this.activeTab = 'upload'
+        this.showCamera = false
+        await this.$nextTick()
+        if (this.$refs.fileInput) this.$refs.fileInput.click()
       }
     },
     captureImage() {
@@ -472,11 +540,19 @@ export default {
             quality: result.quality || 'N/A',
             confidence: result.confidence || '0'
           }
-          alert('✅ Brown object detected!')
+          // Show detailed success message
+          const message = `✅ Brown Cocolumber Detected!\n\n` +
+            `📏 Height: ${this.scanResults.height} m\n` +
+            `📐 Width: ${this.scanResults.width} cm\n` +
+            `🪵 Diameter: ${this.scanResults.diameter} cm\n` +
+            `📦 Estimated: ${this.scanResults.estimatedLumber} board feet\n` +
+            `🏆 Quality: ${this.scanResults.quality}\n` +
+            `✅ Confidence: ${this.scanResults.confidence}%`
+          alert(message)
         } else {
           this.detectionError = '⚠️ No brown object detected in image!'
           this.scanResults = { treeDetected: false, height: '0', width: '0', diameter: '0', estimatedLumber: '0', quality: 'N/A', confidence: '0' }
-          alert('⚠️ No brown object detected. Please scan a brown object.')
+          alert('⚠️ No brown object detected. Please scan a brown cocolumber object.')
         }
       } catch (error) {
         this.detectionError = `Detection failed: ${error.message}`
@@ -803,6 +879,71 @@ export default {
   background: rgba(244, 67, 54, 0.1);
   border-radius: 8px;
   border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.detection-status {
+  padding: 20px 30px;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  animation: slideDown 0.4s ease-out;
+}
+
+.detection-status.success {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(129, 199, 132, 0.15));
+  border: 2px solid #4CAF50;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+}
+
+.detection-status.scanning {
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.15), rgba(100, 181, 246, 0.15));
+  border: 2px solid #2196F3;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+}
+
+.status-icon {
+  font-size: 2.5rem;
+  animation: pulse 1.5s infinite;
+}
+
+.status-info {
+  flex: 1;
+  text-align: left;
+}
+
+.status-info strong {
+  display: block;
+  font-size: 1.3rem;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.status-info p {
+  margin: 0;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
 }
 
 .detection-error {

@@ -1,24 +1,24 @@
 <template>
-  <div class="notifications-page">
-    <UserNavbar />
+  <div class="notifications-page staff-mode">
+    <StaffSidebar />
     <NotificationsCenter />
     <Footer />
   </div>
 </template>
 
 <script>
-import UserNavbar from '../components/UserNavbar.vue';
-import NotificationsCenter from '../components/NotificationsCenter.vue';
-import Footer from '../components/Footer.vue';
+import StaffSidebar from '../components/StaffSidebar.vue'
+import NotificationsCenter from '../components/NotificationsCenter.vue'
+import Footer from '../components/Footer.vue'
 
 export default {
   name: 'NotificationsPage',
   components: {
-    UserNavbar,
+    StaffSidebar,
     NotificationsCenter,
     Footer
   }
-};
+}
 </script>
 
 <style scoped>
@@ -27,5 +27,9 @@ export default {
   flex-direction: column;
   min-height: 100vh;
   background-color: #f5f5f5;
+}
+
+.notifications-page.staff-mode {
+  padding-top: 70px;
 }
 </style>

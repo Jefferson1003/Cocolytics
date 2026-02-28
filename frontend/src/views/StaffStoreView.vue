@@ -1,6 +1,6 @@
 <template>
   <div class="staff-store-layout">
-    <UserNavbar />
+    <StaffSidebar />
 
     <div class="store-container">
       <!-- Trader Header -->
@@ -143,12 +143,12 @@
 </template>
 
 <script>
-import UserNavbar from '../components/UserNavbar.vue'
+import StaffSidebar from '../components/StaffSidebar.vue'
 
 export default {
   name: 'StaffStoreView',
   components: {
-    UserNavbar
+    StaffSidebar
   },
   data() {
     return {

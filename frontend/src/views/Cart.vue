@@ -1,58 +1,66 @@
 <template>
-  <div class="cart-page">
-    <h2>🛒 Your Cart</h2>
-    <div v-if="loading" class="loading">Loading cart...</div>
-    <div v-else>
-      <div v-if="cartItems.length > 0" class="cart-list">
-        <div v-for="(item, idx) in cartItems" :key="idx" class="cart-item">
-          <div class="item-info">
-            <h3>{{ item.size }}</h3>
-            <p>Length: {{ item.length }} cm</p>
-            <div class="quantity-control">
-              <label>Quantity:</label>
-              <input 
-                type="number" 
-                v-model.number="item.quantity"
-                @input="updateQuantity(idx, $event)"
-                @blur="validateQuantity(idx)"
-                min="1"
-                class="qty-input"
-              />
-              <span class="unit-label">units</span>
-            </div>
-            <!-- Display trader information if available -->
-            <p v-if="item.store_name" class="store-name">👤 {{ item.store_name }}</p>
-          </div>
-          <div class="item-actions">
-            <button @click="decrease(idx)" class="qty">−</button>
-            <button @click="increase(idx)" class="qty">+</button>
-            <button @click="remove(idx)" class="btn-remove">Remove</button>
-          </div>
-        </div>
-        <div class="cart-summary">
-          <p><strong>Total Items:</strong> {{ totalItems }}</p>
-          <button @click="placeOrder" class="btn-place" :disabled="isPlacing">
-            <span v-if="!isPlacing">Place Order</span>
-            <span v-else>Placing Order...</span>
-          </button>
-        </div>
-      </div>
-      <div v-else class="empty-cart">
-        <div class="empty-icon">🛒</div>
-        <h3>Your cart is empty</h3>
-        <p>Add products to your cart from the traders list.</p>
-        <router-link to="/sellers" class="btn-shop">Browse Traders</router-link>
-      </div>
+  <div class="staff-layout">
+    <StaffSidebar />
 
-      <div v-if="successMessage" class="alert success">{{ successMessage }}</div>
-      <div v-if="errorMessage" class="alert error">{{ errorMessage }}</div>
+    <div class="cart-page">
+      <h2>🛒 Your Cart</h2>
+      <div v-if="loading" class="loading">Loading cart...</div>
+      <div v-else>
+        <div v-if="cartItems.length > 0" class="cart-list">
+          <div v-for="(item, idx) in cartItems" :key="idx" class="cart-item">
+            <div class="item-info">
+              <h3>{{ item.size }}</h3>
+              <p>Length: {{ item.length }} cm</p>
+              <div class="quantity-control">
+                <label>Quantity:</label>
+                <input 
+                  type="number" 
+                  v-model.number="item.quantity"
+                  @input="updateQuantity(idx, $event)"
+                  @blur="validateQuantity(idx)"
+                  min="1"
+                  class="qty-input"
+                />
+                <span class="unit-label">units</span>
+              </div>
+              <p v-if="item.store_name" class="store-name">👤 {{ item.store_name }}</p>
+            </div>
+            <div class="item-actions">
+              <button @click="decrease(idx)" class="qty">−</button>
+              <button @click="increase(idx)" class="qty">+</button>
+              <button @click="remove(idx)" class="btn-remove">Remove</button>
+            </div>
+          </div>
+          <div class="cart-summary">
+            <p><strong>Total Items:</strong> {{ totalItems }}</p>
+            <button @click="placeOrder" class="btn-place" :disabled="isPlacing">
+              <span v-if="!isPlacing">Place Order</span>
+              <span v-else>Placing Order...</span>
+            </button>
+          </div>
+        </div>
+        <div v-else class="empty-cart">
+          <div class="empty-icon">🛒</div>
+          <h3>Your cart is empty</h3>
+          <p>Add products to your cart from the traders list.</p>
+          <router-link to="/sellers" class="btn-shop">Browse Traders</router-link>
+        </div>
+
+        <div v-if="successMessage" class="alert success">{{ successMessage }}</div>
+        <div v-if="errorMessage" class="alert error">{{ errorMessage }}</div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+import StaffSidebar from '../components/StaffSidebar.vue'
+
 export default {
   name: 'Cart',
+  components: {
+    StaffSidebar
+  },
   data() {
     return {
       cartItems: [],
@@ -70,9 +78,17 @@ export default {
   },
   mounted() {
     this.token = localStorage.getItem('token')
+    const userData = localStorage.getItem('user')
+    const user = userData ? JSON.parse(userData) : null
+
     if (!this.token) {
       console.warn('No token found, redirecting to login')
       this.$router.push('/login')
+      return
+    }
+
+    if (user?.role !== 'staff') {
+      this.$router.push('/staff')
       return
     }
     
@@ -167,6 +183,15 @@ export default {
 </script>
 
 <style scoped>
+.staff-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+  background-attachment: fixed;
+  padding-top: 70px;
+}
+
 .cart-page { max-width: 900px; margin: 40px auto; padding: 20px; }
 .cart-item { display:flex; justify-content:space-between; background:#242442; color:#fff; padding:12px; border-radius:8px; margin-bottom:12px }
 .item-info { flex: 1; }

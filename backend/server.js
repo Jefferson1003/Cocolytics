@@ -2006,10 +2006,11 @@ const notificationRoutes = require('./routes/notifications')(NotificationService
 app.use('/api/notifications', authenticateToken, notificationRoutes);
 
 // ==================== CHAT ROUTES ====================
-const chatRoutes = require('./routes/chat');
-// Add database pool to request object for chat routes
+const chatRoutes = require('./routes/chat')(notificationService, pool);
+// Add database pool and notification service to request object for chat routes
 app.use('/api/chat', authenticateToken, authorizeRoles('staff', 'admin'), (req, res, next) => {
   req.db = pool;
+  req.notificationService = notificationService;
   next();
 }, chatRoutes);
 
