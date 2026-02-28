@@ -215,20 +215,20 @@ export default {
   computed: {
     orderTabs() {
       return [
-        { label: 'Pending', value: 'pending', icon: '⏳', count: this.pendingOrders.length },
-        { label: 'Ready to Ship', value: 'processing', icon: '📦', count: this.processingOrders.length },
-        { label: 'In Transit', value: 'intransit', icon: '🚚', count: this.inTransitOrders.length },
-        { label: 'Completed', value: 'completed', icon: '✓', count: this.completedOrders.length }
+        { label: 'To Ship', value: 'pending', icon: '📦', count: this.pendingOrders.length },
+        { label: 'To Deliver', value: 'processing', icon: '🚚', count: this.processingOrders.length },
+        { label: 'In Transit', value: 'intransit', icon: '🚛', count: this.inTransitOrders.length },
+        { label: 'Delivered', value: 'completed', icon: '✓', count: this.completedOrders.length }
       ]
     },
     pendingOrders() {
-      return this.allOrders.filter(o => o.status === 'pending')
+      return this.allOrders.filter(o => o.status === 'to_ship' || o.status === 'pending')
     },
     processingOrders() {
       return this.allOrders.filter(o => o.status === 'processing' || o.status === 'preparing_shipment')
     },
     inTransitOrders() {
-      return this.allOrders.filter(o => o.status === 'shipped')
+      return this.allOrders.filter(o => o.status === 'to_deliver' || o.status === 'shipped')
     },
     completedOrders() {
       return this.allOrders.filter(o => o.status === 'completed' || o.status === 'delivered')
@@ -278,7 +278,7 @@ export default {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${this.token}`
           },
-          body: JSON.stringify({ status: 'processing' })
+          body: JSON.stringify({ status: 'to_deliver' })
         })
         if (!response.ok) throw new Error('Failed')
         this.successMessage = `✓ Order #${orderId} accepted!`
@@ -369,6 +369,8 @@ export default {
     },
     formatStatus(status) {
       const map = {
+        'to_ship': 'To Ship',
+        'to_deliver': 'To Deliver',
         'pending': 'Pending',
         'processing': 'Processing',
         'preparing_shipment': 'Preparing Shipment',

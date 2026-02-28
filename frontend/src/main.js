@@ -54,6 +54,8 @@ import Communications from './views/Communications.vue'
 import Operations from './views/Operations.vue'
 import OrderTracking from './views/OrderTracking.vue'
 import SellerOrders from './views/SellerOrders.vue'
+import PaymentSuccess from './views/PaymentSuccess.vue'
+import PaymentFailed from './views/PaymentFailed.vue'
 
 // Define routes
 const routes = [
@@ -205,6 +207,18 @@ const routes = [
     path: '/orders/tracking',
     name: 'OrderTracking',
     component: OrderTracking,
+    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
+  },
+  {
+    path: '/payment-success',
+    name: 'PaymentSuccess',
+    component: PaymentSuccess,
+    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
+  },
+  {
+    path: '/payment-failed',
+    name: 'PaymentFailed',
+    component: PaymentFailed,
     meta: { requiresAuth: true, roles: ['staff', 'admin'] }
   }
 ]

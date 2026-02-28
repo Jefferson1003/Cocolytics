@@ -8,8 +8,10 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
 
-// Import Notification Service
+// Import Services
 const NotificationService = require('./services/notificationService');
+const CocolumberPricing = require('./services/cocolumberPricing');
+const PayMongoService = require('./services/paymongoService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -139,6 +141,71 @@ pool.getConnection()
     );
     if (orderStaffIdx[0].count === 0) {
       await pool.execute('ALTER TABLE orders ADD INDEX idx_staff_id (staff_id)');
+    }
+
+    // Ensure order workflow columns exist
+    const [orderPaymentStatusCol] = await pool.execute(
+      `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE table_schema = DATABASE() AND table_name = 'orders' AND column_name = 'payment_status'`
+    );
+    if (orderPaymentStatusCol[0].count === 0) {
+      await pool.execute("ALTER TABLE orders ADD COLUMN payment_status VARCHAR(50) DEFAULT 'pending' AFTER status");
+    }
+
+    const [orderTotalAmountCol] = await pool.execute(
+      `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE table_schema = DATABASE() AND table_name = 'orders' AND column_name = 'total_amount'`
+    );
+    if (orderTotalAmountCol[0].count === 0) {
+      await pool.execute('ALTER TABLE orders ADD COLUMN total_amount DECIMAL(10,2) DEFAULT 0.00 AFTER total_price');
+      await pool.execute('UPDATE orders SET total_amount = total_price WHERE total_amount IS NULL OR total_amount = 0');
+    }
+
+    const [orderCourierCol] = await pool.execute(
+      `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE table_schema = DATABASE() AND table_name = 'orders' AND column_name = 'courier_name'`
+    );
+    if (orderCourierCol[0].count === 0) {
+      await pool.execute('ALTER TABLE orders ADD COLUMN courier_name VARCHAR(100) DEFAULT NULL AFTER payment_status');
+    }
+
+    const [orderTrackingCol] = await pool.execute(
+      `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE table_schema = DATABASE() AND table_name = 'orders' AND column_name = 'tracking_number'`
+    );
+    if (orderTrackingCol[0].count === 0) {
+      await pool.execute('ALTER TABLE orders ADD COLUMN tracking_number VARCHAR(100) DEFAULT NULL AFTER courier_name');
+    }
+
+    const [orderShippedDateCol] = await pool.execute(
+      `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE table_schema = DATABASE() AND table_name = 'orders' AND column_name = 'shipped_date'`
+    );
+    if (orderShippedDateCol[0].count === 0) {
+      await pool.execute('ALTER TABLE orders ADD COLUMN shipped_date DATETIME DEFAULT NULL AFTER tracking_number');
+    }
+
+    const [orderDeliveredDateCol] = await pool.execute(
+      `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE table_schema = DATABASE() AND table_name = 'orders' AND column_name = 'delivered_date'`
+    );
+    if (orderDeliveredDateCol[0].count === 0) {
+      await pool.execute('ALTER TABLE orders ADD COLUMN delivered_date DATETIME DEFAULT NULL AFTER shipped_date');
+    }
+
+    // Expand order status enum (for older schemas using strict enum)
+    const [orderStatusColMeta] = await pool.execute(
+      `SELECT COLUMN_TYPE AS column_type
+       FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE table_schema = DATABASE() AND table_name = 'orders' AND column_name = 'status'`
+    );
+    if (orderStatusColMeta.length > 0) {
+      const statusColumnType = orderStatusColMeta[0].column_type || '';
+      if (statusColumnType.startsWith('enum(') && (!statusColumnType.includes("'to_ship'") || !statusColumnType.includes("'to_deliver'") || !statusColumnType.includes("'delivered'"))) {
+        await pool.execute(
+          "ALTER TABLE orders MODIFY COLUMN status ENUM('pending','to_ship','processing','to_deliver','shipped','delivered','completed','cancelled') DEFAULT 'pending'"
+        );
+      }
     }
 
     // Create staff_profiles table if it doesn't exist (uses staff_id)
@@ -1582,14 +1649,20 @@ app.get('/api/staff-stores/:staffId', async (req, res) => {
 // Create order (all authenticated users)
 app.post('/api/orders/create', authenticateToken, async (req, res) => {
   try {
-    const { items, staffId } = req.body;
+    const { items, staffId, paymentMethod, deliveryAddress, shippingFee } = req.body;
     const userId = req.user.id;
 
     console.log('Creating order for user:', userId);
+    console.log('Payment method:', paymentMethod);
+    console.log('Delivery address:', deliveryAddress ? 'Provided' : 'Not provided');
     console.log('Order items:', JSON.stringify(items, null, 2));
 
     if (!items || items.length === 0) {
       return res.status(400).json({ message: 'No items in order' });
+    }
+
+    if (!paymentMethod) {
+      return res.status(400).json({ message: 'Payment method is required' });
     }
 
     // Validate items have required fields
@@ -1602,6 +1675,30 @@ app.post('/api/orders/create', authenticateToken, async (req, res) => {
       }
     }
 
+    // Format delivery address as string if provided
+    let deliveryAddressString = '';
+    if (deliveryAddress) {
+      const parts = [
+        deliveryAddress.street,
+        deliveryAddress.barangay,
+        deliveryAddress.city,
+        deliveryAddress.province,
+        deliveryAddress.postalCode
+      ].filter(Boolean);
+      deliveryAddressString = parts.join(', ');
+      
+      // Add contact info
+      if (deliveryAddress.fullName) {
+        deliveryAddressString = `${deliveryAddress.fullName} | ${deliveryAddressString}`;
+      }
+      if (deliveryAddress.phone) {
+        deliveryAddressString = `${deliveryAddressString} | Tel: ${deliveryAddress.phone}`;
+      }
+      if (deliveryAddress.notes) {
+        deliveryAddressString = `${deliveryAddressString} | Notes: ${deliveryAddress.notes}`;
+      }
+    }
+
     // Check if orders.staff_id exists (for backward compatibility)
     const [ordersStaffCol] = await pool.execute(
       `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS
@@ -1609,10 +1706,9 @@ app.post('/api/orders/create', authenticateToken, async (req, res) => {
     );
     const hasStaffIdColumn = ordersStaffCol[0].count > 0;
 
-    // Insert each order item
-    const orderIds = [];
+    // Fetch all products to calculate prices
+    const productsMap = {};
     for (const item of items) {
-      // Check if product exists and has enough stock
       const [products] = await pool.execute(
         'SELECT * FROM cocolumber_logs WHERE id = ?',
         [item.id]
@@ -1623,8 +1719,66 @@ app.post('/api/orders/create', authenticateToken, async (req, res) => {
           message: `Product with ID ${item.id} not found` 
         });
       }
+      productsMap[item.id] = products[0];
+    }
 
-      const product = products[0];
+    // Calculate total order price
+    const itemsWithDetails = items.map(item => ({
+      ...item,
+      size: productsMap[item.id].size,
+      length: productsMap[item.id].length
+    }));
+    
+    const priceBreakdown = CocolumberPricing.calculateOrderTotal(itemsWithDetails);
+    const subtotalAmount = priceBreakdown.total;
+    const shippingAmount = shippingFee || 0;
+    const totalAmount = subtotalAmount + shippingAmount;
+
+    // Determine payment status based on payment method
+    let paymentStatus = 'pending';
+    let paymentSourceUrl = null;
+    let paymongoPaymentId = null;
+
+    // Handle different payment methods
+    if (paymentMethod === 'cash_on_delivery') {
+      paymentStatus = 'pending_cod';
+      console.log('COD order - payment will be collected on delivery');
+    } else if (['gcash', 'grab_pay', 'paymaya'].includes(paymentMethod)) {
+      // Create PayMongo payment source for e-wallets
+      try {
+        const amountInCents = Math.round(totalAmount * 100);
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        
+        const sourceData = {
+          type: paymentMethod,
+          amount: amountInCents,
+          successUrl: `${frontendUrl}/payment-success`,
+          failedUrl: `${frontendUrl}/payment-failed`
+        };
+
+        const source = await PayMongoService.createPaymentSource(sourceData);
+        
+        if (source && source.data) {
+          paymentSourceUrl = source.data.attributes.redirect.checkout_url;
+          paymongoPaymentId = source.data.id;
+          paymentStatus = 'awaiting_payment';
+          console.log('Payment source created:', paymongoPaymentId);
+        }
+      } catch (paymentError) {
+        console.error('Payment source creation error:', paymentError);
+        return res.status(500).json({ 
+          message: 'Failed to create payment link. Please try again or use another payment method.',
+          error: paymentError.message 
+        });
+      }
+    } else if (paymentMethod === 'bank_transfer') {
+      paymentStatus = 'awaiting_bank_transfer';
+    }
+
+    // Insert each order item
+    const orderIds = [];
+    for (const item of items) {
+      const product = productsMap[item.id];
       
       if (product.stock < item.quantity) {
         return res.status(400).json({ 
@@ -1632,17 +1786,34 @@ app.post('/api/orders/create', authenticateToken, async (req, res) => {
         });
       }
 
-      // Insert order (include staff_id only if column exists)
+      // Calculate this item's price
+      const itemPrice = CocolumberPricing.calculatePrice(product) * item.quantity;
+
+      // Prepare order notes with payment and delivery details
+      let orderNotes = `Payment method: ${paymentMethod}`;
+      if (paymongoPaymentId) {
+        orderNotes += ` | PayMongo ID: ${paymongoPaymentId}`;
+      }
+      if (deliveryAddressString) {
+        orderNotes += ` | Delivery Address: ${deliveryAddressString}`;
+      }
+      if (shippingAmount > 0) {
+        orderNotes += ` | Shipping Fee: ₱${shippingAmount.toFixed(2)}`;
+      }
+
+      // Insert order with payment method and price
       let result;
       if (hasStaffIdColumn) {
         [result] = await pool.execute(
-          'INSERT INTO orders (user_id, cocolumber_id, quantity, status, staff_id) VALUES (?, ?, ?, ?, ?)',
-          [userId, item.id, item.quantity, 'pending', product.staff_id || null]
+          `INSERT INTO orders (user_id, cocolumber_id, quantity, status, staff_id, payment_status, total_amount, order_notes) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [userId, item.id, item.quantity, 'to_ship', product.staff_id || null, paymentStatus, itemPrice, orderNotes]
         );
       } else {
         [result] = await pool.execute(
-          'INSERT INTO orders (user_id, cocolumber_id, quantity, status) VALUES (?, ?, ?, ?)',
-          [userId, item.id, item.quantity, 'pending']
+          `INSERT INTO orders (user_id, cocolumber_id, quantity, status, payment_status, total_amount, order_notes) 
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [userId, item.id, item.quantity, 'to_ship', paymentStatus, itemPrice, orderNotes]
         );
       }
       orderIds.push(result.insertId);
@@ -1653,15 +1824,41 @@ app.post('/api/orders/create', authenticateToken, async (req, res) => {
         [item.quantity, item.id]
       );
       
-      console.log(`Order created: ID ${result.insertId}, Product: ${product.size}, Quantity: ${item.quantity}`);
+      console.log(`Order created: ID ${result.insertId}, Product: ${product.size}, Quantity: ${item.quantity}, Price: ₱${itemPrice}, Status: ${paymentStatus}`);
     }
 
-    console.log('All orders created successfully:', orderIds);
+    // If payment link was created, store it in payments table
+    if (paymongoPaymentId && orderIds.length > 0) {
+      try {
+        await pool.execute(
+          `INSERT INTO payments (order_id, user_id, paymongo_payment_id, amount, status, payment_method, created_at) 
+           VALUES (?, ?, ?, ?, ?, ?, NOW())`,
+          [orderIds[0], userId, paymongoPaymentId, totalAmount, 'pending', paymentMethod]
+        );
+        console.log('Payment record created for order:', orderIds[0]);
+      } catch (paymentDbError) {
+        console.error('Failed to create payment record:', paymentDbError);
+        // Non-critical - order is still created
+      }
+    }
+
+    console.log(`All orders created successfully. Subtotal: ₱${subtotalAmount.toFixed(2)}, Shipping: ₱${shippingAmount.toFixed(2)}, Total: ₱${totalAmount.toFixed(2)}`);
 
     res.json({
       success: true,
       message: 'Order created successfully',
-      orderIds
+      orderIds,
+      subtotalAmount,
+      shippingFee: shippingAmount,
+      totalAmount,
+      paymentMethod,
+      paymentStatus,
+      paymentUrl: paymentSourceUrl, // URL to redirect user for GCash/e-wallet payment
+      priceBreakdown: {
+        ...priceBreakdown,
+        shippingFee: shippingAmount,
+        grandTotal: totalAmount
+      }
     });
   } catch (error) {
     console.error('Create order error:', error);
@@ -1744,12 +1941,12 @@ app.put('/api/orders/:id/status', authenticateToken, authorizeRoles('staff', 'ad
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!['pending', 'processing', 'completed', 'cancelled'].includes(status)) {
+    if (!['pending', 'to_ship', 'processing', 'to_deliver', 'shipped', 'delivered', 'completed', 'cancelled'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
     }
 
-    let updateQuery = 'UPDATE orders SET status = ? WHERE id = ?';
-    const params = [status, id];
+    let updateQuery = 'UPDATE orders SET status = ?, delivered_date = CASE WHEN ? IN (\'delivered\', \'completed\') THEN NOW() ELSE delivered_date END WHERE id = ?';
+    const params = [status, status, id];
 
     if (req.user.role === 'staff') {
       updateQuery += ' AND staff_id = ?';
@@ -1766,6 +1963,46 @@ app.put('/api/orders/:id/status', authenticateToken, authorizeRoles('staff', 'ad
   } catch (error) {
     console.error('Update order status error:', error);
     res.status(500).json({ message: 'Server error updating order' });
+  }
+});
+
+// Ship order (staff/admin)
+app.post('/api/orders/:id/ship', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { courier_name, tracking_number } = req.body;
+
+    if (!courier_name || !tracking_number) {
+      return res.status(400).json({ message: 'Courier name and tracking number are required' });
+    }
+
+    let updateQuery = `
+      UPDATE orders
+      SET
+        status = 'to_deliver',
+        courier_name = ?,
+        tracking_number = ?,
+        shipped_date = NOW(),
+        order_notes = CONCAT(COALESCE(order_notes, ''), CASE WHEN COALESCE(order_notes, '') = '' THEN '' ELSE ' | ' END, 'Courier: ', ?, ' | Tracking: ', ?)
+      WHERE id = ?
+    `;
+    const params = [courier_name, tracking_number, courier_name, tracking_number, id];
+
+    if (req.user.role === 'staff') {
+      updateQuery += ' AND staff_id = ?';
+      params.push(req.user.id);
+    }
+
+    const [result] = await pool.execute(updateQuery, params);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Order not found or not authorized' });
+    }
+
+    res.json({ success: true, message: 'Order marked for delivery' });
+  } catch (error) {
+    console.error('Ship order error:', error);
+    res.status(500).json({ message: 'Server error updating shipping details' });
   }
 });
 
@@ -1819,6 +2056,36 @@ app.get('/api/sellers/:staffId/products', async (req, res) => {
     res.json(products);
   } catch (error) {
     console.error('Error fetching seller products:', error);
+    res.status(500).json({ message: 'Error fetching products' });
+  }
+});
+
+// Get all products with predicted prices
+app.get('/api/products-with-prices', authenticateToken, async (req, res) => {
+  try {
+    const [products] = await pool.query(`
+      SELECT 
+        cl.*,
+        u.name as staff_name,
+        sp.store_name,
+        sp.store_logo
+      FROM cocolumber_logs cl
+      JOIN users u ON cl.staff_id = u.id
+      LEFT JOIN staff_profiles sp ON u.id = sp.staff_id
+      WHERE cl.stock > 0
+      ORDER BY sp.store_name, cl.size
+    `);
+    
+    // Add predicted prices to each product
+    const productsWithPrices = products.map(product => ({
+      ...product,
+      predicted_price: CocolumberPricing.calculatePrice(product),
+      total_stock_value: CocolumberPricing.calculatePrice(product) * product.stock
+    }));
+    
+    res.json(productsWithPrices);
+  } catch (error) {
+    console.error('Error fetching products with prices:', error);
     res.status(500).json({ message: 'Error fetching products' });
   }
 });

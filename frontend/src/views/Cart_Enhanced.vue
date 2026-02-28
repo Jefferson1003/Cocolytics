@@ -265,43 +265,14 @@ export default {
           throw new Error(data.message || 'Failed to place order')
         }
         
-        // Clear cart
+        this.successMessage = `✓ Order placed! Total: ₱${data.totalAmount.toFixed(2)} | Payment via ${this.selectedPaymentMethod}`
         this.cartItems = []
         try { localStorage.removeItem('cartItems') } catch (e) {}
-
-        // Handle different payment methods
-        if (this.selectedPaymentMethod === 'cash_on_delivery') {
-          // COD - just show success
-          this.successMessage = `✓ Order placed (COD)! Total: ₱${data.totalAmount.toFixed(2)} | Pay upon delivery`
-          setTimeout(() => {
-            this.successMessage = ''
-            this.$router.push('/sellers')
-          }, 3000)
-        } else if (['gcash', 'grab_pay', 'paymaya'].includes(this.selectedPaymentMethod)) {
-          // E-wallet - redirect to payment page
-          if (data.paymentUrl) {
-            this.successMessage = `✓ Redirecting to ${this.selectedPaymentMethod.toUpperCase()} payment...`
-            setTimeout(() => {
-              window.location.href = data.paymentUrl
-            }, 1500)
-          } else {
-            throw new Error('Payment link not generated. Please contact support.')
-          }
-        } else if (this.selectedPaymentMethod === 'bank_transfer') {
-          // Bank transfer - show instructions
-          this.successMessage = `✓ Order placed! Total: ₱${data.totalAmount.toFixed(2)} | Bank transfer instructions sent to your email`
-          setTimeout(() => {
-            this.successMessage = ''
-            this.$router.push('/my-orders')
-          }, 4000)
-        } else {
-          // Generic success
-          this.successMessage = `✓ Order placed! Total: ₱${data.totalAmount.toFixed(2)}`
-          setTimeout(() => {
-            this.successMessage = ''
-            this.$router.push('/sellers')
-          }, 3000)
-        }
+        
+        setTimeout(() => {
+          this.successMessage = ''
+          this.$router.push('/sellers')
+        }, 3000)
       } catch (err) {
         console.error('Order error:', err)
         this.errorMessage = err.message || 'Error placing order. Please try again.'
