@@ -69,14 +69,14 @@
       </div>
 
       <!-- Processing Orders (Ready to Ship with Shipping Form) -->
-      <div v-if="activeOrderTab === 'processing'" class="tab-content">
+      <div v-if="activeOrderTab === 'confirmed'" class="tab-content">
         <div v-if="loadingOrders" class="loading">Loading orders...</div>
         
         <div v-else class="processing-orders">
-          <div v-for="order in processingOrders" :key="order.id" class="order-card processing-card">
+          <div v-for="order in confirmedOrders" :key="order.id" class="order-card processing-card">
             <div class="order-header">
               <h3>📦 Order #{{ order.id }}</h3>
-              <span class="status-badge preparing">{{ formatStatus(order.status) }}</span>
+              <span class="status-badge preparing">IN DELIVERY</span>
             </div>
 
             <div class="order-body">
@@ -84,92 +84,21 @@
                 <p><strong>Product:</strong> {{ order.size }} - {{ order.length }}cm × {{ order.quantity }} units</p>
                 <p><strong>Customer:</strong> {{ order.user_name }} ({{ order.email }})</p>
               </div>
-
-              <!-- Shipping Form -->
-              <div class="shipping-form">
-                <h4>📮 Add Shipping Information</h4>
-                <div class="form-group">
-                  <label>Courier Name *</label>
-                  <select v-model="getShippingForm(order.id).courier_name" 
-                    class="form-input">
-                    <option value="">Select Courier</option>
-                    <option value="JNT">J&T Express</option>
-                    <option value="LBC">LBC Express</option>
-                    <option value="2GO">2GO Express</option>
-                    <option value="LALAMOVE">Lalamove</option>
-                    <option value="GRABEXPRESS">GrabExpress</option>
-                    <option value="OTHER">Other</option>
-                  </select>
-                </div>
-
-                <div class="form-group">
-                  <label>Courier Name (if Other) *</label>
-                  <input 
-                    type="text" 
-                    v-model="getShippingForm(order.id).courier_custom"
-                    placeholder="e.g., Local Courier"
-                    class="form-input"
-                  />
-                </div>
-
-                <div class="form-group">
-                  <label>Tracking Number *</label>
-                  <input 
-                    type="text" 
-                    v-model="getShippingForm(order.id).tracking_number"
-                    placeholder="e.g., JNT123456789"
-                    class="form-input"
-                  />
-                </div>
-
-                <button 
-                  @click="shipOrder(order.id)" 
-                  class="btn btn-ship"
-                  :disabled="!canShip(order.id)"
-                >
-                  🚚 Mark as Shipped
-                </button>
-              </div>
             </div>
-          </div>
 
-          <div v-if="processingOrders.length === 0" class="empty-state">
-            <span class="empty-icon">📦</span>
-            <p>No orders ready to ship</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- In Transit Orders -->
-      <div v-if="activeOrderTab === 'intransit'" class="tab-content">
-        <div v-if="loadingOrders" class="loading">Loading orders...</div>
-        
-        <div v-else class="orders-list">
-          <div v-for="order in inTransitOrders" :key="order.id" class="order-card transit-card">
-            <div class="order-header">
-              <h3>📦 Order #{{ order.id }}</h3>
-              <span class="status-badge shipped">{{ formatStatus(order.status) }}</span>
-            </div>
-            <div class="order-body">
-              <div class="order-info">
-                <p><strong>Product:</strong> {{ order.size }} - {{ order.length }}cm × {{ order.quantity }} units</p>
-                <p><strong>Customer:</strong> {{ order.user_name }}</p>
-                <p><strong>Courier:</strong> {{ order.courier_name }}</p>
-                <p><strong>Tracking:</strong> <code>{{ order.tracking_number }}</code></p>
-                <p><strong>Shipped:</strong> {{ formatDate(order.shipped_date) }}</p>
-              </div>
-            </div>
             <div class="order-actions">
               <button @click="markDelivered(order.id)" class="btn btn-delivered">✓ Mark as Delivered</button>
             </div>
           </div>
-        </div>
 
-        <div v-if="inTransitOrders.length === 0" class="empty-state">
-          <span class="empty-icon">📦</span>
-          <p>No orders in transit</p>
+          <div v-if="confirmedOrders.length === 0" class="empty-state">
+            <span class="empty-icon">📦</span>
+            <p>No orders in delivery</p>
+          </div>
         </div>
       </div>
+
+
 
       <!-- Completed Orders -->
       <div v-if="activeOrderTab === 'completed'" class="tab-content">
@@ -217,7 +146,6 @@ export default {
       activeOrderTab: 'pending',
       allOrders: [],
       loadingOrders: false,
-      shippingForms: {},
       token: null,
       successMessage: '',
       errorMessage: '',
@@ -227,20 +155,16 @@ export default {
   computed: {
     orderTabs() {
       return [
-        { label: 'To Ship', value: 'pending', icon: '📦', count: this.pendingOrders.length },
-        { label: 'To Deliver', value: 'processing', icon: '🚚', count: this.processingOrders.length },
-        { label: 'In Transit', value: 'intransit', icon: '🚛', count: this.inTransitOrders.length },
+        { label: 'Pending', value: 'pending', icon: '📦', count: this.pendingOrders.length },
+        { label: 'In Delivery', value: 'confirmed', icon: '🚚', count: this.confirmedOrders.length },
         { label: 'Delivered', value: 'completed', icon: '✓', count: this.completedOrders.length }
       ]
     },
     pendingOrders() {
-      return this.allOrders.filter(o => o.status === 'to_ship' || o.status === 'pending')
+      return this.allOrders.filter(o => o.status === 'pending')
     },
-    processingOrders() {
-      return this.allOrders.filter(o => o.status === 'processing' || o.status === 'preparing_shipment')
-    },
-    inTransitOrders() {
-      return this.allOrders.filter(o => o.status === 'to_deliver' || o.status === 'shipped')
+    confirmedOrders() {
+      return this.allOrders.filter(o => o.status === 'confirmed' || o.status === 'processing' || o.status === 'shipped')
     },
     completedOrders() {
       return this.allOrders.filter(o => o.status === 'completed' || o.status === 'delivered')
@@ -290,12 +214,12 @@ export default {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${this.token}`
           },
-          body: JSON.stringify({ status: 'processing' })
+          body: JSON.stringify({ status: 'confirmed' })
         })
         if (!response.ok) throw new Error('Failed')
-        this.successMessage = `✓ Order #${orderId} confirmed! Now prepare for shipment.`
+        this.successMessage = `✓ Order #${orderId} confirmed! Ready to deliver.`
         await this.loadOrders()
-        this.activeOrderTab = 'processing' // Switch to processing tab
+        this.activeOrderTab = 'confirmed' // Switch to confirmed tab
         setTimeout(() => { this.successMessage = '' }, 3000)
       } catch (error) {
         this.errorMessage = 'Failed to confirm order'
@@ -318,49 +242,6 @@ export default {
         setTimeout(() => { this.successMessage = '' }, 3000)
       } catch (error) {
         this.errorMessage = 'Failed to reject order'
-      }
-    },
-    getShippingForm(orderId) {
-      if (!this.shippingForms[orderId]) {
-        this.$set(this.shippingForms, orderId, { courier_name: '', courier_custom: '', tracking_number: '' })
-      }
-      return this.shippingForms[orderId]
-    },
-    canShip(orderId) {
-      const form = this.shippingForms[orderId]
-      if (!form) return false
-      const courierName = form.courier_name === 'OTHER' ? form.courier_custom : form.courier_name
-      return courierName && form.tracking_number
-    },
-    async shipOrder(orderId) {
-      const form = this.shippingForms[orderId]
-      if (!this.canShip(orderId)) {
-        this.errorMessage = 'Please fill in all shipping details'
-        return
-      }
-
-      try {
-        const courierName = form.courier_name === 'OTHER' ? form.courier_custom : form.courier_name
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders/${orderId}/ship`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.token}`
-          },
-          body: JSON.stringify({
-            status: 'shipped',
-            courier_name: courierName,
-            tracking_number: form.tracking_number
-          })
-        })
-        if (!response.ok) throw new Error('Failed')
-        this.successMessage = `✓ Order #${orderId} shipped! Tracking: ${form.tracking_number}`
-        delete this.shippingForms[orderId]
-        await this.loadOrders()
-        this.activeOrderTab = 'intransit' // Switch to in transit tab
-        setTimeout(() => { this.successMessage = '' }, 3000)
-      } catch (error) {
-        this.errorMessage = 'Failed to ship order'
       }
     },
     async markDelivered(orderId) {

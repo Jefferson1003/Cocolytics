@@ -27,50 +27,56 @@
         <h2>🥥 All Orders</h2>
         <div v-if="!loadingOrders">
           <div v-if="allOrders.length > 0" class="orders-list">
-            <div v-for="order in allOrders" :key="order.id" class="order-card" :class="{ pending: order.status === 'pending', processing: order.status === 'processing' }">
+            <div v-for="order in allOrders" :key="order.id" class="order-card" :class="{ pending: order.status === 'pending' || order.status === 'to_ship', processing: order.status === 'processing' }">
               <div class="order-header">
-                <h3>Order #{{ order.id }}</h3>
-                <span :class="['status-badge', order.status]">{{ order.status }}</span>
+                <h3>📦 Order #{{ order.id }}</h3>
+                <span :class="['status-badge', getStatusClass(order.status)]">{{ formatStatus(order.status) }}</span>
               </div>
               <div class="order-details">
-                <div class="product-info">
-                  <div class="product-image-small">
-                    <img v-if="order.product_picture" :src="getImageUrl(order.product_picture)" :alt="order.size" />
-                    <div v-else class="no-image-small">🥥</div>
+                <div class="order-info-grid">
+                  <div class="info-item">
+                    <span class="info-label">Product:</span>
+                    <span class="info-value">{{ order.size }} - {{ order.length }}cm</span>
                   </div>
-                  <div class="product-details">
-                    <p><strong>Product:</strong> {{ order.size }} - {{ order.length }} cm</p>
-                    <p><strong>Quantity:</strong> {{ order.quantity }}</p>
+                  <div class="info-item">
+                    <span class="info-label">Quantity:</span>
+                    <span class="info-value">{{ order.quantity }} units</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Customer:</span>
+                    <span class="info-value">{{ order.user_name }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Ordered:</span>
+                    <span class="info-value">{{ formatDate(order.created_at) }}</span>
                   </div>
                 </div>
-                <p><strong>Customer:</strong> {{ order.user_name }} ({{ order.email }})</p>
-                <p><strong>Ordered:</strong> {{ formatDate(order.created_at) }}</p>
               </div>
-              <div class="order-actions">
+              <div class="order-actions" v-if="order.status === 'pending' || order.status === 'to_ship' || order.status === 'processing'">
                 <button
-                  v-if="order.status === 'pending'"
+                  v-if="order.status === 'pending' || order.status === 'to_ship'"
                   @click="updateOrderStatus(order.id, 'processing')"
                   class="btn-accept"
                 >
-                  Accept Order
+                  ✓ Accept Order
                 </button>
                 <button
-                  v-if="order.status === 'pending'"
+                  v-if="order.status === 'pending' || order.status === 'to_ship'"
                   @click="updateOrderStatus(order.id, 'cancelled')"
                   class="btn-cancel"
                 >
-                  Cancel Order
+                  ✕ Cancel
                 </button>
                 <button
                   v-if="order.status === 'processing'"
                   @click="updateOrderStatus(order.id, 'completed')"
                   class="btn-complete"
                 >
-                  Mark as Completed
+                  ✓ Mark as Completed
                 </button>
-                <span v-if="order.status !== 'pending'" class="status-text">
-                  Status: {{ order.status }}
-                </span>
+              </div>
+              <div class="order-status-display" v-else>
+                <span class="completed-text">{{ formatStatus(order.status) }}</span>
               </div>
             </div>
           </div>
@@ -134,7 +140,9 @@ export default {
         const data = await response.json()
         this.allOrders = data
 
-        const pendingCount = data.filter(order => order.status === 'pending').length
+        const pendingCount = data.filter(order => 
+          order.status === 'pending' || order.status === 'to_ship'
+        ).length
         this.pendingOrdersCount = pendingCount
 
         if (pendingCount > this.lastPendingCount) {
@@ -157,6 +165,21 @@ export default {
       }
     },
     async updateOrderStatus(orderId, newStatus) {
+      // Confirmation dialogs based on action
+      let confirmMessage = ''
+      if (newStatus === 'processing') {
+        confirmMessage = `Accept Order #${orderId} and start processing?\n\nThis will confirm the order to the customer.`
+      } else if (newStatus === 'cancelled') {
+        confirmMessage = `Cancel Order #${orderId}?\n\nThis action cannot be undone. The customer will be notified.`
+      } else if (newStatus === 'completed') {
+        confirmMessage = `Mark Order #${orderId} as completed?\n\nThis will complete the order and notify the customer.`
+      }
+      
+      // Show confirmation dialog
+      if (confirmMessage && !confirm(confirmMessage)) {
+        return // User cancelled the action
+      }
+      
       try {
         const token = localStorage.getItem('token')
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders/${orderId}/status`, {
@@ -168,15 +191,30 @@ export default {
           body: JSON.stringify({ status: newStatus })
         })
         if (!response.ok) throw new Error('Failed to update order status')
+        
         // Update local data
         const order = this.allOrders.find(o => o.id === orderId)
         if (order) {
           order.status = newStatus
         }
-        alert(`Order #${orderId} marked as ${newStatus}`)
+        
+        // Success messages
+        let successMsg = ''
+        if (newStatus === 'processing') {
+          successMsg = `✓ Order #${orderId} accepted successfully!`
+        } else if (newStatus === 'cancelled') {
+          successMsg = `Order #${orderId} has been cancelled`
+        } else if (newStatus === 'completed') {
+          successMsg = `✓ Order #${orderId} marked as completed!`
+        } else {
+          successMsg = `Order #${orderId} updated to ${newStatus}`
+        }
+        
+        alert(successMsg)
+        await this.fetchAllOrders(true) // Refresh the list
       } catch (error) {
         console.error('Error updating order status:', error)
-        alert('Failed to update order status')
+        alert('Failed to update order status. Please try again.')
       }
     },
     formatDate(dateString) {
@@ -205,6 +243,22 @@ export default {
       if (this.$refs.ordersSection) {
         this.$refs.ordersSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
+    },
+    formatStatus(status) {
+      const statusMap = {
+        'pending': 'PENDING',
+        'to_ship': 'TO SHIP',
+        'processing': 'PROCESSING',
+        'completed': 'COMPLETED',
+        'cancelled': 'CANCELLED',
+        'shipped': 'SHIPPED',
+        'delivered': 'DELIVERED'
+      }
+      return statusMap[status] || status.toUpperCase()
+    },
+    getStatusClass(status) {
+      if (status === 'to_ship') return 'pending'
+      return status
     }
   }
 }
@@ -315,135 +369,191 @@ export default {
 }
 
 .order-card {
-  background: linear-gradient(135deg, rgba(36, 68, 66, 0.6) 0%, rgba(30, 30, 63, 0.8) 100%);
-  border: 1px solid rgba(76, 175, 80, 0.2);
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(36, 36, 66, 0.95) 100%);
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  border-radius: 16px;
+  padding: 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(10px);
-  border-left: 4px solid #4CAF50;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.order-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.3);
 }
 
 .order-card.pending {
-  border-left: 4px solid #ff9800;
-  box-shadow: 0 8px 24px rgba(255, 152, 0, 0.3);
+  border-left: 5px solid #ff9800;
+  box-shadow: 0 8px 32px rgba(255, 152, 0, 0.3);
 }
 
 .order-card.processing {
-  border-left: 4px solid #03a9f4;
+  border-left: 5px solid #03a9f4;
 }
 
 .order-header {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
 }
 
 .order-header h3 {
   color: white;
   margin: 0;
-  font-size: 1.1em;
+  font-size: 1.3em;
+  font-weight: 700;
 }
 
 .status-badge {
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.75em;
-  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.8em;
+  font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .status-badge.pending {
   background: rgba(255, 193, 7, 0.2);
   color: #ffc107;
+  border: 1px solid #ffc107;
 }
 
 .status-badge.processing {
   background: rgba(3, 169, 244, 0.2);
   color: #4fc3f7;
+  border: 1px solid #4fc3f7;
 }
 
 .status-badge.completed {
   background: rgba(76, 175, 80, 0.2);
   color: #81C784;
+  border: 1px solid #81C784;
 }
 
 .status-badge.cancelled {
   background: rgba(244, 67, 54, 0.2);
   color: #ff6b6b;
+  border: 1px solid #ff6b6b;
 }
 
 .order-details {
-  margin-bottom: 12px;
+  padding: 20px;
 }
 
-.order-details p {
-  margin: 8px 0;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.9em;
+.order-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
 }
 
-.order-details strong {
-  color: rgba(255, 255, 255, 0.7);
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-label {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.75em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.info-value {
+  color: white;
+  font-size: 1.05em;
+  font-weight: 600;
 }
 
 .order-actions {
-  margin-top: 12px;
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 2px solid rgba(102, 126, 234, 0.2);
 }
 
 .btn-accept,
 .btn-complete,
 .btn-cancel {
-  padding: 10px 16px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9em;
-  transition: all 0.2s;
   flex: 1;
-  min-width: 100px;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.95em;
+  transition: all 0.3s;
+  min-width: 140px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .btn-accept {
-  background: rgba(3, 169, 244, 0.9);
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
   color: white;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+}
+
+.btn-accept:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
 }
 
 .btn-accept:active {
-  background: rgba(3, 169, 244, 1);
   transform: scale(0.98);
 }
 
 .btn-complete {
-  background: rgba(76, 175, 80, 0.8);
+  background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
   color: white;
+  box-shadow: 0 4px 15px rgba(156, 39, 176, 0.4);
+}
+
+.btn-complete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(156, 39, 176, 0.5);
 }
 
 .btn-complete:active {
-  background: rgba(76, 175, 80, 1);
   transform: scale(0.98);
 }
 
 .btn-cancel {
-  background: rgba(244, 67, 54, 0.8);
+  background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
   color: white;
+  box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
+}
+
+.btn-cancel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(244, 67, 54, 0.5);
 }
 
 .btn-cancel:active {
-  background: rgba(244, 67, 54, 1);
   transform: scale(0.98);
 }
 
-.status-text {
-  font-weight: 600;
+.order-status-display {
+  padding: 20px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+.completed-text {
   color: rgba(255, 255, 255, 0.7);
-  font-size: 0.9em;
+  font-weight: 700;
+  font-size: 1em;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .product-info {

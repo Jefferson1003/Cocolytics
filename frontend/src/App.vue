@@ -131,10 +131,23 @@ export default {
 
       try {
         const token = localStorage.getItem('token')
+        if (!token) {
+          this.isAuthenticated = false
+          return
+        }
+
         const response = await fetch(
           `${this.apiBaseUrl}/notifications?limit=5&offset=0`,
           { headers: { 'Authorization': `Bearer ${token}` } }
         )
+        
+        if (response.status === 401 || response.status === 403) {
+          // Token expired or invalid
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+          this.isAuthenticated = false
+          return
+        }
         
         if (!response.ok) return
         
@@ -167,7 +180,7 @@ export default {
           }
         }
       } catch (error) {
-        console.error('Error checking notifications:', error)
+        // Silently handle network errors
       }
     },
     showToast({ title, message, type = 'info', icon = '🔔', duration = 5000 }) {

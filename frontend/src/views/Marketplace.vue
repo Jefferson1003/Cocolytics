@@ -522,14 +522,23 @@ export default {
     async fetchInventory() {
       this.invLoading = true
       try {
+        if (!this.token) {
+          this.invLoading = false
+          return
+        }
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/cocolumber/inventory`, {
           headers: { 'Authorization': `Bearer ${this.token}` }
         })
+        if (response.status === 401 || response.status === 403) {
+          // Unauthorized - redirect to login
+          localStorage.removeItem('token')
+          this.$router.push('/login')
+          return
+        }
         if (!response.ok) throw new Error('Failed')
         this.inventory = await response.json()
       } catch (error) {
-        console.error('Error:', error)
-        this.errorMessage = 'Failed to load inventory'
+        // Silently fail
       } finally {
         this.invLoading = false
       }
@@ -655,10 +664,16 @@ export default {
     },
     async fetchSellerMessageCounts() {
       try {
+        if (!this.token) return
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/chat/conversations`, {
           headers: { 'Authorization': `Bearer ${this.token}` }
         })
-        if (!response.ok) throw new Error('Failed')
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem('token')
+          this.$router.push('/login')
+          return
+        }
+        if (!response.ok) return
 
         const result = await response.json()
         const conversations = Array.isArray(result.conversations) ? result.conversations : []
@@ -676,7 +691,7 @@ export default {
 
         this.sellerMessageCounts = counts
       } catch (error) {
-        console.error('Error loading message counts:', error)
+        // Silently fail
       }
     },
     getSellerMessageCount(seller) {
@@ -874,13 +889,22 @@ export default {
     async fetchOrders() {
       this.ordersLoading = true
       try {
+        if (!this.token) {
+          this.ordersLoading = false
+          return
+        }
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders/all`, {
           headers: { 'Authorization': `Bearer ${this.token}` }
         })
-        if (!response.ok) throw new Error('Failed')
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem('token')
+          this.$router.push('/login')
+          return
+        }
+        if (!response.ok) return
         this.allOrders = await response.json()
       } catch (error) {
-        console.error('Error:', error)
+        // Silently fail
       } finally {
         this.ordersLoading = false
       }

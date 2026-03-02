@@ -100,7 +100,8 @@ export default {
       this.loading = true
 
       try {
-        const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/login`, {
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
+        const response = await axios.post(`${apiBaseUrl}/api/auth/login`, {
           email: this.email,
           password: this.password
         })
