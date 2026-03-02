@@ -100,12 +100,16 @@
                 <img v-if="capturedImage" :src="capturedImage" alt="Captured" class="captured-image" />
                 <div v-if="!showCamera && !capturedImage" class="placeholder">
                   <span class="placeholder-icon">📹</span>
-                  <p>Point camera at brown objects</p>
+                  <p>📱 Tips: Use good lighting, steady hand, include full trunk</p>
                 </div>
               </div>
 
               <div class="camera-controls">
-                <select v-model="selectedCamera" class="camera-select">
+                <div style="margin-bottom: 12px;">
+                  <label style="color: rgba(255, 255, 255, 0.8); font-weight: 600; margin-right: 8px;">Reference (cm):</label>
+                  <input type="number" placeholder="e.g., 10" min="1" max="100" value="10" style="width: 100px; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: white;" />
+                </div>
+                <select v-model="selectedCamera" class="camera-select" style="margin-bottom: 12px;">
                   <option value="environment">Back Camera</option>
                   <option value="user">Front Camera</option>
                 </select>
@@ -166,23 +170,19 @@
               <div class="results-grid">
                 <div class="result-item">
                   <span class="label">Brown Detected:</span>
-                  <span class="value">Yes ✓</span>
+                  <span class="value">✓ Yes</span>
                 </div>
                 <div class="result-item highlight">
-                  <span class="label">Height (m):</span>
-                  <span class="value">{{ scanResults.height }}</span>
-                </div>
-                <div class="result-item highlight">
-                  <span class="label">Width (cm):</span>
-                  <span class="value">{{ scanResults.width }}</span>
-                </div>
-                <div class="result-item">
                   <span class="label">Diameter:</span>
                   <span class="value">{{ scanResults.diameter }} cm</span>
                 </div>
+                <div class="result-item highlight">
+                  <span class="label">Height:</span>
+                  <span class="value">{{ scanResults.height }} cm</span>
+                </div>
                 <div class="result-item">
                   <span class="label">Est. Lumber:</span>
-                  <span class="value">{{ scanResults.estimatedLumber }} bf</span>
+                  <span class="value">{{ scanResults.estimatedLumber }} pcs</span>
                 </div>
                 <div class="result-item">
                   <span class="label">Quality:</span>
@@ -382,12 +382,11 @@ export default {
       detectionError: '',
       scanResults: {
         treeDetected: false,
-        height: '0',
-        width: '0',
         diameter: '0',
-        estimatedLumber: '0',
+        height: '0',
         quality: 'N/A',
-        confidence: '0'
+        confidence: '0',
+        estimatedLumber: '0'
       },
       // Dispatch Data
       dispatchForm: {
@@ -452,7 +451,7 @@ export default {
       return parseFloat(price).toLocaleString('en-PH', { minimumFractionDigits: 2 })
     },
     // Scanner Methods
-    async openCamera() {
+    openCamera() {
       this.cameraError = ''
       this.uploadError = ''
       this.showCamera = true
@@ -464,19 +463,15 @@ export default {
       }
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        this.cameraError = 'Camera is not supported in this browser. Using upload camera instead.'
+        this.cameraError = '📱 Camera not supported. Using upload instead.'
         this.scannerMode = 'upload'
-        await this.$nextTick()
-        if (this.$refs.fileInput) this.$refs.fileInput.click()
         return
       }
 
       if (!window.isSecureContext) {
-        this.cameraError = 'Real-time camera needs HTTPS on mobile. Switched to upload camera mode.'
+        this.cameraError = '🔒 Requires HTTPS on mobile. Switched to upload mode.'
         this.scannerMode = 'upload'
         this.showCamera = false
-        await this.$nextTick()
-        if (this.$refs.fileInput) this.$refs.fileInput.click()
         return
       }
 
@@ -487,38 +482,37 @@ export default {
           { video: true, audio: false }
         ]
 
-        let stream = null
-        for (const constraint of constraints) {
-          try {
-            stream = await navigator.mediaDevices.getUserMedia(constraint)
-            break
-          } catch (error) {
-            stream = null
+        let attemptCamera = async () => {
+          for (const constraint of constraints) {
+            try {
+              let stream = await navigator.mediaDevices.getUserMedia(constraint)
+              this.stream = stream
+              await this.$nextTick()
+              if (this.$refs.video) {
+                this.$refs.video.srcObject = this.stream
+                if (typeof this.$refs.video.play === 'function') {
+                  try { await this.$refs.video.play() } catch (e) {}
+                }
+              }
+              return true
+            } catch (error) {
+              continue
+            }
           }
+          return false
         }
 
-        if (!stream) throw new Error('Could not start camera stream')
-        this.stream = stream
-
-        await this.$nextTick()
-        if (this.$refs.video) {
-          this.$refs.video.srcObject = this.stream
-          if (typeof this.$refs.video.play === 'function') {
-            try { await this.$refs.video.play() } catch (e) {}
+        attemptCamera().then(success => {
+          if (!success) {
+            this.cameraError = '❌ Could not access camera. Please allow camera permission and try again.'
+            this.scannerMode = 'upload'
+            this.showCamera = false
           }
-        }
+        })
       } catch (err) {
-        if (err?.name === 'NotAllowedError') {
-          this.cameraError = 'Camera permission denied. Allow camera access in browser settings and try again.'
-        } else if (err?.name === 'NotFoundError') {
-          this.cameraError = 'No camera found on this device.'
-        } else {
-          this.cameraError = 'Unable to access camera. Switched to upload camera mode.'
-        }
+        this.cameraError = '⚠️ Camera access error: ' + (err?.name || err.message)
         this.scannerMode = 'upload'
         this.showCamera = false
-        await this.$nextTick()
-        if (this.$refs.fileInput) this.$refs.fileInput.click()
       }
     },
     captureImage() {
@@ -608,18 +602,17 @@ export default {
           return
         }
 
-        if (result.height && result.width && result.diameter) {
+        if (result.height && result.diameter) {
           this.scanResults = {
             treeDetected: true,
-            height: result.height || '0',
-            width: result.width || '0',
             diameter: result.diameter || '0',
+            height: result.height || '0',
             estimatedLumber: result.estimatedLumber || '0',
             quality: result.quality || 'N/A',
             confidence: result.confidence || '0'
           }
         } else {
-          this.detectionError = '⚠️ No brown object detected in image!'
+          this.detectionError = '⚠️ No cocolumber object detected in image! Try better lighting or a clearer image.'
         }
       } catch (error) {
         this.detectionError = `Detection failed: ${error.message}`
