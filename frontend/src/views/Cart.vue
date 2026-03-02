@@ -127,9 +127,7 @@ export default {
       selectedPaymentMethod: '',
       paymentMethods: [
         { value: 'gcash', label: 'GCash', icon: '📱' },
-        { value: 'grab_pay', label: 'GrabPay', icon: '🚗' },
         { value: 'paymaya', label: 'PayMaya', icon: '💳' },
-        { value: 'bank_transfer', label: 'Bank Transfer', icon: '🏦' },
         { value: 'cash_on_delivery', label: 'Cash on Delivery', icon: '💵' }
       ]
     }
@@ -269,34 +267,20 @@ export default {
         this.cartItems = []
         try { localStorage.removeItem('cartItems') } catch (e) {}
 
-        // Handle different payment methods
+        // Handle payment methods
         if (this.selectedPaymentMethod === 'cash_on_delivery') {
-          // COD - just show success
-          this.successMessage = `✓ Order placed (COD)! Total: ₱${data.totalAmount.toFixed(2)} | Pay upon delivery`
+          this.successMessage = `✓ Order placed! Total: ₱${data.totalAmount.toFixed(2)} | Pay upon delivery`
           setTimeout(() => {
             this.successMessage = ''
             this.$router.push('/sellers')
           }, 3000)
-        } else if (['gcash', 'grab_pay', 'paymaya'].includes(this.selectedPaymentMethod)) {
-          // E-wallet - redirect to payment page
-          if (data.paymentUrl) {
-            this.successMessage = `✓ Redirecting to ${this.selectedPaymentMethod.toUpperCase()} payment...`
-            setTimeout(() => {
-              window.location.href = data.paymentUrl
-            }, 1500)
-          } else {
-            throw new Error('Payment link not generated. Please contact support.')
-          }
-        } else if (this.selectedPaymentMethod === 'bank_transfer') {
-          // Bank transfer - show instructions
-          this.successMessage = `✓ Order placed! Total: ₱${data.totalAmount.toFixed(2)} | Bank transfer instructions sent to your email`
+        } else if (data.paymentUrl && ['gcash', 'paymaya'].includes(this.selectedPaymentMethod)) {
+          this.successMessage = `✓ Redirecting to ${this.selectedPaymentMethod.toUpperCase()} payment...`
           setTimeout(() => {
-            this.successMessage = ''
-            this.$router.push('/my-orders')
-          }, 4000)
+            window.location.href = data.paymentUrl
+          }, 1500)
         } else {
-          // Generic success
-          this.successMessage = `✓ Order placed! Total: ₱${data.totalAmount.toFixed(2)}`
+          this.successMessage = `✓ Order placed! Total: ₱${data.totalAmount.toFixed(2)} | Payment via ${this.selectedPaymentMethod.toUpperCase()}`
           setTimeout(() => {
             this.successMessage = ''
             this.$router.push('/sellers')

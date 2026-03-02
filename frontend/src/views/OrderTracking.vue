@@ -4,17 +4,204 @@
     
     <div class="checkout-page">
       <div class="checkout-container">
-        <!-- Header -->
+        <!-- Header with Tabs -->
         <div class="checkout-header">
-          <h1>🛒 Checkout & Order Placement</h1>
-          <p>Review your cart, add delivery address, and place your order</p>
+          <h1>🛒 Orders & Checkout</h1>
+          <div class="main-tabs">
+            <button 
+              class="main-tab"
+              :class="{ active: activeMainTab === 'checkout' }"
+              @click="activeMainTab = 'checkout'"
+            >
+              🛒 Checkout ({{ cartItems.length }})
+            </button>
+            <button 
+              class="main-tab"
+              :class="{ active: activeMainTab === 'orders' }"
+              @click="activeMainTab = 'orders'"
+            >
+              📦 My Orders ({{ myOrders.length }})
+            </button>
+          </div>
         </div>
 
+        <div v-if="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
+        <div v-if="successMessage" class="alert alert-success">{{ successMessage }}</div>
+
+        <!-- CHECKOUT TAB -->
+        <div v-show="activeMainTab === 'checkout'" class="tab-content">
+          <div v-if="cartItems.length > 0" class="checkout-grid">
+            <div>
+            <section class="checkout-section">
+              <h2>🛒 Products Ordered</h2>
+              <div class="cart-items-list">
+                <div v-for="(item, index) in cartItems" :key="`${item.id}-${index}`" class="cart-item">
+                  <div class="item-image">
+                    <img v-if="item.product_picture" :src="getImageUrl(item.product_picture)" :alt="item.size" />
+                    <div v-else class="no-image">🥥</div>
+                  </div>
+
+                  <div class="item-details">
+                    <h3>{{ item.size }}</h3>
+                    <p class="item-meta">Length: {{ item.length }} cm</p>
+                    <p v-if="item.store_name" class="item-store">Store: {{ item.store_name }}</p>
+                    <div class="item-pricing">
+                      <span class="unit-price">₱{{ getUnitPrice(item).toFixed(2) }} each</span>
+                      <span class="item-total">₱{{ getItemTotal(item).toFixed(2) }}</span>
+                    </div>
+                  </div>
+
+                  <div class="item-quantity">
+                    <button class="qty-btn" @click="decrease(index)" :disabled="item.quantity <= 1">−</button>
+                    <input
+                      type="number"
+                      class="qty-input"
+                      v-model.number="item.quantity"
+                      min="1"
+                      @input="updateQuantity(index, $event)"
+                      @blur="validateQuantity(index)"
+                    />
+                    <button class="qty-btn" @click="increase(index)">+</button>
+                  </div>
+
+                  <button class="btn-remove" @click="remove(index)">✕</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="checkout-section">
+              <h2>📍 Delivery Address</h2>
+              <div class="address-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Full Name *</label>
+                    <input v-model="deliveryAddress.fullName" type="text" class="form-input" placeholder="Enter full name" />
+                  </div>
+                  <div class="form-group">
+                    <label>Phone Number *</label>
+                    <input v-model="deliveryAddress.phone" type="text" class="form-input" placeholder="09XXXXXXXXX" />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Street Address *</label>
+                  <input v-model="deliveryAddress.street" type="text" class="form-input" placeholder="House number, street" />
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Barangay</label>
+                    <input v-model="deliveryAddress.barangay" type="text" class="form-input" placeholder="Barangay" />
+                  </div>
+                  <div class="form-group">
+                    <label>City *</label>
+                    <input v-model="deliveryAddress.city" type="text" class="form-input" placeholder="City" />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Province *</label>
+                    <input v-model="deliveryAddress.province" type="text" class="form-input" placeholder="Province" />
+                  </div>
+                  <div class="form-group">
+                    <label>Postal Code</label>
+                    <input v-model="deliveryAddress.postalCode" type="text" class="form-input" placeholder="Postal code" />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Delivery Notes (optional)</label>
+                  <textarea v-model="deliveryAddress.notes" class="form-textarea" placeholder="Landmark, special instructions"></textarea>
+                </div>
+
+                <div class="form-check">
+                  <input id="save-default-address" v-model="deliveryAddress.isDefault" type="checkbox" class="form-checkbox" />
+                  <label for="save-default-address">Save as default address</label>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <aside class="order-summary sticky">
+            <h2>📊 Order Summary</h2>
+            <div class="summary-details">
+              <div class="summary-row">
+                <span>Total Items</span>
+                <strong>{{ totalItems }} units</strong>
+              </div>
+              <div class="summary-row">
+                <span>Subtotal</span>
+                <strong>₱{{ subtotal.toFixed(2) }}</strong>
+              </div>
+              <div v-if="bulkDiscount > 0" class="summary-row discount">
+                <span>Bulk Discount</span>
+                <strong>-₱{{ discountAmount.toFixed(2) }}</strong>
+              </div>
+              <div class="summary-row">
+                <span>Shipping Fee</span>
+                <strong>₱{{ shippingFee.toFixed(2) }}</strong>
+              </div>
+              <div class="summary-row total">
+                <span>Total</span>
+                <strong class="total-price">₱{{ orderTotal.toFixed(2) }}</strong>
+              </div>
+            </div>
+
+            <div class="payment-method-section">
+              <h3>💳 Payment Method</h3>
+              <div class="payment-options">
+                <label
+                  v-for="method in paymentMethods"
+                  :key="method.value"
+                  class="payment-radio-label"
+                >
+                  <input
+                    v-model="selectedPaymentMethod"
+                    :value="method.value"
+                    type="radio"
+                    class="payment-radio"
+                  />
+                  <div class="payment-option-card">
+                    <span class="payment-icon">{{ method.icon }}</span>
+                    <span class="payment-text">{{ method.label }}</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <button class="btn-place-order" :disabled="isPlacing || !canPlaceOrder" @click="placeOrder">
+              <span v-if="isPlacing"><span class="spinner-small"></span>Processing Order...</span>
+              <span v-else>Place Order (₱{{ orderTotal.toFixed(2) }})</span>
+            </button>
+
+            <div class="order-notes">
+              <strong>Before placing order:</strong>
+              <ul>
+                <li>Double-check your delivery address and contact number.</li>
+                <li>Select your preferred payment method.</li>
+                <li>Ensure product quantities are correct.</li>
+              </ul>
+            </div>
+          </aside>
+        </div>
+
+        <div v-else class="empty-cart">
+          <div class="empty-icon">🛒</div>
+          <h2>Your cart is empty</h2>
+          <p>Add products from the marketplace to continue checkout.</p>
+          <router-link to="/sellers" class="btn-primary">Go to Marketplace</router-link>
+        </div>
+        </div>
+        <!-- END CHECKOUT TAB -->
+
+        <!-- ORDERS TRACKING TAB -->
+        <div v-show="activeMainTab === 'orders'" class="tab-content">
         <section class="tracking-section">
           <div class="tracking-header">
-            <h2>🚚 Order Tracking</h2>
+            <h2>Track Your Orders</h2>
             <button class="refresh-btn" @click="fetchMyOrders" :disabled="loadingOrders">
-              {{ loadingOrders ? 'Refreshing...' : 'Refresh' }}
+              {{ loadingOrders ? '⏳ Refreshing...' : '🔄 Refresh' }}
             </button>
           </div>
 
@@ -31,7 +218,7 @@
               :class="{ active: activeTrackingTab === 'to_deliver' }"
               @click="activeTrackingTab = 'to_deliver'"
             >
-              To Delivered ({{ toDeliverOrders.length }})
+              To Deliver ({{ toDeliverOrders.length }})
             </button>
             <button
               class="tracking-tab"
@@ -59,230 +246,8 @@
             </div>
           </div>
         </section>
-
-        <div v-if="cartItems.length === 0" class="empty-cart">
-          <div class="empty-icon">🛒</div>
-          <h2>Your cart is empty</h2>
-          <p>Add products to your cart from the traders list.</p>
-          <router-link to="/sellers" class="btn btn-primary">Browse Traders</router-link>
         </div>
-
-        <div v-else class="checkout-grid">
-          <!-- Left Column: Cart Items & Delivery Address -->
-          <div class="checkout-left">
-            <!-- Cart Items Section -->
-            <section class="checkout-section">
-              <h2>📦 Cart Items</h2>
-              <div class="cart-items-list">
-                <div v-for="(item, idx) in cartItems" :key="idx" class="cart-item">
-                  <div class="item-image">
-                    <img v-if="item.product_picture" :src="getImageUrl(item.product_picture)" :alt="item.size" />
-                    <div v-else class="no-image">🥥</div>
-                  </div>
-                  <div class="item-details">
-                    <h3>{{ item.size }}</h3>
-                    <p class="item-meta">📏 {{ item.length }} cm</p>
-                    <p v-if="item.store_name" class="item-store">👤 {{ item.store_name }}</p>
-                    <div class="item-pricing">
-                      <span class="unit-price">₱{{ getUnitPrice(item).toFixed(2) }} / unit</span>
-                      <span class="item-total">₱{{ getItemTotal(item).toFixed(2) }}</span>
-                    </div>
-                  </div>
-                  <div class="item-quantity">
-                    <button @click="decrease(idx)" class="qty-btn">−</button>
-                    <input 
-                      type="number" 
-                      v-model.number="item.quantity"
-                      @input="updateQuantity(idx, $event)"
-                      @blur="validateQuantity(idx)"
-                      min="1"
-                      class="qty-input"
-                    />
-                    <button @click="increase(idx)" class="qty-btn">+</button>
-                  </div>
-                  <button @click="remove(idx)" class="btn-remove">🗑️</button>
-                </div>
-              </div>
-            </section>
-
-            <!-- Delivery Address Section -->
-            <section class="checkout-section">
-              <h2>📍 Delivery Address</h2>
-              <div class="address-form">
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>Full Name *</label>
-                    <input 
-                      v-model="deliveryAddress.fullName" 
-                      type="text" 
-                      placeholder="Juan Dela Cruz"
-                      class="form-input"
-                      required
-                    />
-                  </div>
-                  <div class="form-group">
-                    <label>Phone Number *</label>
-                    <input 
-                      v-model="deliveryAddress.phone" 
-                      type="tel" 
-                      placeholder="+63 912 345 6789"
-                      class="form-input"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  <label>Street Address *</label>
-                  <input 
-                    v-model="deliveryAddress.street" 
-                    type="text" 
-                    placeholder="House/Unit/Floor No., Building Name, Street Name"
-                    class="form-input"
-                    required
-                  />
-                </div>
-
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>Barangay *</label>
-                    <input 
-                      v-model="deliveryAddress.barangay" 
-                      type="text" 
-                      placeholder="Barangay"
-                      class="form-input"
-                      required
-                    />
-                  </div>
-                  <div class="form-group">
-                    <label>City/Municipality *</label>
-                    <input 
-                      v-model="deliveryAddress.city" 
-                      type="text" 
-                      placeholder="City/Municipality"
-                      class="form-input"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>Province *</label>
-                    <input 
-                      v-model="deliveryAddress.province" 
-                      type="text" 
-                      placeholder="Province"
-                      class="form-input"
-                      required
-                    />
-                  </div>
-                  <div class="form-group">
-                    <label>Postal Code *</label>
-                    <input 
-                      v-model="deliveryAddress.postalCode" 
-                      type="text" 
-                      placeholder="1234"
-                      class="form-input"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  <label>Additional Instructions (Optional)</label>
-                  <textarea 
-                    v-model="deliveryAddress.notes" 
-                    placeholder="Landmarks, gate codes, delivery instructions..."
-                    class="form-textarea"
-                    rows="3"
-                  ></textarea>
-                </div>
-
-                <div class="form-check">
-                  <input 
-                    v-model="deliveryAddress.isDefault" 
-                    type="checkbox" 
-                    id="saveAddress"
-                    class="form-checkbox"
-                  />
-                  <label for="saveAddress">Save as default delivery address</label>
-                </div>
-              </div>
-            </section>
-          </div>
-
-          <!-- Right Column: Order Summary & Payment -->
-          <div class="checkout-right">
-            <section class="order-summary sticky">
-              <h2>📊 Order Summary</h2>
-              
-              <div class="summary-details">
-                <div class="summary-row">
-                  <span>Total Items:</span>
-                  <strong>{{ totalItems }} units</strong>
-                </div>
-                <div class="summary-row">
-                  <span>Subtotal:</span>
-                  <strong>₱{{ subtotal.toFixed(2) }}</strong>
-                </div>
-                <div v-if="bulkDiscount > 0" class="summary-row discount">
-                  <span>Bulk Discount ({{ (bulkDiscount * 100).toFixed(0) }}%):</span>
-                  <strong>-₱{{ discountAmount.toFixed(2) }}</strong>
-                </div>
-                <div class="summary-row">
-                  <span>Shipping Fee:</span>
-                  <strong>{{ shippingFee > 0 ? '₱' + shippingFee.toFixed(2) : 'FREE' }}</strong>
-                </div>
-                <div class="summary-row total">
-                  <span>Total Amount:</span>
-                  <strong class="total-price">₱{{ orderTotal.toFixed(2) }}</strong>
-                </div>
-              </div>
-
-              <div class="payment-method-section">
-                <h3>💳 Payment Method</h3>
-                <div class="payment-options">
-                  <label v-for="method in paymentMethods" :key="method.value" class="payment-radio-label">
-                    <input 
-                      type="radio"
-                      v-model="selectedPaymentMethod"
-                      :value="method.value"
-                      class="payment-radio"
-                    />
-                    <div class="payment-option-card">
-                      <span class="payment-icon">{{ method.icon }}</span>
-                      <span class="payment-text">{{ method.label }}</span>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              <div v-if="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
-              <div v-if="successMessage" class="alert alert-success">{{ successMessage }}</div>
-
-              <button 
-                @click="placeOrder" 
-                class="btn-place-order" 
-                :disabled="!canPlaceOrder || isPlacing"
-              >
-                <span v-if="!isPlacing">✓ Place Order (₱{{ orderTotal.toFixed(2) }})</span>
-                <span v-else>
-                  <span class="spinner-small"></span> Processing...
-                </span>
-              </button>
-
-              <div class="order-notes">
-                <p><strong>📝 Note:</strong></p>
-                <ul>
-                  <li>Please ensure your delivery address is correct</li>
-                  <li>Orders are typically processed within 1-2 business days</li>
-                  <li>You'll receive order confirmation via email</li>
-                </ul>
-              </div>
-            </section>
-          </div>
-        </div>
+        <!-- END ORDERS TRACKING TAB -->
       </div>
     </div>
   </div>
@@ -313,9 +278,7 @@ export default {
       selectedPaymentMethod: '',
       paymentMethods: [
         { value: 'gcash', label: 'GCash', icon: '📱' },
-        { value: 'grab_pay', label: 'GrabPay', icon: '🚗' },
         { value: 'paymaya', label: 'PayMaya', icon: '💳' },
-        { value: 'bank_transfer', label: 'Bank Transfer', icon: '🏦' },
         { value: 'cash_on_delivery', label: 'Cash on Delivery', icon: '💵' }
       ],
       shippingFee: 150, // Fixed shipping fee in PHP
@@ -325,6 +288,7 @@ export default {
       token: null,
       myOrders: [],
       loadingOrders: false,
+      activeMainTab: 'checkout', // Main tab: 'checkout' or 'orders'
       activeTrackingTab: 'to_ship'
     }
   },
@@ -568,26 +532,22 @@ export default {
 
         await this.fetchMyOrders()
 
-        // Handle different payment methods
+        // Handle payment methods
         if (this.selectedPaymentMethod === 'cash_on_delivery') {
-          this.successMessage = `✓ Order placed successfully! Total: ₱${data.totalAmount.toFixed(2)} | Pay upon delivery to: ${this.deliveryAddress.street}, ${this.deliveryAddress.city}`
+          this.successMessage = `✓ Order placed! Total: ₱${data.totalAmount.toFixed(2)} | Pay upon delivery to: ${this.deliveryAddress.street}, ${this.deliveryAddress.city}`
           setTimeout(() => {
             this.$router.push('/sellers')
-          }, 4000)
-        } else if (['gcash', 'grab_pay', 'paymaya'].includes(this.selectedPaymentMethod)) {
-          if (data.paymentUrl) {
-            this.successMessage = `✓ Redirecting to ${this.selectedPaymentMethod.toUpperCase()} payment...`
-            setTimeout(() => {
-              window.location.href = data.paymentUrl
-            }, 1500)
-          } else {
-            throw new Error('Payment link not generated')
-          }
-        } else if (this.selectedPaymentMethod === 'bank_transfer') {
-          this.successMessage = `✓ Order placed! Total: ₱${data.totalAmount.toFixed(2)} | Bank transfer instructions sent to your email`
+          }, 3000)
+        } else if (data.paymentUrl && ['gcash', 'paymaya'].includes(this.selectedPaymentMethod)) {
+          this.successMessage = `✓ Redirecting to ${this.selectedPaymentMethod.toUpperCase()} payment...`
+          setTimeout(() => {
+            window.location.href = data.paymentUrl
+          }, 1500)
+        } else {
+          this.successMessage = `✓ Order placed! Total: ₱${data.totalAmount.toFixed(2)} | Payment via ${this.selectedPaymentMethod.toUpperCase()}`
           setTimeout(() => {
             this.$router.push('/sellers')
-          }, 4000)
+          }, 3000)
         }
       } catch (err) {
         console.error('Order error:', err)
@@ -628,12 +588,61 @@ export default {
 .checkout-header h1 {
   color: #fff;
   font-size: 2.5em;
-  margin-bottom: 8px;
+  margin-bottom: 20px;
 }
 
 .checkout-header p {
   color: rgba(255, 255, 255, 0.7);
   font-size: 1.1em;
+}
+
+/* Main Tabs for Checkout vs Orders */
+.main-tabs {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.main-tab {
+  background: rgba(36, 36, 66, 0.4);
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.main-tab:hover {
+  background: rgba(102, 126, 234, 0.2);
+  border-color: rgba(102, 126, 234, 0.5);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.main-tab.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.tab-content {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .tracking-section {
@@ -664,6 +673,13 @@ export default {
   border-radius: 8px;
   padding: 8px 14px;
   cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: #5568d3;
+  transform: translateY(-2px);
 }
 
 .refresh-btn:disabled {
@@ -685,6 +701,12 @@ export default {
   border-radius: 8px;
   padding: 8px 12px;
   cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.tracking-tab:hover {
+  background: rgba(102, 126, 234, 0.15);
 }
 
 .tracking-tab.active {
@@ -697,6 +719,7 @@ export default {
 .tracking-empty {
   color: rgba(255, 255, 255, 0.75);
   padding: 10px 4px;
+  text-align: center;
 }
 
 .tracking-list {

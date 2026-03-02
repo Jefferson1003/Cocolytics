@@ -112,9 +112,14 @@
                 />
                 <button @click="increaseQuantity(product.id, product.stock)" class="qty-btn" :disabled="getProductQuantity(product.id) >= product.stock">+</button>
               </div>
-              <button @click="addToCart(product)" class="btn-add-cart">
-                🛒 Add to Cart
-              </button>
+              <div class="action-buttons">
+                <button @click="addToCart(product)" class="btn-add-cart">
+                  🛒 Add to Cart
+                </button>
+                <button @click="buyNow(product)" class="btn-buy-now">
+                  🔥 Buy Now
+                </button>
+              </div>
             </div>
             <button v-else class="btn-add-cart" disabled>
               ⛔ Out of Stock
@@ -364,6 +369,64 @@ export default {
       } catch (error) {
         console.error('Error adding to cart:', error)
         this.errorMessage = 'Error adding to cart'
+        setTimeout(() => this.errorMessage = '', 3000)
+      }
+    },
+    buyNow(product) {
+      if (!this.token) {
+        this.errorMessage = 'Please log in to continue'
+        setTimeout(() => {
+          this.$router.push('/login')
+        }, 2000)
+        return
+      }
+
+      if (product.stock <= 0) {
+        this.errorMessage = 'This product is out of stock'
+        setTimeout(() => this.errorMessage = '', 3000)
+        return
+      }
+
+      try {
+        const quantityToAdd = this.getProductQuantity(product.id)
+        let cart = localStorage.getItem('cartItems')
+        cart = cart ? JSON.parse(cart) : []
+
+        const existingItem = cart.find(item => item.id === product.id)
+        
+        if (existingItem) {
+          const newQuantity = existingItem.quantity + quantityToAdd
+          if (newQuantity <= product.stock) {
+            existingItem.quantity = newQuantity
+          } else {
+            this.errorMessage = 'Cannot add more than available stock'
+            setTimeout(() => this.errorMessage = '', 3000)
+            return
+          }
+        } else {
+          cart.push({
+            id: product.id,
+            size: product.size,
+            length: product.length,
+            quantity: quantityToAdd,
+            staff_id: product.staff_id,
+            store_name: product.store_name || this.seller?.store_name
+          })
+        }
+
+        localStorage.setItem('cartItems', JSON.stringify(cart))
+        
+        // Reset quantity to 1
+        this.productQuantities[product.id] = 1
+        
+        // Redirect to checkout page
+        this.$router.push({
+          path: '/orders/tracking',
+          query: { checkout: '1' }
+        })
+      } catch (error) {
+        console.error('Error processing buy now:', error)
+        this.errorMessage = 'Error processing purchase'
         setTimeout(() => this.errorMessage = '', 3000)
       }
     },
@@ -800,12 +863,19 @@ export default {
   -moz-appearance: textfield;
 }
 
-.btn-add-cart {
+.action-buttons {
+  display: flex;
+  gap: 10px;
   width: 100%;
+}
+
+.btn-add-cart {
+  flex: 1;
   padding: 14px;
   background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
   color: white;
   border: none;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 1.05em;
   font-weight: 600;
@@ -815,9 +885,35 @@ export default {
 .btn-add-cart:hover:not(:disabled) {
   background: linear-gradient(135deg, #45a049 0%, #388E3C 100%);
   box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+  transform: translateY(-2px);
 }
 
 .btn-add-cart:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #666;
+}
+
+.btn-buy-now {
+  flex: 1;
+  padding: 14px;
+  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.05em;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-buy-now:hover:not(:disabled) {
+  background: linear-gradient(135deg, #F57C00 0%, #E65100 100%);
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+  transform: translateY(-2px);
+}
+
+.btn-buy-now:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   background: #666;

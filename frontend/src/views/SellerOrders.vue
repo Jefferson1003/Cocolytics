@@ -36,16 +36,28 @@
               <span class="status-badge pending">{{ formatStatus(order.status) }}</span>
             </div>
             <div class="order-body">
-              <div class="order-info">
-                <p><strong>Product:</strong> {{ order.size }} - {{ order.length }}cm</p>
-                <p><strong>Quantity:</strong> {{ order.quantity }} units</p>
-                <p><strong>Customer:</strong> {{ order.user_name }}</p>
-                <p><strong>Ordered:</strong> {{ formatDate(order.created_at) }}</p>
+              <div class="order-info-grid">
+                <div class="info-item">
+                  <span class="info-label">Product:</span>
+                  <span class="info-value">{{ order.size }} - {{ order.length }}cm</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Quantity:</span>
+                  <span class="info-value">{{ order.quantity }} units</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Customer:</span>
+                  <span class="info-value">{{ order.user_name }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Ordered:</span>
+                  <span class="info-value">{{ formatDate(order.created_at) }}</span>
+                </div>
               </div>
             </div>
             <div class="order-actions">
-              <button @click="acceptOrder(order.id)" class="btn btn-accept">✓ Accept Order</button>
-              <button @click="rejectOrder(order.id)" class="btn btn-reject">✕ Reject Order</button>
+              <button @click="confirmOrder(order.id)" class="btn btn-accept">✓ Accept Order</button>
+              <button @click="rejectOrder(order.id)" class="btn btn-reject">✕ Cancel</button>
             </div>
           </div>
         </div>
@@ -270,7 +282,7 @@ export default {
         if (!silent) this.loadingOrders = false
       }
     },
-    async acceptOrder(orderId) {
+    async confirmOrder(orderId) {
       try {
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders/${orderId}/status`, {
           method: 'PUT',
@@ -278,14 +290,15 @@ export default {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${this.token}`
           },
-          body: JSON.stringify({ status: 'to_deliver' })
+          body: JSON.stringify({ status: 'processing' })
         })
         if (!response.ok) throw new Error('Failed')
-        this.successMessage = `✓ Order #${orderId} accepted!`
+        this.successMessage = `✓ Order #${orderId} confirmed! Now prepare for shipment.`
         await this.loadOrders()
+        this.activeOrderTab = 'processing' // Switch to processing tab
         setTimeout(() => { this.successMessage = '' }, 3000)
       } catch (error) {
-        this.errorMessage = 'Failed to accept order'
+        this.errorMessage = 'Failed to confirm order'
       }
     },
     async rejectOrder(orderId) {
@@ -341,15 +354,18 @@ export default {
           })
         })
         if (!response.ok) throw new Error('Failed')
-        this.successMessage = `✓ Order #${orderId} shipped with tracking ${form.tracking_number}`
+        this.successMessage = `✓ Order #${orderId} shipped! Tracking: ${form.tracking_number}`
         delete this.shippingForms[orderId]
         await this.loadOrders()
+        this.activeOrderTab = 'intransit' // Switch to in transit tab
         setTimeout(() => { this.successMessage = '' }, 3000)
       } catch (error) {
         this.errorMessage = 'Failed to ship order'
       }
     },
     async markDelivered(orderId) {
+      if (!confirm('Confirm that this order has been delivered to the customer?')) return
+      
       try {
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders/${orderId}/status`, {
           method: 'PUT',
@@ -360,8 +376,9 @@ export default {
           body: JSON.stringify({ status: 'delivered' })
         })
         if (!response.ok) throw new Error('Failed')
-        this.successMessage = `✓ Order #${orderId} marked as delivered`
+        this.successMessage = `✓ Order #${orderId} marked as delivered successfully!`
         await this.loadOrders()
+        this.activeOrderTab = 'completed' // Switch to completed tab
         setTimeout(() => { this.successMessage = '' }, 3000)
       } catch (error) {
         this.errorMessage = 'Failed to update order'
@@ -542,26 +559,29 @@ export default {
 }
 
 .order-header {
-  background: rgba(0, 0, 0, 0.2);
-  padding: 16px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
 }
 
 .order-header h3 {
   margin: 0;
   color: white;
-  font-size: 1.1em;
+  font-size: 1.3em;
+  font-weight: 700;
 }
 
 .status-badge {
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 0.75em;
-  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.8em;
+  font-weight: 700;
   display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .status-badge.pending {
@@ -585,7 +605,7 @@ export default {
 }
 
 .order-body {
-  padding: 16px;
+  padding: 20px;
 }
 
 .order-info {
@@ -596,6 +616,33 @@ export default {
 
 .order-info p {
   margin: 6px 0;
+}
+
+.order-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.info-label {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  color: white;
+  font-size: 1.05em;
+  font-weight: 600;
 }
 
 .order-info code {
@@ -657,23 +704,24 @@ export default {
 
 .order-actions {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   flex-wrap: wrap;
-  padding: 0 16px 16px 16px;
-  border-top: 1px solid rgba(102, 126, 234, 0.2);
-  margin-top: 12px;
-  padding-top: 12px;
+  padding: 20px;
+  border-top: 2px solid rgba(102, 126, 234, 0.2);
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .btn {
-  padding: 10px 16px;
+  flex: 1;
+  padding: 14px 24px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  font-weight: 600;
-  font-size: 0.85em;
+  font-weight: 700;
+  font-size: 0.95em;
   transition: all 0.3s;
   white-space: nowrap;
+  min-width: 150px;
 }
 
 .btn:hover:not(:disabled) {

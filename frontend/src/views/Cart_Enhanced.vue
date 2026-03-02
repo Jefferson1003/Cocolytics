@@ -127,9 +127,7 @@ export default {
       selectedPaymentMethod: '',
       paymentMethods: [
         { value: 'gcash', label: 'GCash', icon: '📱' },
-        { value: 'grab_pay', label: 'GrabPay', icon: '🚗' },
         { value: 'paymaya', label: 'PayMaya', icon: '💳' },
-        { value: 'bank_transfer', label: 'Bank Transfer', icon: '🏦' },
         { value: 'cash_on_delivery', label: 'Cash on Delivery', icon: '💵' }
       ]
     }
@@ -265,14 +263,29 @@ export default {
           throw new Error(data.message || 'Failed to place order')
         }
         
-        this.successMessage = `✓ Order placed! Total: ₱${data.totalAmount.toFixed(2)} | Payment via ${this.selectedPaymentMethod}`
+        // Clear cart
         this.cartItems = []
         try { localStorage.removeItem('cartItems') } catch (e) {}
-        
-        setTimeout(() => {
-          this.successMessage = ''
-          this.$router.push('/sellers')
-        }, 3000)
+
+        // Handle payment response
+        if (this.selectedPaymentMethod === 'cash_on_delivery') {
+          this.successMessage = `✓ Order placed! Total: ₱${data.totalAmount.toFixed(2)} | Pay upon delivery`
+          setTimeout(() => {
+            this.successMessage = ''
+            this.$router.push('/sellers')
+          }, 3000)
+        } else if (data.paymentUrl && ['gcash', 'paymaya'].includes(this.selectedPaymentMethod)) {
+          this.successMessage = `✓ Order placed! Redirecting to ${this.selectedPaymentMethod.toUpperCase()} payment...`
+          setTimeout(() => {
+            window.location.href = data.paymentUrl
+          }, 1500)
+        } else {
+          this.successMessage = `✓ Order placed! Total: ₱${data.totalAmount.toFixed(2)} | Payment via ${this.selectedPaymentMethod}`
+          setTimeout(() => {
+            this.successMessage = ''
+            this.$router.push('/sellers')
+          }, 3000)
+        }
       } catch (err) {
         console.error('Order error:', err)
         this.errorMessage = err.message || 'Error placing order. Please try again.'

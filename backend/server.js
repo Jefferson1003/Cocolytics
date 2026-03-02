@@ -1758,11 +1758,14 @@ app.post('/api/orders/create', authenticateToken, async (req, res) => {
 
         const source = await PayMongoService.createPaymentSource(sourceData);
         
-        if (source && source.data) {
-          paymentSourceUrl = source.data.attributes.redirect.checkout_url;
+        if (source && source.data && source.data.attributes) {
+          paymentSourceUrl = source.data.attributes.redirect?.checkout_url || null;
           paymongoPaymentId = source.data.id;
           paymentStatus = 'awaiting_payment';
-          console.log('Payment source created:', paymongoPaymentId);
+          console.log('Payment source created:', paymongoPaymentId, 'URL:', paymentSourceUrl);
+        } else {
+          console.warn('Unexpected payment source structure:', source);
+          paymentStatus = 'pending_payment';
         }
       } catch (paymentError) {
         console.error('Payment source creation error:', paymentError);

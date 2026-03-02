@@ -425,6 +425,12 @@ export default {
     } catch (error) {
       this.currentUserId = null
     }
+    
+    // Check for tab query parameter
+    if (this.$route.query.tab) {
+      this.activeTab = this.$route.query.tab
+    }
+    
     this.fetchInventory()
     this.fetchSellers()
     this.fetchSellerMessageCounts()

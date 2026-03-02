@@ -1,0 +1,143 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║     🚀 HOW TO MAKE PAYMONGO WORK - STEP BY STEP 🚀          ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+📋 WHAT YOU NEED TO DO (3 Simple Steps):
+
+
+┌─────────────────────────────────────────────────────────────┐
+│  STEP 1: Get Your PayMongo API Keys                         │
+└─────────────────────────────────────────────────────────────┘
+
+1. Open your browser
+2. Go to: https://dashboard.paymongo.com/signup
+3. Create an account (use your email)
+4. After signing up, go to: https://dashboard.paymongo.com/developers
+5. You will see TWO keys:
+   
+   ✅ Public Key  (looks like: pk_test_AbC123...)
+   ✅ Secret Key  (looks like: sk_test_XyZ789...)
+
+6. COPY both keys (you'll need them in Step 2)
+
+
+┌─────────────────────────────────────────────────────────────┐
+│  STEP 2: Put Keys in .env File                              │
+└─────────────────────────────────────────────────────────────┘
+
+1. Open file: Cocolytics/backend/.env
+2. Find these lines:
+
+   PAYMONGO_PUBLIC_KEY=pk_test_your_public_key_here
+   PAYMONGO_SECRET_KEY=sk_test_your_secret_key_here
+
+3. REPLACE with your actual keys from Step 1:
+
+   PAYMONGO_PUBLIC_KEY=pk_test_AbC123...YOUR_ACTUAL_KEY
+   PAYMONGO_SECRET_KEY=sk_test_XyZ789...YOUR_ACTUAL_KEY
+
+4. SAVE the file
+
+
+┌─────────────────────────────────────────────────────────────┐
+│  STEP 3: Test Your Setup                                    │
+└─────────────────────────────────────────────────────────────┘
+
+Open terminal and run:
+
+   cd Cocolytics/backend
+   npm run verify-paymongo
+
+You should see:
+   ✅ SUCCESS: PayMongo keys are configured!
+   🚀 Ready to process payments!
+
+If you see this, YOU'RE DONE! ✅
+
+
+┌─────────────────────────────────────────────────────────────┐
+│  RESTART BACKEND (Important!)                               │
+└─────────────────────────────────────────────────────────────┘
+
+After updating .env, you MUST restart your backend:
+
+1. Stop backend (press Ctrl+C if it's running)
+2. Start again:
+   
+   cd Cocolytics/backend
+   node server.js
+
+3. Look for this message:
+   ✅ PayMongo LIVE MODE - Using real API
+
+If you see this, PayMongo IS WORKING! 🎉
+
+
+┌─────────────────────────────────────────────────────────────┐
+│  TEST THE PAYMENT                                           │
+└─────────────────────────────────────────────────────────────┘
+
+GCash Test:
+1. Go to checkout page
+2. Click "Generate GCash QR Code"
+3. QR Code should appear ✅
+4. Scan with GCash app
+5. Complete payment
+
+PayMaya Test:
+1. Go to checkout page  
+2. Select PayMaya
+3. Enter email
+4. Click "Pay with PayMaya"
+5. Should redirect to PayMongo payment page ✅
+
+
+┌─────────────────────────────────────────────────────────────┐
+│  TROUBLESHOOTING                                            │
+└─────────────────────────────────────────────────────────────┘
+
+❌ Problem: Still seeing "TEST MODE" message
+   ✅ Solution: 
+      - Check .env file has correct keys (no typos)
+      - Make sure keys start with pk_test_ and sk_test_
+      - Restart backend server
+
+❌ Problem: "Failed to create payment link"
+   ✅ Solution:
+      - Verify API keys are correct in .env
+      - Check internet connection
+      - Run: npm run verify-paymongo
+
+❌ Problem: QR Code not showing
+   ✅ Solution:
+      - Run: cd frontend && npm install
+      - Clear browser cache
+      - Check browser console for errors (F12)
+
+
+┌─────────────────────────────────────────────────────────────┐
+│  QUICK VERIFICATION COMMAND                                 │
+└─────────────────────────────────────────────────────────────┘
+
+Run this anytime to check your setup:
+
+   cd Cocolytics/backend
+   npm run verify-paymongo
+
+
+┌─────────────────────────────────────────────────────────────┐
+│  NEED HELP?                                                 │
+└─────────────────────────────────────────────────────────────┘
+
+📧 PayMongo Support: support@paymongo.com
+📚 Documentation: https://developers.paymongo.com/docs
+🎯 API Keys: https://dashboard.paymongo.com/developers
+
+
+═══════════════════════════════════════════════════════════════
+
+THAT'S IT! Follow these 3 steps and PayMongo will work! 🎉
+
+═══════════════════════════════════════════════════════════════

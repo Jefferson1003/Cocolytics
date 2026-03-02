@@ -44,29 +44,27 @@
 
         <!-- GCash Payment -->
         <div v-if="selectedMethod === 'gcash'" class="payment-form">
-          <div class="form-group">
-            <label>GCash Phone Number</label>
-            <input 
-              v-model="phoneNumber"
-              type="text"
-              placeholder="09xxxxxxxxx"
-              class="form-input"
-            />
-            <small>Payment link will be sent to your GCash account</small>
+          <div v-if="!gcashQrCode" class="form-group">
+            <button 
+              @click="generateGcashCode"
+              class="btn btn-generate"
+              :disabled="isProcessing"
+            >
+              📲 Generate GCash QR Code
+            </button>
+            <small>Click to generate a QR code you can scan with GCash app</small>
           </div>
-        </div>
-
-        <!-- GrabPay Payment -->
-        <div v-if="selectedMethod === 'grab_pay'" class="payment-form">
-          <div class="form-group">
-            <label>Grab Account Phone Number</label>
-            <input 
-              v-model="phoneNumber"
-              type="text"
-              placeholder="09xxxxxxxxx"
-              class="form-input"
-            />
-            <small>Payment link will be sent to your Grab app</small>
+          <div v-else class="qr-code-section">
+            <p class="qr-instruction">📱 Scan this QR code with your GCash app to pay</p>
+            <div class="qr-display">
+              <img :src="gcashQrCode" alt="GCash QR Code" class="qr-image" />
+            </div>
+            <button 
+              @click="resetGcashCode"
+              class="btn btn-reset"
+            >
+              Generate New Code
+            </button>
           </div>
         </div>
 
@@ -81,40 +79,6 @@
               class="form-input"
             />
             <small>Payment link will be sent to your email</small>
-          </div>
-        </div>
-
-        <!-- Card Payment -->
-        <div v-if="selectedMethod === 'card'" class="payment-form">
-          <div class="form-group">
-            <label>Card Details</label>
-            <div class="card-inputs">
-              <input 
-                v-model="cardNumber"
-                type="text"
-                placeholder="4111 1111 1111 1111"
-                @blur="formatCardNumber"
-                class="form-input card-number"
-                maxlength="19"
-              />
-              <div class="card-row">
-                <input 
-                  v-model="cardExpiry"
-                  type="text"
-                  placeholder="MM/YY"
-                  @blur="formatExpiry"
-                  class="form-input"
-                  maxlength="5"
-                />
-                <input 
-                  v-model="cardCVC"
-                  type="text"
-                  placeholder="CVC"
-                  class="form-input"
-                  maxlength="4"
-                />
-              </div>
-            </div>
           </div>
         </div>
 
@@ -145,7 +109,15 @@
           class="btn btn-primary"
           :disabled="!canProceed || isProcessing"
         >
-          {{ isProcessing ? '⏳ Processing...' : '💳 Pay Now' }}
+          <template v-if="selectedMethod === 'gcash' && gcashQrCode">
+            {{ isProcessing ? '⏳ Processing...' : '✓ Confirm Payment' }}
+          </template>
+          <template v-else-if="selectedMethod === 'paymaya'">
+            {{ isProcessing ? '⏳ Processing...' : '💳 Pay with PayMaya' }}
+          </template>
+          <template v-else>
+            {{ isProcessing ? '⏳ Processing...' : '💳 Pay Now' }}
+          </template>
         </button>
       </div>
     </div>
@@ -153,6 +125,8 @@
 </template>
 
 <script>
+import QRCode from 'qrcode'
+
 export default {
   name: 'PaymentModal',
   props: {
@@ -182,124 +156,192 @@ export default {
       selectedMethod: 'gcash',
       paymentMethods: [
         { value: 'gcash', name: 'GCash', icon: '📱' },
-        { value: 'grab_pay', name: 'GrabPay', icon: '🚗' },
-        { value: 'paymaya', name: 'PayMaya', icon: '💳' },
-        { value: 'card', name: 'Card', icon: '🏧' }
+        { value: 'paymaya', name: 'PayMaya', icon: '💳' }
       ],
       phoneNumber: '',
       emailAddress: '',
-      cardNumber: '',
-      cardExpiry: '',
-      cardCVC: '',
       agreedToTerms: false,
       isProcessing: false,
-      errorMessage: ''
+      errorMessage: '',
+      gcashQrCode: null,
+      gcashSourceId: null
     }
   },
   computed: {
     canProceed() {
       if (!this.agreedToTerms) return false
       
-      switch (this.selectedMethod) {
-        case 'gcash':
-        case 'grab_pay':
-          return this.phoneNumber.length >= 10
-        case 'paymaya':
-          return this.emailAddress.includes('@')
-        case 'card':
-          return this.cardNumber.length >= 16 && this.cardExpiry && this.cardCVC.length >= 3
-        default:
-          return false
+      if (this.selectedMethod === 'gcash') {
+        // For GCash, need to have generated a QR code
+        return this.gcashQrCode !== null
+      } else if (this.selectedMethod === 'paymaya') {
+        return this.emailAddress.includes('@')
       }
+      return false
     }
   },
   methods: {
-    async processPayment() {
+    async generateGcashCode() {
       this.errorMessage = ''
       this.isProcessing = true
 
       try {
-        // Step 1: Create payment source
-        let sourceData = {
-          type: this.selectedMethod,
-          amount: this.totalAmount + this.deliveryFee
-        }
-
-        // Add phone or email based on method
-        if (['gcash', 'grab_pay'].includes(this.selectedMethod)) {
-          sourceData.phone = this.phoneNumber
-        } else if (this.selectedMethod === 'paymaya') {
-          sourceData.email = this.emailAddress
-        }
-
-        const sourceResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/payments/create-source`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${this.token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(sourceData)
-        })
-
-        if (!sourceResponse.ok) {
-          throw new Error('Failed to create payment source')
-        }
-
-        const sourceResult = await sourceResponse.json()
-        const sourceId = sourceResult.source.id
-
-        // Step 2: Create payment
-        const paymentResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/payments/create-payment`, {
+        // Create payment source for GCash
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/payments/create-source`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${this.token}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            orderId: this.orderId,
-            sourceId,
-            amount: this.totalAmount + this.deliveryFee,
-            description: `Payment for Order #${this.orderId}`
+            type: 'gcash',
+            amount: this.totalAmount + this.deliveryFee
           })
         })
 
-        if (!paymentResponse.ok) {
-          throw new Error('Failed to create payment')
+        if (!response.ok) {
+          throw new Error('Failed to generate GCash code')
         }
 
-        const paymentResult = await paymentResponse.json()
+        const result = await response.json()
+        const sourceData = result.source
 
-        // Emit success event
-        this.$emit('payment-success', {
-          paymentId: paymentResult.payment.id,
-          status: paymentResult.payment.attributes.status,
-          redirectUrl: paymentResult.payment.attributes.redirect?.checkout_url
+        // Extract checkout URL
+        const checkoutUrl = sourceData.attributes.checkout_url
+        this.gcashSourceId = sourceData.id
+
+        // Generate QR code image from checkout URL
+        const qrCodeDataUrl = await QRCode.toDataURL(checkoutUrl, {
+          errorCorrectionLevel: 'H',
+          type: 'image/png',
+          width: 300,
+          margin: 2,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+          }
         })
 
-        // Redirect to payment provider if needed
-        if (paymentResult.payment.attributes.redirect?.checkout_url) {
-          window.location.href = paymentResult.payment.attributes.redirect.checkout_url
-        }
+        this.gcashQrCode = qrCodeDataUrl
+        
+        // Emit QR code generated event
+        this.$emit('qr-generated', {
+          sourceId: this.gcashSourceId,
+          checkoutUrl: checkoutUrl,
+          qrCodeImage: qrCodeDataUrl
+        })
+      } catch (error) {
+        console.error('GCash code generation error:', error)
+        this.errorMessage = error.message || 'Failed to generate GCash code. Please try again.'
+      } finally {
+        this.isProcessing = false
+      }
+    },
+    resetGcashCode() {
+      this.gcashQrCode = null
+      this.gcashSourceId = null
+    },
+    async processPayment() {
+      this.errorMessage = ''
+      this.isProcessing = true
 
-        this.closeModal()
+      try {
+        if (this.selectedMethod === 'gcash' && this.gcashSourceId) {
+          // For GCash, use the source already generated
+          // Create payment with the GCash source
+          const paymentResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/payments/create-payment`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${this.token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              orderId: this.orderId,
+              sourceId: this.gcashSourceId,
+              amount: this.totalAmount + this.deliveryFee,
+              description: `Payment for Order #${this.orderId}`
+            })
+          })
+
+          if (!paymentResponse.ok) {
+            throw new Error('Failed to create payment')
+          }
+
+          const paymentResult = await paymentResponse.json()
+
+          this.$emit('payment-success', {
+            paymentId: paymentResult.payment.id,
+            status: paymentResult.payment.attributes.status,
+            method: 'gcash'
+          })
+
+          this.closeModal()
+        } else if (this.selectedMethod === 'paymaya') {
+          // For PayMaya, create source and payment
+          let sourceData = {
+            type: 'paymaya',
+            amount: this.totalAmount + this.deliveryFee,
+            email: this.emailAddress
+          }
+
+          const sourceResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/payments/create-source`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${this.token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(sourceData)
+          })
+
+          if (!sourceResponse.ok) {
+            throw new Error('Failed to create payment source')
+          }
+
+          const sourceResult = await sourceResponse.json()
+          const sourceId = sourceResult.source.id
+
+          // Step 2: Create payment
+          const paymentResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/payments/create-payment`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${this.token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              orderId: this.orderId,
+              sourceId,
+              amount: this.totalAmount + this.deliveryFee,
+              description: `Payment for Order #${this.orderId}`
+            })
+          })
+
+          if (!paymentResponse.ok) {
+            throw new Error('Failed to create payment')
+          }
+
+          const paymentResult = await paymentResponse.json()
+
+          // Emit success event
+          this.$emit('payment-success', {
+            paymentId: paymentResult.payment.id,
+            status: paymentResult.payment.attributes.status,
+            redirectUrl: paymentResult.payment.attributes.redirect?.checkout_url,
+            method: 'paymaya'
+          })
+
+          // Redirect to payment provider if needed
+          if (paymentResult.payment.attributes.redirect?.checkout_url) {
+            window.location.href = paymentResult.payment.attributes.redirect.checkout_url
+          }
+
+          this.closeModal()
+        }
       } catch (error) {
         console.error('Payment error:', error)
         this.errorMessage = error.message || 'Payment processing failed. Please try again.'
       } finally {
         this.isProcessing = false
       }
-    },
-    formatCardNumber() {
-      this.cardNumber = this.cardNumber
-        .replace(/\s/g, '')
-        .replace(/(.{4})/g, '$1 ')
-        .trim()
-    },
-    formatExpiry() {
-      this.cardExpiry = this.cardExpiry
-        .replace(/\D/g, '')
-        .replace(/(.{2})/, '$1/')
-        .slice(0, 5)
     },
     closeModal() {
       this.$emit('close')
@@ -309,11 +351,10 @@ export default {
       this.selectedMethod = 'gcash'
       this.phoneNumber = ''
       this.emailAddress = ''
-      this.cardNumber = ''
-      this.cardExpiry = ''
-      this.cardCVC = ''
       this.agreedToTerms = false
       this.errorMessage = ''
+      this.gcashQrCode = null
+      this.gcashSourceId = null
     },
     formatPrice(price) {
       return parseFloat(price).toLocaleString('en-PH', { minimumFractionDigits: 2 })
@@ -662,4 +703,77 @@ export default {
     width: 100%;
   }
 }
+
+/* QR Code Styles */
+.qr-code-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+.qr-instruction {
+  color: #e0e0e0;
+  font-size: 14px;
+  text-align: center;
+  margin: 0;
+}
+
+.qr-display {
+  width: 100%;
+  max-width: 300px;
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.qr-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.btn-generate {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-generate:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-generate:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-reset {
+  background: rgba(102, 126, 234, 0.2);
+  color: #667eea;
+  border: 1px solid #667eea;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-reset:hover {
+  background: rgba(102, 126, 234, 0.3);
+}
+
 </style>
