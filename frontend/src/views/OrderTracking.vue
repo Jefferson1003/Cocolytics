@@ -45,6 +45,12 @@
                     <h3>{{ item.size }}</h3>
                     <p class="item-meta">Length: {{ item.length }} cm</p>
                     <p v-if="item.store_name" class="item-store">Store: {{ item.store_name }}</p>
+                    <div class="stock-status">
+                      <span v-if="item.stock === 0" class="stock-badge out-of-stock">⛔ Out of Stock</span>
+                      <span v-else-if="item.stock < 10" class="stock-badge critical">🔴 Only {{ item.stock }} left</span>
+                      <span v-else-if="item.stock < 30" class="stock-badge low-stock">⚠️ Low Stock: {{ item.stock }} units</span>
+                      <span v-else class="stock-badge in-stock">✓ {{ item.stock }} in stock</span>
+                    </div>
                     <div class="item-pricing">
                       <span class="unit-price">₱{{ getUnitPrice(item).toFixed(2) }} each</span>
                       <span class="item-total">₱{{ getItemTotal(item).toFixed(2) }}</span>
@@ -58,10 +64,11 @@
                       class="qty-input"
                       v-model.number="item.quantity"
                       min="1"
+                      :max="item.stock || undefined"
                       @input="updateQuantity(index, $event)"
                       @blur="validateQuantity(index)"
                     />
-                    <button class="qty-btn" @click="increase(index)">+</button>
+                    <button class="qty-btn" @click="increase(index)" :disabled="item.stock && item.quantity >= item.stock">+</button>
                   </div>
 
                   <button class="btn-remove" @click="remove(index)">✕</button>
@@ -459,7 +466,13 @@ export default {
       this.saveCart()
     },
     increase(index) {
-      this.cartItems[index].quantity++
+      const item = this.cartItems[index]
+      if (item.stock && item.quantity >= item.stock) {
+        this.errorMessage = `⚠️ Cannot increase quantity. Only ${item.stock} units available for ${item.size}`
+        setTimeout(() => this.errorMessage = '', 4000)
+        return
+      }
+      item.quantity++
       this.saveCart()
     },
     decrease(index) {
@@ -470,15 +483,36 @@ export default {
     },
     updateQuantity(index, event) {
       let value = parseInt(event.target.value)
+      const item = this.cartItems[index]
+      
       if (isNaN(value) || value < 1) {
         value = 1
       }
-      this.cartItems[index].quantity = value
+      
+      // Check if quantity exceeds available stock
+      if (item.stock && value > item.stock) {
+        this.errorMessage = `⚠️ Cannot order ${value} units. Only ${item.stock} units available for ${item.size}`
+        item.quantity = item.stock
+        setTimeout(() => this.errorMessage = '', 4000)
+      } else {
+        item.quantity = value
+      }
+      
       this.saveCart()
     },
     validateQuantity(index) {
-      if (!this.cartItems[index].quantity || this.cartItems[index].quantity < 1) {
-        this.cartItems[index].quantity = 1
+      const item = this.cartItems[index]
+      
+      if (!item.quantity || item.quantity < 1) {
+        item.quantity = 1
+        this.saveCart()
+      }
+      
+      // Final check for stock
+      if (item.stock && item.quantity > item.stock) {
+        item.quantity = item.stock
+        this.errorMessage = `⚠️ Quantity adjusted to available stock: ${item.stock} units`
+        setTimeout(() => this.errorMessage = '', 3000)
         this.saveCart()
       }
     },
@@ -902,6 +936,56 @@ export default {
   color: #4CAF50;
   font-weight: 600;
   font-size: 1.1em;
+}
+
+.stock-status {
+  margin: 8px 0;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.stock-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.85em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.stock-badge.in-stock {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+  border: 1px solid #4CAF50;
+}
+
+.stock-badge.low-stock {
+  background: rgba(255, 193, 7, 0.2);
+  color: #FFC107;
+  border: 1px solid #FFC107;
+}
+
+.stock-badge.critical {
+  background: rgba(244, 67, 54, 0.2);
+  color: #FF5722;
+  border: 1px solid #FF5722;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.stock-badge.out-of-stock {
+  background: rgba(155, 39, 176, 0.2);
+  color: #9B27B0;
+  border: 1px solid #9B27B0;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .item-quantity {
