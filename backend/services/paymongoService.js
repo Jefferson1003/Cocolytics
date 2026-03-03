@@ -26,7 +26,9 @@ if (isTestMode) {
   console.log('   2. Copy your API keys');
   console.log('   3. Update .env file with real keys');
 } else {
-  console.log('✅ PayMongo LIVE MODE - Using real API');
+  console.log('✅ PayMongo LIVE MODE - Using real API connections');
+  console.log('📊 GCash QR codes will be generated');
+  console.log('💳 Real payment authorization required');
 }
 
 class PayMongoService {

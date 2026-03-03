@@ -80,7 +80,8 @@ router.post('/create-payment', authenticateToken, async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, NOW())
     `;
 
-    const paymentStatus = payment.data.attributes.status || 'pending';
+    // Always start with "pending" status - only webhook updates it to "paid"
+    const paymentStatus = 'pending';
     const paymentMethod = payment.data.attributes.source?.type || 'unknown';
 
     await db.query(savePaymentQuery, [
@@ -92,9 +93,9 @@ router.post('/create-payment', authenticateToken, async (req, res) => {
       paymentMethod
     ]);
 
-    // Update order payment status
+    // Update order to show payment has been initiated but is awaiting confirmation
     const updateOrderQuery = 'UPDATE orders SET payment_status = ?, paymongo_payment_id = ? WHERE id = ?';
-    await db.query(updateOrderQuery, [paymentStatus, payment.data.id, orderId]);
+    await db.query(updateOrderQuery, ['awaiting_payment_confirmation', payment.data.id, orderId]);
 
     res.json({
       success: true,
@@ -172,6 +173,15 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 
       const query = 'UPDATE payments SET status = ?, failed_at = NOW() WHERE paymongo_payment_id = ?';
       await db.query(query, ['failed', paymentId]);
+
+      // Also update related order status to payment_failed
+      const paymentQuery = 'SELECT order_id FROM payments WHERE paymongo_payment_id = ?';
+      const [payment] = await db.query(paymentQuery, [paymentId]);
+
+      if (payment && payment.length > 0) {
+        const updateOrderQuery = 'UPDATE orders SET payment_status = ? WHERE id = ?';
+        await db.query(updateOrderQuery, ['payment_failed', payment[0].order_id]);
+      }
     }
 
     res.json({ success: true });
