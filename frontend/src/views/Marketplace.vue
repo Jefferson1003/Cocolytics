@@ -171,10 +171,18 @@
               <button @click="removeFromCart(idx)" class="btn-remove">Remove</button>
             </div>
             <div class="cart-summary">
-              <p><strong>Total Items:</strong> {{ totalItems }}</p>
-              <button @click="placeOrder" class="btn-place-order" :disabled="isPlacing">
-                <span v-if="!isPlacing">Place Order</span>
-                <span v-else>Placing...</span>
+              <h3>📊 Order Summary</h3>
+              <div class="summary-row">
+                <span><strong>Total Items:</strong></span>
+                <strong>{{ totalItems }} units</strong>
+              </div>
+              <div v-if="totalItems > 0" class="summary-info">
+                <p style="color: #4CAF50; font-size: 0.9em; font-style: italic;">
+                  ℹ️ Payment will be via Cash on Delivery
+                </p>
+              </div>
+              <button @click="placeOrder" class="btn-place-order" :disabled="totalItems === 0">
+                <span>✓ Place Order</span>
               </button>
             </div>
           </div>
@@ -394,7 +402,6 @@ export default {
       markLoading: false,
       // Cart
       cartItems: [],
-      isPlacing: false,
       // Orders
       allOrders: [],
       ordersLoading: false,
@@ -941,27 +948,19 @@ export default {
       this.saveCart()
     },
     async placeOrder() {
-      if (this.cartItems.length === 0) return
-      this.isPlacing = true
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders/create`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.token}`
-          },
-          body: JSON.stringify({ items: this.cartItems })
-        })
-        if (!res.ok) throw new Error('Failed')
-        this.successMessage = '✓ Order placed successfully!'
-        this.cartItems = []
-        this.saveCart()
-        setTimeout(() => this.activeTab = 'orders', 2000)
-      } catch (error) {
-        this.errorMessage = 'Failed to place order'
-      } finally {
-        this.isPlacing = false
+      if (this.cartItems.length === 0) {
+        this.errorMessage = 'Your cart is empty'
+        return
       }
+      
+      // Save cart to localStorage (should already be there, but ensure it's saved)
+      this.saveCart()
+      
+      // Navigate to checkout page
+      this.$router.push({
+        path: '/orders/tracking',
+        query: { checkout: '1' }
+      })
     },
     // Orders methods
     async fetchOrders() {
@@ -1767,10 +1766,40 @@ export default {
   margin-top: 20px;
 }
 
+.cart-summary h3 {
+  color: #4CAF50;
+  font-size: 1.2em;
+  margin: 0 0 16px 0;
+  border-bottom: 1px solid rgba(76, 175, 80, 0.2);
+  padding-bottom: 12px;
+}
+
 .cart-summary p {
   color: white;
   font-size: 1.05em;
   margin-bottom: 16px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+  color: white;
+  font-size: 0.95em;
+}
+
+.summary-info {
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 12px 0;
+}
+
+.summary-info p {
+  margin: 0;
+  font-size: 0.85em;
 }
 
 .btn-place-order {
