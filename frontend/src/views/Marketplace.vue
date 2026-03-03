@@ -284,6 +284,24 @@
                 <label>Stock Quantity *</label>
                 <input type="number" v-model.number="editingItem.stock" class="form-input" min="0" />
               </div>
+              <div class="form-group">
+                <label>Product Image</label>
+                <div class="drag-drop-zone" :class="{ 'drag-over': isEditDragging }" @dragover.prevent="isEditDragging = true" @dragleave.prevent="isEditDragging = false" @drop.prevent="handleEditImageDrop" @click="triggerEditFileInput">
+                  <input type="file" @change="handleEditImageUpload" accept="image/*" class="file-input" ref="editImageInput" />
+                  <div v-if="!editImagePreview && !editingItem.product_picture" class="drop-zone-content">
+                    <span class="file-icon">📷</span>
+                    <p>Drag & Drop image or click to upload</p>
+                  </div>
+                  <div v-else-if="editImagePreview" class="image-preview-wrapper">
+                    <img :src="editImagePreview" alt="Preview" class="image-preview-small" />
+                    <button type="button" @click.stop="removeEditImage" class="btn-remove-image">✕ Remove</button>
+                  </div>
+                  <div v-else class="image-preview-wrapper">
+                    <img :src="getImageUrl(editingItem.product_picture)" alt="Current" class="image-preview-small" />
+                    <button type="button" @click.stop="triggerEditFileInput" class="btn-change-image">📷 Change Image</button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div class="modal-footer">
@@ -384,6 +402,9 @@ export default {
       showStockInModal: false,
       showDispatchModal: false,
       showEditModal: false,
+      editImageFile: null,
+      editImagePreview: '',
+      isEditDragging: false,
       selectedProduct: null,
       editingItem: null,
       stockInForm: { quantity: 0, reason: '' },
@@ -615,27 +636,84 @@ export default {
     },
     editItem(item) {
       this.editingItem = JSON.parse(JSON.stringify(item))
+      this.editImageFile = null
+      this.editImagePreview = ''
       this.showEditModal = true
     },
     closeEditModal() {
       this.showEditModal = false
       this.editingItem = null
+      this.editImageFile = null
+      this.editImagePreview = ''
+    },
+    handleEditImageUpload(event) {
+      const file = event.target.files[0]
+      if (file && file.type.startsWith('image/')) {
+        this.processEditImage(file)
+      }
+    },
+    handleEditImageDrop(event) {
+      this.isEditDragging = false
+      const file = event.dataTransfer.files[0]
+      if (file && file.type.startsWith('image/')) {
+        this.processEditImage(file)
+      }
+    },
+    processEditImage(file) {
+      if (!file) return
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif']
+      if (!allowedTypes.includes(file.type)) {
+        this.errorMessage = 'Only JPEG, PNG, and GIF images are allowed'
+        setTimeout(() => this.errorMessage = '', 3000)
+        return
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        this.errorMessage = 'File size must be less than 5MB'
+        setTimeout(() => this.errorMessage = '', 3000)
+        return
+      }
+      this.editImageFile = file
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        this.editImagePreview = e.target.result
+      }
+      reader.readAsDataURL(file)
+    },
+    removeEditImage() {
+      this.editImageFile = null
+      this.editImagePreview = ''
+      if (this.$refs.editImageInput) {
+        this.$refs.editImageInput.value = ''
+      }
+    },
+    triggerEditFileInput() {
+      if (this.$refs.editImageInput) {
+        this.$refs.editImageInput.click()
+      }
     },
     async saveEdit() {
       try {
+        const formData = new FormData()
+        formData.append('size', this.editingItem.size)
+        formData.append('length', this.editingItem.length)
+        formData.append('stock', this.editingItem.stock)
+        
+        if (this.editImageFile) {
+          formData.append('product_picture', this.editImageFile)
+        }
+        
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/api/cocolumber/${this.editingItem.id}`,
+          `${import.meta.env.VITE_API_BASE_URL}/api/staff/cocolumber/${this.editingItem.id}`,
           {
             method: 'PUT',
             headers: {
-              'Content-Type': 'application/json',
               'Authorization': `Bearer ${this.token}`
             },
-            body: JSON.stringify({ stock: this.editingItem.stock })
+            body: formData
           }
         )
         if (!response.ok) throw new Error('Failed')
-        this.successMessage = '✓ Stock updated!'
+        this.successMessage = '✓ Product updated!'
         this.closeEditModal()
         this.fetchInventory()
         setTimeout(() => this.successMessage = '', 3000)
@@ -1111,10 +1189,46 @@ export default {
   font-size: 0.8em;
   font-weight: 600;
   transition: all 0.2s;
+  pointer-events: auto;
 }
 
 .btn-remove-image:hover {
   background: rgba(244, 67, 54, 0.9);
+}
+
+.image-preview-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.image-preview-wrapper img {
+  pointer-events: none;
+}
+
+.image-preview-wrapper button {
+  pointer-events: auto;
+}
+
+.btn-change-image {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85em;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-change-image:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 /* Tab Content Add Product */
