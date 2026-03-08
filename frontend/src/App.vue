@@ -5,6 +5,16 @@
       :deferredPrompt="deferredPrompt"
     />
 
+    <button
+      v-if="showGlobalBackButton"
+      class="global-back-btn"
+      @click="goBack"
+      type="button"
+      aria-label="Go back"
+    >
+      ← Back
+    </button>
+
     <main class="main-content" :class="{ 'no-nav': !isAuthenticated }">
       <router-view />
     </main>
@@ -49,7 +59,9 @@ export default {
       user: null,
       toasts: [],
       lastNotificationCheck: null,
-      notificationCheckInterval: null
+      notificationCheckInterval: null,
+      navigationStack: [],
+      removeAfterEachHook: null
     }
   },
   computed: {
@@ -65,6 +77,11 @@ export default {
     isLoginPage() {
       return this.$route.path === '/login'
     },
+    showGlobalBackButton() {
+      if (this.isLoginPage) return false
+      if (this.$route.path === '/') return false
+      return !this.$route.meta?.hideBackButton
+    },
     apiBaseUrl() {
       return import.meta.env.VITE_API_BASE_URL
         ? `${import.meta.env.VITE_API_BASE_URL}/api`
@@ -73,8 +90,15 @@ export default {
   },
   created() {
     this.checkAuth()
-    this.$router.afterEach(() => {
+    this.navigationStack = [this.$route.fullPath]
+
+    this.removeAfterEachHook = this.$router.afterEach((to) => {
       this.checkAuth()
+
+      const lastRoute = this.navigationStack[this.navigationStack.length - 1]
+      if (lastRoute !== to.fullPath) {
+        this.navigationStack.push(to.fullPath)
+      }
     })
   },
   mounted() {
@@ -95,6 +119,10 @@ export default {
     }
   },
   beforeUnmount() {
+    if (this.removeAfterEachHook) {
+      this.removeAfterEachHook()
+    }
+
     if (this.notificationCheckInterval) {
       clearInterval(this.notificationCheckInterval)
     }
@@ -198,6 +226,23 @@ export default {
       if (index > -1) {
         this.toasts.splice(index, 1)
       }
+    },
+    getDefaultRoute() {
+      if (!this.isAuthenticated) return '/'
+      return this.user?.role === 'admin' ? '/admin' : '/staff'
+    },
+    goBack() {
+      if (this.navigationStack.length > 1) {
+        this.navigationStack.pop()
+        const previousRoute = this.navigationStack[this.navigationStack.length - 1]
+        this.$router.push(previousRoute)
+        return
+      }
+
+      const fallbackRoute = this.getDefaultRoute()
+      if (this.$route.path !== fallbackRoute) {
+        this.$router.push(fallbackRoute)
+      }
     }
   }
 }
@@ -256,6 +301,41 @@ body::-webkit-scrollbar {
 
 .main-content.no-nav {
   margin-top: 0;
+}
+
+.global-back-btn {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 900;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(15, 32, 39, 0.92);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 10px 16px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.global-back-btn:hover {
+  background: rgba(32, 58, 67, 0.96);
+  transform: translateY(-1px);
+}
+
+.global-back-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .global-back-btn {
+    right: 12px;
+    bottom: 12px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+  }
 }
 
 .simple-footer {
