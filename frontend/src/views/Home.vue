@@ -219,7 +219,10 @@ export default {
       }
     },
     visitStore(sellerId) {
-      this.$router.push(`/sellers/${sellerId}`)
+      // Force fresh authentication before entering any trader storefront.
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      this.$router.push({ path: '/login', query: { redirect: `/sellers/${sellerId}` } })
     },
     getImageUrl(imagePath) {
       if (!imagePath) return ''

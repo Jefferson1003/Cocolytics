@@ -76,127 +76,7 @@
 
         <!-- Tab 2: Scanner -->
         <div v-if="activeTab === 'scanner'" class="tab-content">
-          <div class="scanner-section">
-            <!-- Tab Sub-navigation -->
-            <div class="scanner-tabs">
-              <button 
-                @click="scannerMode = 'camera'"
-                :class="['scan-tab', { active: scannerMode === 'camera' }]"
-              >
-                📹 Real-time Camera
-              </button>
-              <button 
-                @click="scannerMode = 'upload'"
-                :class="['scan-tab', { active: scannerMode === 'upload' }]"
-              >
-                📁 Upload Image
-              </button>
-            </div>
-
-            <!-- Camera Mode -->
-            <div v-if="scannerMode === 'camera'" class="scanner-camera">
-              <div class="camera-display">
-                <video v-if="showCamera && !capturedImage" ref="video" autoplay playsinline class="camera-feed"></video>
-                <img v-if="capturedImage" :src="capturedImage" alt="Captured" class="captured-image" />
-                <div v-if="!showCamera && !capturedImage" class="placeholder">
-                  <span class="placeholder-icon">📹</span>
-                  <p>📱 Tips: Use good lighting, steady hand, include full trunk</p>
-                </div>
-              </div>
-
-              <div class="camera-controls">
-                <div style="margin-bottom: 12px;">
-                  <label style="color: rgba(255, 255, 255, 0.8); font-weight: 600; margin-right: 8px;">Reference (cm):</label>
-                  <input type="number" placeholder="e.g., 10" min="1" max="100" value="10" style="width: 100px; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: white;" />
-                </div>
-                <select v-model="selectedCamera" class="camera-select" style="margin-bottom: 12px;">
-                  <option value="environment">Back Camera</option>
-                  <option value="user">Front Camera</option>
-                </select>
-
-                <div class="action-buttons">
-                  <button v-if="!showCamera" @click="openCamera" class="btn btn-primary">📹 Open Camera</button>
-                  <button v-else-if="!capturedImage" @click="captureImage" class="btn btn-success">📸 Capture</button>
-                  <button v-if="capturedImage" @click="retakeImage" class="btn btn-warning">🔄 Retake</button>
-                  <button v-if="capturedImage" @click="saveImage" class="btn btn-info">💾 Save</button>
-                  <button v-if="capturedImage" @click="startDetection" class="btn btn-detect">🟢 Detect</button>
-                  <button v-if="showCamera" @click="closeCamera" class="btn btn-secondary">✕ Close</button>
-                </div>
-              </div>
-
-              <div v-if="cameraError" class="error-message">{{ cameraError }}</div>
-            </div>
-
-            <!-- Upload Mode -->
-            <div v-if="scannerMode === 'upload'" class="scanner-upload">
-              <div class="upload-area" v-if="!uploadedImage">
-                <input 
-                  ref="fileInput"
-                  type="file"
-                  @change="handleFileSelect"
-                  accept="image/*"
-                  capture="environment"
-                  style="display: none"
-                />
-                <div 
-                  @click="$refs.fileInput.click()"
-                  @dragover.prevent="isDragging = true"
-                  @dragleave.prevent="isDragging = false"
-                  @drop.prevent="handleFileDrop"
-                  :class="['drop-zone', { dragging: isDragging }]"
-                >
-                  <span class="upload-icon">📁</span>
-                  <p>Click to browse or drag & drop</p>
-                  <span class="upload-hint">Supported: JPG, PNG, GIF (Max 5MB)</span>
-                </div>
-              </div>
-
-              <div v-else class="uploaded-preview">
-                <img :src="uploadedImage" alt="Uploaded" class="preview-image" />
-              </div>
-
-              <div class="upload-actions">
-                <button v-if="uploadedImage" @click="startDetection" class="btn btn-detect">🟢 Start Detection</button>
-                <button v-if="uploadedImage" @click="removeUploadedImage" class="btn btn-secondary">🗑️ Remove</button>
-                <button v-if="uploadedImage" @click="downloadUploadedImage" class="btn btn-info">💾 Download</button>
-              </div>
-
-              <div v-if="uploadError" class="error-message">{{ uploadError }}</div>
-            </div>
-
-            <!-- Detection Results -->
-            <div v-if="detectionStarted && scanResults.treeDetected" class="detection-results">
-              <h3>🔍 Detection Results</h3>
-              <div class="results-grid">
-                <div class="result-item">
-                  <span class="label">Brown Detected:</span>
-                  <span class="value">✓ Yes</span>
-                </div>
-                <div class="result-item highlight">
-                  <span class="label">Diameter:</span>
-                  <span class="value">{{ scanResults.diameter }} cm</span>
-                </div>
-                <div class="result-item highlight">
-                  <span class="label">Height:</span>
-                  <span class="value">{{ scanResults.height }} cm</span>
-                </div>
-                <div class="result-item">
-                  <span class="label">Est. Lumber:</span>
-                  <span class="value">{{ scanResults.estimatedLumber }} pcs</span>
-                </div>
-                <div class="result-item">
-                  <span class="label">Quality:</span>
-                  <span class="value">{{ scanResults.quality }}</span>
-                </div>
-                <div class="result-item">
-                  <span class="label">Confidence:</span>
-                  <span class="value">{{ scanResults.confidence }}%</span>
-                </div>
-              </div>
-            </div>
-
-            <div v-if="detectionError" class="error-message">{{ detectionError }}</div>
-          </div>
+          <CameraScanner :embedded="true" />
         </div>
 
         <!-- Tab 3: Dispatch -->
@@ -349,11 +229,13 @@
 
 <script>
 import StaffSidebar from '../components/StaffSidebar.vue'
+import CameraScanner from './CameraScanner.vue'
 
 export default {
   name: 'Operations',
   components: {
-    StaffSidebar
+    StaffSidebar,
+    CameraScanner
   },
   data() {
     return {

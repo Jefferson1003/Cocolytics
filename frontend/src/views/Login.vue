@@ -89,9 +89,13 @@ export default {
         localStorage.setItem('token', response.data.token)
         localStorage.setItem('user', JSON.stringify(response.data.user))
 
+        const redirectTarget = this.$route.query.redirect
+
         // Redirect based on user role
         const role = response.data.user.role
-        if (role === 'admin') {
+        if (typeof redirectTarget === 'string' && redirectTarget.startsWith('/')) {
+          this.$router.push(redirectTarget)
+        } else if (role === 'admin') {
           this.$router.push('/admin')
         } else if (role === 'staff') {
           this.$router.push('/staff')
