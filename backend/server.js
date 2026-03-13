@@ -227,6 +227,47 @@ pool.getConnection()
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
     );
 
+    // Create staff_applications table for onboarding requests
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS staff_applications (
+        id INT NOT NULL AUTO_INCREMENT,
+        user_id INT NOT NULL,
+        phone VARCHAR(30) DEFAULT NULL,
+        reason TEXT,
+        status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+        applicant_accepted BOOLEAN DEFAULT FALSE,
+        applicant_accepted_at DATETIME DEFAULT NULL,
+        reviewed_by INT DEFAULT NULL,
+        reviewed_at DATETIME DEFAULT NULL,
+        review_note VARCHAR(255) DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY idx_staff_app_status (status),
+        KEY idx_staff_app_user_id (user_id),
+        KEY idx_staff_app_reviewed_by (reviewed_by),
+        CONSTRAINT fk_staff_app_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        CONSTRAINT fk_staff_app_reviewer FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+
+    // Ensure acceptance columns exist for older staff_applications schemas
+    const [appAcceptedCol] = await pool.execute(
+      `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE table_schema = DATABASE() AND table_name = 'staff_applications' AND column_name = 'applicant_accepted'`
+    );
+    if (appAcceptedCol[0].count === 0) {
+      await pool.execute("ALTER TABLE staff_applications ADD COLUMN applicant_accepted BOOLEAN DEFAULT FALSE AFTER status");
+    }
+
+    const [appAcceptedAtCol] = await pool.execute(
+      `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE table_schema = DATABASE() AND table_name = 'staff_applications' AND column_name = 'applicant_accepted_at'`
+    );
+    if (appAcceptedAtCol[0].count === 0) {
+      await pool.execute('ALTER TABLE staff_applications ADD COLUMN applicant_accepted_at DATETIME DEFAULT NULL AFTER applicant_accepted');
+    }
+
     // Migrate staff_profiles.user_id -> staff_id if needed
     const [staffIdCol] = await pool.execute(
       `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS
@@ -585,6 +626,74 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
+// Staff application (creates account as regular user, then notifies admins)
+app.post('/api/auth/apply-staff', async (req, res) => {
+  try {
+    const { name, email, password, phone, reason } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Name, email, and password are required' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    const [existingUsers] = await pool.execute(
+      'SELECT id FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (existingUsers.length > 0) {
+      return res.status(400).json({ message: 'User with this email already exists' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Applicants start as regular users until approved and promoted by admin.
+    const [userResult] = await pool.execute(
+      'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
+      [name, email, hashedPassword, 'user']
+    );
+
+    const userId = userResult.insertId;
+
+    await pool.execute(
+      'INSERT INTO staff_applications (user_id, phone, reason, status) VALUES (?, ?, ?, ?)',
+      [userId, phone || null, reason || null, 'pending']
+    );
+
+    const [admins] = await pool.execute(
+      'SELECT id FROM users WHERE role = ?',
+      ['admin']
+    );
+
+    for (const admin of admins) {
+      await notificationService.createNotification({
+        user_id: admin.id,
+        alert_type: 'SYSTEM',
+        title: 'New Staff Application',
+        message: `${name} (${email}) applied to become staff. Review in Manage Users and change role when approved.`,
+        severity: 'info',
+        role_target: 'admin'
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Application submitted successfully. Wait for admin approval.',
+      application: {
+        user_id: userId,
+        status: 'pending'
+      }
+    });
+  } catch (error) {
+    console.error('Staff application error:', error);
+    res.status(500).json({ message: 'Server error during staff application' });
+  }
+});
+
 // Login
 app.post('/api/auth/login', async (req, res) => {
   try {
@@ -657,6 +766,141 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ==================== CLIENT APPLICATION ROUTES ====================
+
+// Get current user's latest staff application status
+app.get('/api/client/staff-application', authenticateToken, async (req, res) => {
+  try {
+    const [applications] = await pool.execute(
+      `SELECT id, user_id, phone, reason, status, applicant_accepted, applicant_accepted_at, review_note, created_at, reviewed_at
+       FROM staff_applications
+       WHERE user_id = ?
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [req.user.id]
+    );
+
+    res.json({
+      success: true,
+      application: applications[0] || null
+    });
+  } catch (error) {
+    console.error('Get client staff application error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Accept approved staff invitation and promote user to staff
+app.put('/api/client/staff-application/:id/accept', authenticateToken, async (req, res) => {
+  let connection;
+  try {
+    const { id } = req.params;
+
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    const [applications] = await connection.execute(
+      `SELECT sa.id, sa.user_id, sa.status, sa.applicant_accepted, u.name, u.email
+       FROM staff_applications sa
+       JOIN users u ON sa.user_id = u.id
+       WHERE sa.id = ? FOR UPDATE`,
+      [id]
+    );
+
+    if (applications.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    const application = applications[0];
+    if (application.user_id !== req.user.id) {
+      await connection.rollback();
+      return res.status(403).json({ message: 'You can only accept your own application' });
+    }
+
+    if (application.status !== 'approved') {
+      await connection.rollback();
+      return res.status(400).json({ message: 'Application is not approved yet' });
+    }
+
+    if (application.applicant_accepted) {
+      await connection.rollback();
+      return res.status(400).json({ message: 'Application already accepted' });
+    }
+
+    await connection.execute(
+      `UPDATE staff_applications
+       SET applicant_accepted = TRUE, applicant_accepted_at = NOW()
+       WHERE id = ?`,
+      [id]
+    );
+
+    await connection.execute(
+      'UPDATE users SET role = ? WHERE id = ?',
+      ['staff', req.user.id]
+    );
+
+    await connection.execute(
+      `INSERT INTO staff_profiles (staff_id, store_name, store_description, contact_number, is_active)
+       SELECT ?, ?, ?, ?, TRUE
+       WHERE NOT EXISTS (SELECT 1 FROM staff_profiles WHERE staff_id = ?)`,
+      [
+        req.user.id,
+        `${application.name} Store`,
+        `Store profile for ${application.name}`,
+        null,
+        req.user.id
+      ]
+    );
+
+    await connection.commit();
+
+    await notificationService.createNotification({
+      user_id: req.user.id,
+      alert_type: 'SYSTEM',
+      title: 'Staff Account Activated',
+      message: 'You accepted the invitation and your account is now active as staff.',
+      severity: 'info',
+      role_target: 'staff'
+    });
+
+    const [admins] = await pool.execute('SELECT id FROM users WHERE role = ?', ['admin']);
+    for (const admin of admins) {
+      await notificationService.createNotification({
+        user_id: admin.id,
+        alert_type: 'SYSTEM',
+        title: 'Staff Invitation Accepted',
+        message: `${application.name} accepted the staff invitation and is now active as staff.`,
+        severity: 'info',
+        role_target: 'admin'
+      });
+    }
+
+    const token = jwt.sign(
+      { id: req.user.id, email: application.email, name: application.name, role: 'staff' },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      success: true,
+      message: 'Staff invitation accepted. Account upgraded to staff.',
+      token,
+      user: { id: req.user.id, name: application.name, email: application.email, role: 'staff' }
+    });
+  } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+    console.error('Accept staff invitation error:', error);
+    res.status(500).json({ message: 'Server error' });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 });
 
@@ -745,6 +989,165 @@ app.put('/api/admin/users/:id/role', authenticateToken, authorizeRoles('admin'),
   } catch (error) {
     console.error('Update role error:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get all staff applications (admin only)
+app.get('/api/admin/staff-applications', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const [applications] = await pool.execute(
+      `SELECT
+        sa.id,
+        sa.user_id,
+        sa.phone,
+        sa.reason,
+        sa.status,
+        sa.applicant_accepted,
+        sa.applicant_accepted_at,
+        sa.review_note,
+        sa.created_at,
+        sa.reviewed_at,
+        u.name,
+        u.email,
+        u.role
+      FROM staff_applications sa
+      JOIN users u ON sa.user_id = u.id
+      ORDER BY
+        CASE sa.status
+          WHEN 'pending' THEN 1
+          WHEN 'approved' THEN 2
+          WHEN 'rejected' THEN 3
+          ELSE 4
+        END,
+        sa.created_at DESC`
+    );
+
+    res.json({ success: true, applications });
+  } catch (error) {
+    console.error('Get staff applications error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Approve staff application (admin only).
+// Applicant must accept offer in client dashboard before promotion to staff.
+app.put('/api/admin/staff-applications/:id/approve', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  let connection;
+  try {
+    const { id } = req.params;
+    const { note } = req.body || {};
+
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    const [applications] = await connection.execute(
+      `SELECT sa.id, sa.user_id, sa.status, u.name, u.email
+       FROM staff_applications sa
+       JOIN users u ON sa.user_id = u.id
+       WHERE sa.id = ? FOR UPDATE`,
+      [id]
+    );
+
+    if (applications.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    const application = applications[0];
+    if (application.status !== 'pending') {
+      await connection.rollback();
+      return res.status(400).json({ message: `Application already ${application.status}` });
+    }
+
+    await connection.execute(
+      `UPDATE staff_applications
+       SET status = 'approved', reviewed_by = ?, reviewed_at = NOW(), review_note = ?
+       WHERE id = ?`,
+      [req.user.id, note || null, id]
+    );
+
+    await connection.commit();
+
+    await notificationService.createNotification({
+      user_id: application.user_id,
+      alert_type: 'SYSTEM',
+      title: 'Staff Application Approved',
+      message: 'Your staff application was approved by admin. Please log in to the client dashboard and accept the staff invitation to activate your staff account.',
+      severity: 'info',
+      role_target: 'user'
+    });
+
+    res.json({ success: true, message: 'Application approved. Waiting for applicant acceptance.' });
+  } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+    console.error('Approve staff application error:', error);
+    res.status(500).json({ message: 'Server error' });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
+});
+
+// Reject staff application (admin only)
+app.put('/api/admin/staff-applications/:id/reject', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  let connection;
+  try {
+    const { id } = req.params;
+    const { note } = req.body || {};
+
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    const [applications] = await connection.execute(
+      `SELECT sa.id, sa.user_id, sa.status
+       FROM staff_applications sa
+       WHERE sa.id = ? FOR UPDATE`,
+      [id]
+    );
+
+    if (applications.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    const application = applications[0];
+    if (application.status !== 'pending') {
+      await connection.rollback();
+      return res.status(400).json({ message: `Application already ${application.status}` });
+    }
+
+    await connection.execute(
+      `UPDATE staff_applications
+       SET status = 'rejected', reviewed_by = ?, reviewed_at = NOW(), review_note = ?
+       WHERE id = ?`,
+      [req.user.id, note || null, id]
+    );
+
+    await connection.commit();
+
+    await notificationService.createNotification({
+      user_id: application.user_id,
+      alert_type: 'SYSTEM',
+      title: 'Staff Application Rejected',
+      message: 'Your staff application was not approved at this time. You may contact admin for details.',
+      severity: 'warning',
+      role_target: 'user'
+    });
+
+    res.json({ success: true, message: 'Application rejected' });
+  } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+    console.error('Reject staff application error:', error);
+    res.status(500).json({ message: 'Server error' });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 });
 

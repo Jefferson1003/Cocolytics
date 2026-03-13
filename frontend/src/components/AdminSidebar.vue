@@ -34,6 +34,10 @@
         <span class="nav-icon">👥</span>
         <span class="nav-label" v-show="sidebarOpen">Manage Users</span>
       </router-link>
+      <router-link to="/admin/staff-applications" class="nav-item" :class="{ active: isActive('/admin/staff-applications') }" title="Staff Applications" @click="closeMobileMenu">
+        <span class="nav-icon">📝</span>
+        <span class="nav-label" v-show="sidebarOpen">Staff Applications</span>
+      </router-link>
       <router-link to="/admin/features" class="nav-item" :class="{ active: isActive('/admin/features') }" title="Admin Features" @click="closeMobileMenu">
         <span class="nav-icon">🔧</span>
         <span class="nav-label" v-show="sidebarOpen">Features</span>

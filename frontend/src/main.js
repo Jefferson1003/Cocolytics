@@ -29,6 +29,9 @@ ChartJS.register(
 import Home from './views/Home.vue'
 import About from './views/About.vue'
 import Login from './views/Login.vue'
+import ApplyStaff from './views/ApplyStaff.vue'
+import ClientLogin from './views/ClientLogin.vue'
+import ClientDashboard from './views/ClientDashboard.vue'
 import AdminDashboard from './views/AdminDashboard.vue'
 import StaffDashboard from './views/StaffDashboard.vue'
 import AddCocolumber from './views/AddCocolumber.vue'
@@ -46,6 +49,7 @@ import StaffStoreView from './views/StaffStoreView.vue'
 import AdminReports from './views/AdminReports.vue'
 import AdminUsers from './views/AdminUsers.vue'
 import AdminFeatures from './views/AdminFeatures.vue'
+import AdminStaffApplications from './views/AdminStaffApplications.vue'
 import StaffReports from './views/StaffReports.vue'
 import NotificationsPage from './views/NotificationsPage.vue'
 import TraderChat from './views/TraderChat.vue'
@@ -77,6 +81,24 @@ const routes = [
     meta: { guest: true }
   },
   {
+    path: '/client/login',
+    name: 'ClientLogin',
+    component: ClientLogin,
+    meta: { guest: true }
+  },
+  {
+    path: '/apply-staff',
+    name: 'ApplyStaff',
+    component: ApplyStaff,
+    meta: { guest: true }
+  },
+  {
+    path: '/client',
+    name: 'ClientDashboard',
+    component: ClientDashboard,
+    meta: { requiresAuth: true, roles: ['user'] }
+  },
+  {
     path: '/admin',
     name: 'AdminDashboard',
     component: AdminDashboard,
@@ -92,6 +114,12 @@ const routes = [
     path: '/admin/features',
     name: 'AdminFeatures',
     component: AdminFeatures,
+    meta: { requiresAuth: true, roles: ['admin'] }
+  },
+  {
+    path: '/admin/staff-applications',
+    name: 'AdminStaffApplications',
+    component: AdminStaffApplications,
     meta: { requiresAuth: true, roles: ['admin'] }
   },
   {
@@ -234,26 +262,24 @@ router.beforeEach((to, from, next) => {
   const userData = localStorage.getItem('user')
   const isAuthenticated = !!token
   const user = userData ? JSON.parse(userData) : null
-  const allowedRoles = ['staff', 'admin']
-
-  if (isAuthenticated && user && !allowedRoles.includes(user.role)) {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    next('/login')
-    return
-  }
 
   // If route requires auth and user is not authenticated
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next('/login')
+    if (to.path.startsWith('/client')) {
+      next('/client/login')
+    } else {
+      next('/login')
+    }
   }
   // If route is for guests only and user is authenticated
   else if (to.meta.guest && isAuthenticated) {
     // Redirect based on role
     if (user?.role === 'admin') {
       next('/admin')
-    } else {
+    } else if (user?.role === 'staff') {
       next('/staff')
+    } else {
+      next('/client')
     }
   }
   // Check role-based access
@@ -264,8 +290,10 @@ router.beforeEach((to, from, next) => {
       // Redirect to appropriate dashboard based on role
       if (user?.role === 'admin') {
         next('/admin')
-      } else {
+      } else if (user?.role === 'staff') {
         next('/staff')
+      } else {
+        next('/client')
       }
     }
   }

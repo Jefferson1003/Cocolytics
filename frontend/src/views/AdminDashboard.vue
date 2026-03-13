@@ -36,6 +36,10 @@
             <span class="link-icon">👥</span>
             <span class="link-text">Manage Users</span>
           </router-link>
+          <router-link to="/admin/staff-applications" class="quick-link-card">
+            <span class="link-icon">📝</span>
+            <span class="link-text">Staff Applications</span>
+          </router-link>
           <router-link to="/admin/reports" class="quick-link-card">
             <span class="link-icon">📊</span>
             <span class="link-text">View Reports</span>

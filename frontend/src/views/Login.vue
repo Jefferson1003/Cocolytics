@@ -50,7 +50,8 @@
       </form>
 
       <div class="auth-footer">
-        <p>Account creation is managed by administrator.</p>
+        <p>Need access as staff? <router-link to="/apply-staff">Apply here</router-link></p>
+        <p>Client/new applicant account? <router-link to="/client/login">Client login</router-link></p>
       </div>
     </div>
   </div>

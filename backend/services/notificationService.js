@@ -292,11 +292,15 @@ class NotificationService {
         role_target = 'all'
       } = data;
 
+      // mysql2 prepared statements do not accept undefined bind values.
+      const safeRelatedProductId = related_product_id ?? null;
+      const safeRelatedOrderId = related_order_id ?? null;
+
       const [result] = await this.pool.execute(
         `INSERT INTO notifications 
         (user_id, alert_type, title, message, related_product_id, related_order_id, severity, role_target)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [user_id, alert_type, title, message, related_product_id, related_order_id, severity, role_target]
+        [user_id, alert_type, title, message, safeRelatedProductId, safeRelatedOrderId, severity, role_target]
       );
 
       return result;
