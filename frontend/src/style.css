@@ -12,13 +12,18 @@ html, body {
 }
 
 :root {
-  --primary-color: #4CAF50;
-  --primary-dark: #388E3C;
-  --secondary-color: #8D6E63;
-  --background-color: #f5f5f5;
-  --text-color: #333;
+  --primary-color: #4caf50;
+  --primary-dark: #3f9f43;
+  --secondary-color: #203a43;
+  --background-color: #102830;
+  --text-color: #e8f2ef;
+  --muted-text: #b6cbc6;
   --white: #ffffff;
-  --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  --surface-1: rgba(18, 47, 58, 0.9);
+  --surface-2: rgba(22, 56, 68, 0.85);
+  --surface-border: rgba(76, 175, 80, 0.28);
+  --app-gradient: linear-gradient(135deg, #0f2027 0%, #203a43 52%, #2c5364 100%);
+  --shadow: 0 14px 30px rgba(4, 14, 18, 0.32);
   --safe-area-inset-top: 0px;
   --safe-area-inset-bottom: 0px;
   --safe-area-inset-left: 0px;
@@ -26,8 +31,8 @@ html, body {
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: var(--background-color);
+  font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif;
+  background: var(--app-gradient);
   color: var(--text-color);
   line-height: 1.6;
   -webkit-user-select: none;
@@ -45,19 +50,23 @@ body {
   flex-direction: column;
   width: 100%;
   max-width: 100vw;
+  background: var(--app-gradient);
   overflow-x: hidden;
 }
 
 /* Navbar */
 .navbar {
-  background: var(--white);
+  background: linear-gradient(90deg, rgba(32, 58, 67, 0.96), rgba(44, 83, 100, 0.95));
   padding: 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   box-shadow: var(--shadow);
+  border: 1px solid var(--surface-border);
+  border-radius: 14px;
+  margin: 12px;
   position: sticky;
-  top: 0;
+  top: 10px;
   z-index: 100;
   flex-wrap: wrap;
   gap: 0.5rem;
@@ -67,7 +76,7 @@ body {
 .nav-brand a {
   font-size: 1.2rem;
   font-weight: bold;
-  color: var(--primary-color);
+  color: #eaf7f2;
   text-decoration: none;
 }
 
@@ -78,7 +87,7 @@ body {
 }
 
 .nav-links a {
-  color: var(--text-color);
+  color: var(--muted-text);
   text-decoration: none;
   font-weight: 500;
   transition: color 0.3s ease;
@@ -91,8 +100,8 @@ body {
 }
 
 .install-btn {
-  background: var(--primary-color);
-  color: var(--white);
+  background: linear-gradient(135deg, #4caf50 0%, #439e46 100%);
+  color: #effff2;
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 25px;
@@ -117,24 +126,30 @@ body {
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
+  color: var(--text-color);
+  background: transparent;
   box-sizing: border-box;
 }
 
 /* Footer */
 .footer {
-  background: var(--white);
+  background: rgba(14, 31, 37, 0.92);
+  color: var(--muted-text);
   padding: 1.5rem;
   text-align: center;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  border-top: 1px solid var(--surface-border);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.25);
   font-size: 0.85rem;
 }
 
 /* Cards */
 .card {
-  background: var(--white);
+  background: linear-gradient(145deg, var(--surface-1), var(--surface-2));
   border-radius: 10px;
   padding: 1rem;
   box-shadow: var(--shadow);
+  border: 1px solid var(--surface-border);
+  color: var(--text-color);
   transition: transform 0.3s ease;
 }
 
@@ -144,8 +159,8 @@ body {
 
 /* Buttons */
 .btn {
-  background: var(--primary-color);
-  color: var(--white);
+  background: linear-gradient(135deg, #4caf50 0%, #3f9f43 100%);
+  color: #effff2;
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 5px;
@@ -166,13 +181,13 @@ body {
 
 .btn-outline {
   background: transparent;
-  border: 2px solid var(--primary-color);
-  color: var(--primary-color);
+  border: 2px solid rgba(76, 175, 80, 0.75);
+  color: #9de3a2;
 }
 
 .btn-outline:hover {
-  background: var(--primary-color);
-  color: var(--white);
+  background: rgba(76, 175, 80, 0.16);
+  color: #effff2;
 }
 
 /* Grid - Mobile first 1 column, then 2, then 3+ */
@@ -192,15 +207,15 @@ body {
 }
 
 .user-name {
-  color: var(--text-color);
+  color: #d8ebe5;
   font-weight: 500;
   font-size: 0.9rem;
 }
 
 .logout-btn {
-  background: transparent;
-  border: 2px solid #f44336;
-  color: #f44336;
+  background: rgba(255, 82, 82, 0.15);
+  border: 1px solid rgba(255, 120, 120, 0.55);
+  color: #ffd6d6;
   padding: 0.5rem 1rem;
   border-radius: 5px;
   cursor: pointer;
@@ -210,8 +225,61 @@ body {
 }
 
 .logout-btn:hover {
-  background: #f44336;
-  color: white;
+  background: rgba(255, 82, 82, 0.28);
+  color: #ffffff;
+}
+
+/* Theme bridge: force a single look across routed screens with local scoped CSS */
+.main-content > * {
+  background: transparent !important;
+  color: var(--text-color);
+}
+
+.main-content :is(
+  .page,
+  .page-wrapper,
+  .content,
+  .content-wrapper,
+  .dashboard-container,
+  .dashboard-content,
+  .section,
+  .panel,
+  .widget,
+  .box,
+  .table-container,
+  .summary,
+  .summary-card,
+  .stat-card,
+  .quick-link-card,
+  .shop-card,
+  .cart-item,
+  .order-summary,
+  .empty-cart,
+  .form-section,
+  .modal-content
+) {
+  background: linear-gradient(145deg, var(--surface-1), var(--surface-2)) !important;
+  color: var(--text-color);
+  border: 1px solid var(--surface-border) !important;
+  box-shadow: var(--shadow);
+}
+
+.main-content :is(h1, h2, h3, h4, h5, h6, strong, label) {
+  color: #e9f8f2;
+}
+
+.main-content :is(p, span, small, td, th, li) {
+  color: #c6dad4;
+}
+
+.main-content :is(input, select, textarea) {
+  background: rgba(10, 27, 33, 0.66) !important;
+  color: #ecfff3 !important;
+  border: 1px solid rgba(76, 175, 80, 0.36) !important;
+}
+
+.main-content :is(button, .btn, .action-btn, .submit-btn) {
+  border-color: transparent;
 }
 
 /* No Nav layout */

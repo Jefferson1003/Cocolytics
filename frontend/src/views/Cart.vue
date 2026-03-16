@@ -336,8 +336,8 @@ export default {
 .cart-item {
   display: flex;
   gap: 16px;
-  background: rgba(36, 36, 66, 0.8);
-  border: 1px solid rgba(102, 126, 234, 0.2);
+  background: linear-gradient(145deg, rgba(18, 47, 58, 0.9), rgba(22, 56, 68, 0.88));
+  border: 1px solid rgba(76, 175, 80, 0.28);
   padding: 16px;
   border-radius: 12px;
   color: #fff;
@@ -391,7 +391,7 @@ export default {
 
 .store-name {
   margin: 8px 0 0;
-  color: #667eea;
+  color: #8dd89a;
   font-weight: 600;
   font-size: 0.85em;
 }
@@ -432,7 +432,7 @@ export default {
 }
 
 .qty-btn {
-  background: #667eea;
+  background: #4caf50;
   border: none;
   color: #fff;
   width: 28px;
@@ -444,7 +444,7 @@ export default {
 }
 
 .qty-btn:hover {
-  background: #5568d3;
+  background: #3f9f43;
 }
 
 .qty-input {
@@ -480,8 +480,8 @@ export default {
 
 /* Order Summary Sidebar */
 .order-summary {
-  background: rgba(36, 36, 66, 0.8);
-  border: 1px solid rgba(102, 126, 234, 0.2);
+  background: linear-gradient(145deg, rgba(18, 47, 58, 0.9), rgba(22, 56, 68, 0.88));
+  border: 1px solid rgba(76, 175, 80, 0.28);
   padding: 24px;
   border-radius: 12px;
   color: #fff;
@@ -503,7 +503,7 @@ export default {
   display: flex;
   justify-content: space-between;
   padding: 12px 0;
-  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+  border-bottom: 1px solid rgba(76, 175, 80, 0.14);
   font-size: 0.95em;
 }
 
@@ -530,8 +530,8 @@ export default {
 .payment-section {
   margin: 24px 0;
   padding: 16px 0;
-  border-top: 1px solid rgba(102, 126, 234, 0.2);
-  border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+  border-top: 1px solid rgba(76, 175, 80, 0.2);
+  border-bottom: 1px solid rgba(76, 175, 80, 0.2);
 }
 
 .payment-section h4 {
@@ -655,7 +655,7 @@ export default {
 .btn-shop {
   display: inline-block;
   padding: 12px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4caf50 0%, #3f9f43 100%);
   color: white;
   text-decoration: none;
   border-radius: 8px;
@@ -670,7 +670,7 @@ export default {
 .loading {
   text-align: center;
   padding: 40px;
-  color: #667eea;
+  color: #84d58d;
   font-size: 1.1em;
 }
 

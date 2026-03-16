@@ -263,11 +263,12 @@ export default {
 }
 
 .modal-content {
-  background: white;
+  background: linear-gradient(145deg, rgba(18, 47, 58, 0.98), rgba(22, 56, 68, 0.98));
+  border: 1px solid rgba(76, 175, 80, 0.35);
   border-radius: 12px;
   max-width: 500px;
   width: 90%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
 }
 
 .modal-header {
@@ -275,19 +276,19 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 25px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid rgba(76, 175, 80, 0.3);
 }
 
 .modal-header h2 {
   margin: 0;
-  color: #333;
+  color: #eaf8f2;
 }
 
 .modal-close {
   background: none;
   border: none;
   font-size: 1.8em;
-  color: #95a5a6;
+  color: #c6dad4;
   cursor: pointer;
   transition: color 0.2s;
 }
@@ -298,22 +299,23 @@ export default {
 
 .modal-body {
   padding: 20px 25px;
-  color: #666;
+  color: #cfe3dd;
+  font-weight: 500;
 }
 
 .modal-footer {
   display: flex;
   gap: 10px;
   padding: 20px 25px;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid rgba(76, 175, 80, 0.3);
   justify-content: flex-end;
 }
 
 .btn-cancel {
   padding: 10px 20px;
-  background: #ecf0f1;
-  color: #333;
-  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #eaf8f2;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
@@ -321,14 +323,14 @@ export default {
 }
 
 .btn-cancel:hover {
-  background: #d5dbdb;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .btn-logout {
   padding: 10px 20px;
-  background: #e74c3c;
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
   color: white;
-  border: none;
+  border: 1px solid rgba(255, 140, 120, 0.45);
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
@@ -336,7 +338,7 @@ export default {
 }
 
 .btn-logout:hover {
-  background: #c0392b;
+  background: linear-gradient(135deg, #f05454 0%, #d44232 100%);
 }
 
 .btn-logout:hover {

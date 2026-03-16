@@ -258,7 +258,7 @@ export default {
   flex-direction: column;
   gap: 3rem;
   min-height: 100vh;
-  background: #e5e5e5;
+  background: transparent;
   color: #fff;
   padding: 20px;
 }
@@ -266,10 +266,11 @@ export default {
 .hero {
   text-align: center;
   padding: 4rem 2rem 3rem;
-  background: linear-gradient(135deg, #2d1b4e 0%, #3d2463 50%, #4a2f77 100%);
+  background: linear-gradient(145deg, rgba(18, 47, 58, 0.92), rgba(22, 56, 68, 0.92));
   color: #fff;
   border-radius: 20px;
-  box-shadow: 0 25px 70px rgba(61, 36, 99, 0.5);
+  box-shadow: 0 20px 50px rgba(4, 14, 18, 0.35);
+  border: 1px solid rgba(76, 175, 80, 0.28);
   position: relative;
   overflow: hidden;
 }
@@ -301,7 +302,7 @@ export default {
 .hero-images h2 {
   font-size: 2rem;
   margin-bottom: 0.5rem;
-  color: #e0d5ff;
+  color: #b8f0be;
 }
 
 .hero-images p {
@@ -366,8 +367,8 @@ export default {
 }
 
 .btn-primary {
-  background: #fff;
-  color: #4a2f77;
+  background: linear-gradient(135deg, #4caf50 0%, #3f9f43 100%);
+  color: #effff2;
 }
 
 .btn-primary:hover {
@@ -421,9 +422,10 @@ export default {
 .cocolytics-welcome {
   text-align: center;
   padding: 3rem 1rem;
-  background: linear-gradient(135deg, #2a2a3e 0%, #1a1a2e 100%);
+  background: linear-gradient(145deg, rgba(18, 47, 58, 0.9), rgba(22, 56, 68, 0.88));
   border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 16px 42px rgba(4, 14, 18, 0.32);
+  border: 1px solid rgba(76, 175, 80, 0.28);
   margin-bottom: 2rem;
 }
 
@@ -446,10 +448,11 @@ export default {
 }
 
 .image-item {
-  background: #242442;
+  background: linear-gradient(145deg, rgba(18, 47, 58, 0.9), rgba(22, 56, 68, 0.88));
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 12px 24px rgba(4, 14, 18, 0.25);
+  border: 1px solid rgba(76, 175, 80, 0.28);
   transition: transform 0.3s;
 }
 
@@ -473,10 +476,11 @@ export default {
 
 .install-section .install-card {
   text-align: center;
-  background: #242442;
+  background: linear-gradient(145deg, rgba(18, 47, 58, 0.9), rgba(22, 56, 68, 0.88));
   border-radius: 16px;
   padding: 25px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 16px 42px rgba(4, 14, 18, 0.32);
+  border: 1px solid rgba(76, 175, 80, 0.28);
   color: #fff;
 }
 
@@ -504,10 +508,11 @@ export default {
 .status-card {
   text-align: center;
   max-width: 300px;
-  background: #242442;
+  background: linear-gradient(145deg, rgba(18, 47, 58, 0.9), rgba(22, 56, 68, 0.88));
   border-radius: 16px;
   padding: 25px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 16px 42px rgba(4, 14, 18, 0.32);
+  border: 1px solid rgba(76, 175, 80, 0.28);
   color: #fff;
 }
 
@@ -528,10 +533,11 @@ export default {
 }
 
 .card {
-  background: #242442;
+  background: linear-gradient(145deg, rgba(18, 47, 58, 0.9), rgba(22, 56, 68, 0.88));
   border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 16px 42px rgba(4, 14, 18, 0.32);
+  border: 1px solid rgba(76, 175, 80, 0.28);
   color: #fff;
 }
 
@@ -575,10 +581,11 @@ export default {
 }
 
 .data-card {
-  background: #242442;
+  background: linear-gradient(145deg, rgba(18, 47, 58, 0.9), rgba(22, 56, 68, 0.88));
   border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 16px 42px rgba(4, 14, 18, 0.32);
+  border: 1px solid rgba(76, 175, 80, 0.28);
   color: #fff;
   text-align: center;
 }

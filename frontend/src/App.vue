@@ -257,9 +257,9 @@ export default {
 }
 
 html, body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif;
   background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
-  color: #333;
+  color: #e8f2ef;
   width: 100%;
   height: 100%;
   overflow-x: hidden;
@@ -339,8 +339,8 @@ body::-webkit-scrollbar {
 }
 
 .simple-footer {
-  background: rgba(26, 26, 46, 0.95);
-  color: white;
+  background: rgba(14, 31, 37, 0.92);
+  color: #c2d8d1;
   text-align: center;
   padding: 16px;
   border-top: 1px solid rgba(76, 175, 80, 0.3);
@@ -411,7 +411,9 @@ input, textarea, select {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  background: white;
+  background: linear-gradient(145deg, rgba(18, 47, 58, 0.95), rgba(22, 56, 68, 0.95));
+  color: #e9f8f2;
+  border: 1px solid rgba(76, 175, 80, 0.28);
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
@@ -453,13 +455,13 @@ input, textarea, select {
 
 .toast-title {
   font-weight: 600;
-  color: #333;
+  color: #eaf8f2;
   margin-bottom: 4px;
   font-size: 14px;
 }
 
 .toast-message {
-  color: #666;
+  color: #c6dad4;
   font-size: 13px;
   word-wrap: break-word;
 }
@@ -468,7 +470,7 @@ input, textarea, select {
   background: none;
   border: none;
   font-size: 24px;
-  color: #999;
+  color: #b5cbc4;
   cursor: pointer;
   padding: 0;
   width: 24px;
@@ -478,7 +480,7 @@ input, textarea, select {
 }
 
 .toast-close:hover {
-  color: #333;
+  color: #ffffff;
 }
 
 @keyframes slideIn {

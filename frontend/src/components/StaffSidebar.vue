@@ -341,11 +341,12 @@ export default {
 }
 
 .modal-content {
-  background: white;
+  background: linear-gradient(145deg, rgba(18, 47, 58, 0.98), rgba(22, 56, 68, 0.98));
+  border: 1px solid rgba(76, 175, 80, 0.35);
   border-radius: 16px;
   max-width: 400px;
   width: 100%;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
   animation: scaleIn 0.3s;
 }
 
@@ -365,12 +366,12 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid rgba(76, 175, 80, 0.3);
 }
 
 .modal-header h2 {
   margin: 0;
-  color: #333;
+  color: #eaf8f2;
   font-size: 1.3em;
 }
 
@@ -378,7 +379,7 @@ export default {
   background: none;
   border: none;
   font-size: 1.8em;
-  color: #95a5a6;
+  color: #c6dad4;
   cursor: pointer;
   transition: color 0.2s;
   width: 40px;
@@ -394,7 +395,8 @@ export default {
 
 .modal-body {
   padding: 20px;
-  color: #666;
+  color: #cfe3dd;
+  font-weight: 500;
   font-size: 1em;
 }
 
@@ -402,15 +404,15 @@ export default {
   display: flex;
   gap: 10px;
   padding: 20px;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid rgba(76, 175, 80, 0.3);
   justify-content: flex-end;
 }
 
 .btn-cancel {
   padding: 12px 24px;
-  background: #ecf0f1;
-  color: #333;
-  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #eaf8f2;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
@@ -419,15 +421,15 @@ export default {
 }
 
 .btn-cancel:active {
-  background: #d5dbdb;
+  background: rgba(255, 255, 255, 0.2);
   transform: scale(0.98);
 }
 
 .btn-logout {
   padding: 12px 24px;
-  background: #e74c3c;
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
   color: white;
-  border: none;
+  border: 1px solid rgba(255, 140, 120, 0.45);
   border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
@@ -436,7 +438,7 @@ export default {
 }
 
 .btn-logout:active {
-  background: #c0392b;
+  background: linear-gradient(135deg, #f05454 0%, #d44232 100%);
   transform: scale(0.98);
 }
 </style>
