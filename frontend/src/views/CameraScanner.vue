@@ -3,8 +3,20 @@
     <StaffSidebar v-if="!embedded" />
 
     <main class="scanner-main" :class="{ embedded: embedded }">
-      <div class="container">
-        <h1>Coco Lumber Estimator</h1>
+      <div class="scanner-shell">
+        <header class="scanner-hero" :class="{ embedded: embedded }">
+          <div>
+            <p class="scanner-eyebrow">{{ embedded ? 'Scanner Module' : 'Operations / Scanner' }}</p>
+            <h1>Coco Lumber Estimator</h1>
+            <p class="scanner-subtitle">
+              Measure coconut trunks from live camera input or uploaded images using the same workflow used across the staff portal.
+            </p>
+          </div>
+          <div class="scanner-hero-badge">
+            <span class="hero-badge-label">Workflow</span>
+            <strong>{{ currentMode === 'realtime' ? 'Real-time Camera' : 'Image Upload' }}</strong>
+          </div>
+        </header>
 
         <div class="mode-selection">
           <button
@@ -23,8 +35,15 @@
           </button>
         </div>
 
-        <section v-show="currentMode === 'realtime'" class="section active">
+        <section v-show="currentMode === 'realtime'" class="section scanner-panel active">
           <div class="camera-container">
+            <div class="panel-heading">
+              <div>
+                <h2>Live Detection</h2>
+                <p>Use your device camera for real-time diameter, volume, and lumber estimates.</p>
+              </div>
+            </div>
+
             <div class="video-wrapper">
               <video ref="videoInput" autoplay playsinline muted></video>
               <canvas ref="canvasOutput" @click="handleCalibrationClick"></canvas>
@@ -33,7 +52,7 @@
             </div>
           </div>
 
-          <div class="camera-controls">
+          <div class="camera-controls scanner-subpanel">
             <div class="camera-selection" :class="{ 'mobile-hidden': isMobile }">
               <label for="cameraSelect">Select Camera:</label>
               <select id="cameraSelect" v-model="cameraSelectValue">
@@ -58,7 +77,7 @@
             </div>
           </div>
 
-          <div v-if="isMobile" class="mobile-instructions">
+          <div v-if="isMobile" class="mobile-instructions scanner-subpanel">
             <h3>Mobile Instructions</h3>
             <ol>
               <li>Tap Start Camera and allow camera access.</li>
@@ -69,8 +88,15 @@
           </div>
         </section>
 
-        <section v-show="currentMode === 'upload'" class="section active">
+        <section v-show="currentMode === 'upload'" class="section scanner-panel active">
           <div class="upload-container">
+            <div class="panel-heading">
+              <div>
+                <h2>Upload Detection</h2>
+                <p>Drop a photo, calibrate if needed, and run the same estimate pipeline on a still image.</p>
+              </div>
+            </div>
+
             <div
               class="upload-area"
               :class="{ dragover: isDragOver }"
@@ -110,7 +136,7 @@
           </div>
         </section>
 
-        <div class="calibration">
+        <div class="calibration scanner-panel scanner-panel-accent">
           <h3>Calibration</h3>
           <div class="calibration-inputs">
             <label for="refWidth">Reference Width (cm):</label>
@@ -120,7 +146,7 @@
           <p :style="{ color: calibrationStatusColor }">{{ calibrationStatus }}</p>
         </div>
 
-        <div class="results">
+        <div class="results scanner-panel">
           <h3>Measurement Results</h3>
           <div class="result-grid">
             <div class="result-item" :class="{ detecting: detectingPulse }">
@@ -152,7 +178,7 @@
           <p id="status">{{ statusText }}</p>
         </div>
 
-        <div class="detection-info">
+        <div class="detection-info scanner-panel scanner-subpanel">
           <h3>Detection Information</h3>
           <p>{{ detectionInfoText }}</p>
         </div>
@@ -1095,13 +1121,13 @@ export default {
 .lumber-scanner-layout {
   display: flex;
   min-height: 100vh;
-  background: linear-gradient(140deg, #102326 0%, #1f3f43 38%, #d9c38e 100%);
+  background: linear-gradient(135deg, #121428 0%, #1a1a2e 45%, #242442 100%);
   padding-top: 70px;
 }
 
 .scanner-main {
   flex: 1;
-  padding: 20px 14px;
+  padding: 20px 14px 28px;
   overflow-y: auto;
 }
 
@@ -1110,35 +1136,128 @@ export default {
   overflow: visible;
 }
 
-.container {
-  max-width: 980px;
+.scanner-shell {
+  max-width: 1120px;
   margin: 0 auto;
-  background: #fff;
-  padding: 18px;
-  border-radius: 16px;
-  box-shadow: 0 10px 28px rgba(8, 20, 22, 0.3);
+  display: grid;
+  gap: 18px;
+}
+
+.scanner-hero,
+.scanner-panel,
+.scanner-subpanel {
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.96) 0%, rgba(36, 36, 66, 0.98) 100%);
+  border: 1px solid rgba(102, 126, 234, 0.18);
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(5, 8, 20, 0.28);
+}
+
+.scanner-hero {
+  padding: 24px;
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.scanner-hero.embedded {
+  margin-top: 0;
+}
+
+.scanner-eyebrow {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9aa8ff;
 }
 
 h1 {
-  text-align: center;
-  color: #234045;
-  margin-bottom: 20px;
-  font-size: 1.65rem;
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.9rem;
+}
+
+.scanner-subtitle {
+  margin: 10px 0 0;
+  max-width: 720px;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.6;
+}
+
+.scanner-hero-badge {
+  min-width: 180px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.18) 0%, rgba(118, 75, 162, 0.22) 100%);
+  border: 1px solid rgba(102, 126, 234, 0.32);
+  color: #fff;
+}
+
+.hero-badge-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.hero-badge-label + strong {
+  font-size: 1rem;
+}
+
+.scanner-panel {
+  padding: 20px;
+}
+
+.scanner-subpanel {
+  padding: 16px;
+}
+
+.scanner-panel-accent {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.18) 0%, rgba(36, 36, 66, 0.98) 100%);
+}
+
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.panel-heading h2,
+.scanner-panel h3,
+.mobile-instructions h3,
+.detection-info h3,
+.results h3 {
+  margin: 0;
+  color: #fff;
+}
+
+.panel-heading p,
+.detection-info p,
+.mobile-instructions,
+.mobile-instructions li,
+.calibration p,
+#status {
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .mode-selection {
   display: flex;
   gap: 10px;
-  margin-bottom: 20px;
 }
 
 .mode-btn {
   flex: 1;
   padding: 12px 10px;
-  border: 2px solid #356b74;
-  border-radius: 10px;
-  background: #eef4f4;
-  color: #1d3b40;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.82);
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -1146,12 +1265,13 @@ h1 {
 }
 
 .mode-btn:hover {
-  background: #d4e5e7;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .mode-btn.active {
-  background: #2f6f79;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
+  border-color: rgba(102, 126, 234, 0.7);
 }
 
 .camera-container {
@@ -1162,8 +1282,8 @@ h1 {
   position: relative;
   width: 100%;
   height: 320px;
-  border: 3px solid #356b74;
-  border-radius: 12px;
+  border: 1px solid rgba(102, 126, 234, 0.35);
+  border-radius: 16px;
   overflow: hidden;
   background: #000;
 }
@@ -1194,8 +1314,8 @@ canvas {
 }
 
 .overlay-active {
-  border-color: #e74c3c;
-  box-shadow: inset 0 0 24px rgba(231, 76, 60, 0.35);
+  border-color: #fa709a;
+  box-shadow: inset 0 0 24px rgba(250, 112, 154, 0.35);
 }
 
 .camera-feedback {
@@ -1213,20 +1333,23 @@ canvas {
 }
 
 .camera-selection {
-  margin: 10px 0;
-  text-align: center;
+  margin: 0 0 14px;
 }
 
 .camera-selection label {
-  margin-right: 8px;
-  color: #1f3c41;
+  display: block;
+  margin-bottom: 8px;
+  color: rgba(255, 255, 255, 0.78);
   font-weight: 600;
 }
 
 .camera-selection select {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 2px solid #356b74;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
 }
 
 .controls,
@@ -1238,70 +1361,86 @@ canvas {
 
 .btn {
   border: none;
-  border-radius: 26px;
+  border-radius: 12px;
   padding: 13px 18px;
   cursor: pointer;
   font-size: 15px;
   font-weight: 700;
-  background: #356b74;
+  background: rgba(255, 255, 255, 0.12);
   color: #fff;
-  transition: transform 0.2s ease, filter 0.2s ease;
+  transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
 }
 
 .btn:hover:not(:disabled) {
   transform: translateY(-1px);
   filter: brightness(1.04);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
 }
 
 .btn:disabled {
-  background: #b7c5c8;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.45);
   cursor: not-allowed;
 }
 
 .btn.primary {
-  background: #2c875f;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .btn.secondary {
-  background: #356b74;
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: #14222b;
 }
 
 .btn.danger {
-  background: #be493f;
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  color: #33211d;
 }
 
 .btn.active {
-  background: #be493f;
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  color: #33211d;
 }
 
 .upload-area {
-  border: 3px dashed #356b74;
-  border-radius: 12px;
+  border: 2px dashed rgba(102, 126, 234, 0.55);
+  border-radius: 16px;
   padding: 28px 16px;
   text-align: center;
-  background: #f4f8f8;
+  background: rgba(102, 126, 234, 0.08);
   cursor: pointer;
   margin-bottom: 14px;
 }
 
 .upload-area:hover {
-  background: #e7f0f1;
+  background: rgba(102, 126, 234, 0.14);
 }
 
 .upload-area.dragover {
-  border-color: #2c875f;
-  background: #d9ece2;
+  border-color: #84fab0;
+  background: rgba(132, 250, 176, 0.12);
 }
 
 .upload-icon {
   font-size: 2rem;
   display: block;
   margin-bottom: 8px;
+  color: #9aa8ff;
+}
+
+.upload-content h3 {
+  margin: 0 0 8px;
+  color: #fff;
+}
+
+.upload-content p {
+  margin: 4px 0;
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .upload-note {
   font-size: 12px;
-  color: #678286;
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .upload-preview {
@@ -1312,8 +1451,8 @@ canvas {
 #previewImage {
   max-width: 100%;
   max-height: 380px;
-  border: 3px solid #356b74;
-  border-radius: 12px;
+  border: 1px solid rgba(102, 126, 234, 0.35);
+  border-radius: 16px;
   margin-bottom: 10px;
 }
 
@@ -1321,14 +1460,10 @@ canvas {
 .results,
 .detection-info,
 .mobile-instructions {
-  border-radius: 12px;
-  padding: 14px;
-  margin-top: 14px;
+  margin-top: 0;
 }
 
 .calibration {
-  background: #fff4d9;
-  border: 2px solid #efd598;
   text-align: center;
 }
 
@@ -1338,22 +1473,22 @@ canvas {
   gap: 10px;
 }
 
+.calibration label {
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 600;
+}
+
 .calibration input {
-  padding: 10px;
-  border: 2px solid #356b74;
-  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
   text-align: center;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
 }
 
 .results {
-  background: #edf3f3;
-}
-
-.results h3,
-.detection-info h3,
-.mobile-instructions h3 {
-  margin-top: 0;
-  color: #1e4045;
+  overflow: hidden;
 }
 
 .result-grid {
@@ -1363,56 +1498,52 @@ canvas {
 }
 
 .result-item {
-  background: #fff;
-  border-left: 4px solid #356b74;
-  padding: 10px;
-  border-radius: 8px;
-  text-align: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 4px solid rgba(102, 126, 234, 0.55);
+  padding: 14px;
+  border-radius: 12px;
+  text-align: left;
   font-weight: 700;
-  color: #1f3d42;
+  color: #fff;
 }
 
 .result-item.highlight {
-  background: #e0f0e6;
-  border-left-color: #2c875f;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.16) 0%, rgba(118, 75, 162, 0.18) 100%);
+  border-left-color: #84fab0;
 }
 
 .result-label {
   display: block;
   margin-bottom: 4px;
   font-size: 13px;
+  color: rgba(255, 255, 255, 0.62);
 }
 
 .detection-quality {
   margin-top: 10px;
-  background: #fff;
-  padding: 10px;
-  border-radius: 8px;
-  text-align: center;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 12px;
+  border-radius: 12px;
+  text-align: left;
 }
 
 .quality-label {
   font-weight: 700;
-  color: #24464b;
+  color: rgba(255, 255, 255, 0.72);
   margin-right: 6px;
 }
 
 #status {
   margin-top: 10px;
-  background: #fff;
-  border-radius: 8px;
-  padding: 10px;
-  text-align: center;
-  color: #4b676c;
-}
-
-.detection-info,
-.mobile-instructions {
-  background: #e7f1f2;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: left;
 }
 
 .mobile-instructions ol {
-  margin: 0;
+  margin: 12px 0 0;
   padding-left: 18px;
 }
 
@@ -1426,13 +1557,13 @@ canvas {
 
 @keyframes pulse {
   0% {
-    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.06);
   }
   50% {
-    background-color: #d9ece2;
+    background-color: rgba(132, 250, 176, 0.14);
   }
   100% {
-    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.06);
   }
 }
 
@@ -1441,8 +1572,12 @@ canvas {
     padding: 24px;
   }
 
-  .container {
-    padding: 24px;
+  .scanner-shell {
+    gap: 20px;
+  }
+
+  .scanner-hero {
+    padding: 28px;
   }
 
   .video-wrapper {
@@ -1454,11 +1589,11 @@ canvas {
   .calibration-inputs {
     flex-direction: row;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .btn {
-    min-width: 180px;
+    min-width: 170px;
   }
 
   .result-grid {
@@ -1475,6 +1610,15 @@ canvas {
 }
 
 @media (max-width: 767px) {
+  .scanner-hero {
+    flex-direction: column;
+  }
+
+  .scanner-hero-badge {
+    width: 100%;
+    min-width: 0;
+  }
+
   .mobile-hidden {
     display: none;
   }

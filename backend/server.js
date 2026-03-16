@@ -697,7 +697,7 @@ app.post('/api/auth/apply-staff', async (req, res) => {
 // Login
 app.post('/api/auth/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, portal } = req.body;
 
     // Validate input
     if (!email || !password) {
@@ -715,6 +715,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const user = users[0];
+    const userRole = user.role || 'user';
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
@@ -722,9 +723,13 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
+    if (portal === 'client' && userRole !== 'user') {
+      return res.status(403).json({ message: 'Only client accounts can log in on the client page.' });
+    }
+
     // Generate JWT token with role
     const token = jwt.sign(
-      { id: user.id, email: user.email, name: user.name, role: user.role || 'user' },
+      { id: user.id, email: user.email, name: user.name, role: userRole },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -732,7 +737,7 @@ app.post('/api/auth/login', async (req, res) => {
     res.json({
       message: 'Login successful',
       token,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role || 'user' }
+      user: { id: user.id, name: user.name, email: user.email, role: userRole }
     });
   } catch (error) {
     console.error('Login error:', error);

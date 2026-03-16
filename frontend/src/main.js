@@ -186,19 +186,19 @@ const routes = [
     path: '/marketplace',
     name: 'Marketplace',
     component: Marketplace,
-    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
+    meta: { requiresAuth: true, roles: ['user', 'staff', 'admin'] }
   },
   {
     path: '/sellers',
     name: 'SellersList',
     component: SellersList,
-    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
+    meta: { requiresAuth: true, roles: ['user', 'staff', 'admin'] }
   },
   {
     path: '/sellers/:sellerId',
     name: 'SellerProducts',
     component: SellerProducts,
-    meta: { requiresAuth: true, roles: ['staff', 'admin'] }
+    meta: { requiresAuth: true, roles: ['user', 'staff', 'admin'] }
   },
   {
     path: '/staff-store/:staffId',

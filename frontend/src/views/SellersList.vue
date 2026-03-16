@@ -1,6 +1,6 @@
 <template>
-  <div class="staff-layout">
-    <StaffSidebar />
+  <div :class="isClientUser ? 'client-market-layout' : 'staff-layout'">
+    <StaffSidebar v-if="!isClientUser" />
     
     <div class="sellers-container">
       <div class="header">
@@ -42,7 +42,7 @@
           </div>
           
           <div class="seller-actions">
-            <button @click="messageTrader(seller.staff_id)" class="btn-message-trader">
+            <button v-if="isTraderUser" @click="messageTrader(seller.staff_id)" class="btn-message-trader">
               💬 Message
             </button>
             <button @click="viewSellerProducts(seller.staff_id)" class="btn-view-store">
@@ -75,13 +75,11 @@
 
 <script>
 import axios from 'axios'
-import UserNavbar from '../components/UserNavbar.vue'
 import StaffSidebar from '../components/StaffSidebar.vue'
 
 export default {
   name: 'SellersList',
   components: {
-    UserNavbar,
     StaffSidebar
   },
   data() {
@@ -89,12 +87,26 @@ export default {
       sellers: [],
       loading: false,
       token: null,
+      user: null,
       successMessage: '',
       errorMessage: ''
     }
   },
+  computed: {
+    userRole() {
+      return this.user?.role || null
+    },
+    isClientUser() {
+      return this.userRole === 'user'
+    },
+    isTraderUser() {
+      return this.userRole === 'staff' || this.userRole === 'admin'
+    }
+  },
   mounted() {
     this.token = localStorage.getItem('token')
+    const userData = localStorage.getItem('user')
+    this.user = userData ? JSON.parse(userData) : null
     this.fetchSellers()
   },
   methods: {
@@ -203,7 +215,8 @@ export default {
 </script>
 
 <style scoped>
-.staff-layout {
+.staff-layout,
+.client-market-layout {
   min-height: 100vh;
   background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
   background-attachment: fixed;

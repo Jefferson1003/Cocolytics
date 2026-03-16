@@ -521,7 +521,10 @@ export default {
 .staff-layout {
   display: flex;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background:
+    radial-gradient(circle at top left, rgba(102, 126, 234, 0.2), transparent 30%),
+    radial-gradient(circle at right center, rgba(118, 75, 162, 0.16), transparent 28%),
+    linear-gradient(135deg, #121428 0%, #1a1a2e 44%, #242442 100%);
 }
 
 .main-content {
@@ -549,16 +552,16 @@ export default {
   display: flex;
   gap: 10px;
   margin-bottom: 25px;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   flex-wrap: wrap;
 }
 
 .tab-btn {
   padding: 12px 24px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.8);
-  border: 2px solid transparent;
-  border-radius: 8px 8px 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px 12px 0 0;
   cursor: pointer;
   font-size: 1em;
   font-weight: 600;
@@ -571,9 +574,9 @@ export default {
 }
 
 .tab-btn.active {
-  background: white;
-  color: #667eea;
-  border-bottom-color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: rgba(102, 126, 234, 0.72);
 }
 
 .tab-content {
@@ -587,28 +590,32 @@ export default {
 
 .alert {
   padding: 15px 20px;
-  border-radius: 8px;
+  border-radius: 12px;
   margin-bottom: 20px;
   display: flex;
   align-items: center;
   gap: 10px;
+  border: 1px solid transparent;
 }
 
 .alert-success {
-  background: #d4edda;
-  color: #155724;
+  background: rgba(17, 153, 142, 0.16);
+  color: #93ffd0;
+  border-color: rgba(17, 153, 142, 0.35);
 }
 
 .alert-error {
-  background: #f8d7da;
-  color: #721c24;
+  background: rgba(250, 112, 154, 0.12);
+  color: #ffb3d5;
+  border-color: rgba(250, 112, 154, 0.32);
 }
 
 .profile-form {
-  background: white;
-  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.96) 0%, rgba(36, 36, 66, 0.98) 100%);
+  border: 1px solid rgba(102, 126, 234, 0.18);
+  border-radius: 18px;
   padding: 40px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 18px 40px rgba(5, 8, 20, 0.28);
 }
 
 .form-group {
@@ -617,7 +624,7 @@ export default {
 
 .form-group label {
   display: block;
-  color: #333;
+  color: rgba(255, 255, 255, 0.82);
   font-weight: 600;
   margin-bottom: 8px;
   font-size: 1.05em;
@@ -625,17 +632,23 @@ export default {
 
 .form-control {
   width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
+  padding: 13px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
   font-size: 1em;
   transition: all 0.3s;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
 }
 
 .form-control:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: rgba(102, 126, 234, 0.72);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.18);
+}
+
+.form-control::placeholder {
+  color: rgba(255, 255, 255, 0.36);
 }
 
 textarea.form-control {
@@ -654,11 +667,12 @@ textarea.form-control {
   border-radius: 50%;
   overflow: hidden;
   margin: 0 auto 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.22) 0%, rgba(118, 75, 162, 0.26) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .logo-preview img {
@@ -678,10 +692,10 @@ textarea.form-control {
 
 .btn-upload {
   padding: 12px 30px;
-  background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
-  border: 2px solid #667eea;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #dfe5ff;
+  border: 1px solid rgba(102, 126, 234, 0.4);
+  border-radius: 12px;
   cursor: pointer;
   font-size: 1em;
   font-weight: 600;
@@ -689,14 +703,15 @@ textarea.form-control {
 }
 
 .btn-upload:hover {
-  background: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
 }
 
 .checkbox-group {
   padding: 15px;
-  background: #f8f9fa;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .checkbox-label {
@@ -705,6 +720,7 @@ textarea.form-control {
   gap: 10px;
   cursor: pointer;
   font-weight: 500;
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -724,7 +740,7 @@ textarea.form-control {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
   font-size: 1.15em;
   font-weight: 600;
@@ -778,28 +794,28 @@ textarea.form-control {
 
 .upload-card,
 .list-card {
-  background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.96) 0%, rgba(36, 36, 66, 0.98) 100%);
+  border: 1px solid rgba(102, 126, 234, 0.18);
+  border-radius: 18px;
   padding: 20px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 18px 40px rgba(5, 8, 20, 0.28);
 }
 
 .card-title {
-  color: #333;
+  color: white;
   font-size: 1.2em;
   font-weight: 600;
   margin-bottom: 4px;
 }
 
 .card-subtitle {
-  color: #777;
+  color: rgba(255, 255, 255, 0.6);
   font-size: 0.9em;
   margin-bottom: 16px;
 }
 
 .list-card h3 {
-  color: #333;
+  color: white;
   margin-bottom: 16px;
   font-size: 1.2em;
 }
@@ -814,18 +830,18 @@ textarea.form-control {
 
 .tab {
   padding: 8px 16px;
-  border: 1px solid #e0e0e0;
-  background: #f5f5f5;
-  color: #333;
-  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s;
   font-size: 0.9em;
 }
 
 .tab:hover {
-  border-color: #667eea;
-  background: rgba(102, 126, 234, 0.05);
+  border-color: rgba(102, 126, 234, 0.5);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .tab.active {
@@ -848,7 +864,7 @@ textarea.form-control {
 }
 
 .field label {
-  color: #333;
+  color: rgba(255, 255, 255, 0.82);
   font-weight: 500;
   font-size: 0.95em;
 }
@@ -857,10 +873,10 @@ textarea.form-control {
 .field textarea {
   width: 100%;
   padding: 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background: #f9f9f9;
-  color: #333;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
   font-family: inherit;
   font-size: 1em;
 }
@@ -868,22 +884,27 @@ textarea.form-control {
 .field input[type="text"]:focus,
 .field textarea:focus {
   outline: none;
-  border-color: #667eea;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: rgba(102, 126, 234, 0.72);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.18);
+}
+
+.field input[type="text"]::placeholder,
+.field textarea::placeholder {
+  color: rgba(255, 255, 255, 0.36);
 }
 
 .field input[type="file"] {
   padding: 10px;
-  border: 1px dashed #ccc;
-  border-radius: 8px;
-  background: #f9f9f9;
-  color: #333;
+  border: 1px dashed rgba(102, 126, 234, 0.4);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.72);
   font-size: 0.9em;
 }
 
 .file-name {
-  color: #4CAF50;
+  color: #93ffd0;
   font-size: 0.85em;
   margin-top: 4px;
 }
@@ -923,22 +944,22 @@ textarea.form-control {
 }
 
 .alert.success {
-  background: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+  background: rgba(17, 153, 142, 0.16);
+  color: #93ffd0;
+  border: 1px solid rgba(17, 153, 142, 0.35);
 }
 
 .alert.error {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
+  background: rgba(250, 112, 154, 0.12);
+  color: #ffb3d5;
+  border: 1px solid rgba(250, 112, 154, 0.32);
 }
 
 .loading,
 .empty {
   text-align: center;
   padding: 40px 20px;
-  color: #999;
+  color: rgba(255, 255, 255, 0.58);
   font-size: 0.95em;
 }
 
@@ -949,14 +970,15 @@ textarea.form-control {
 }
 
 .list-item {
-  background: #f9f9f9;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
   padding: 16px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  border-left: 4px solid #667eea;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 4px solid rgba(102, 126, 234, 0.55);
 }
 
 .paper-type {
@@ -974,14 +996,14 @@ textarea.form-control {
 }
 
 .badge-to-cut {
-  background: rgba(102, 126, 234, 0.2);
-  color: #667eea;
+  background: rgba(102, 126, 234, 0.16);
+  color: #dfe5ff;
   border: 1px solid rgba(102, 126, 234, 0.3);
 }
 
 .badge-transport {
-  background: rgba(245, 87, 108, 0.2);
-  color: #f5576c;
+  background: rgba(245, 87, 108, 0.16);
+  color: #ffc0cc;
   border: 1px solid rgba(245, 87, 108, 0.3);
 }
 
@@ -991,13 +1013,13 @@ textarea.form-control {
 }
 
 .info h4 {
-  color: #333;
+  color: white;
   margin: 0 0 8px 0;
   font-size: 1em;
 }
 
 .description {
-  color: #666;
+  color: rgba(255, 255, 255, 0.68);
   margin: 4px 0;
   font-size: 0.9em;
   line-height: 1.4;
@@ -1008,11 +1030,11 @@ textarea.form-control {
   gap: 12px;
   margin-top: 8px;
   font-size: 0.85em;
-  color: #999;
+  color: rgba(255, 255, 255, 0.52);
 }
 
 .file-link {
-  color: #667eea;
+  color: #9aa8ff;
   text-decoration: none;
 }
 
@@ -1036,27 +1058,27 @@ textarea.form-control {
 }
 
 .status-pending {
-  background: rgba(255, 193, 7, 0.2);
+  background: rgba(255, 193, 7, 0.18);
   color: #ffc107;
 }
 
 .status-approved {
-  background: rgba(76, 175, 80, 0.2);
-  color: #4CAF50;
+  background: rgba(17, 153, 142, 0.18);
+  color: #93ffd0;
 }
 
 .status-rejected {
-  background: rgba(244, 67, 54, 0.2);
-  color: #f44336;
+  background: rgba(250, 112, 154, 0.18);
+  color: #ffb3d5;
 }
 
 .review-note {
   margin-top: 8px;
   padding: 8px 12px;
-  background: #f5f5f5;
-  border-left: 2px solid #ccc;
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 2px solid rgba(255, 255, 255, 0.18);
   font-size: 0.8em;
-  color: #666;
+  color: rgba(255, 255, 255, 0.62);
   border-radius: 4px;
 }
 

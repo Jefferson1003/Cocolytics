@@ -229,7 +229,9 @@ export default {
     },
     getDefaultRoute() {
       if (!this.isAuthenticated) return '/'
-      return this.user?.role === 'admin' ? '/admin' : '/staff'
+      if (this.user?.role === 'admin') return '/admin'
+      if (this.user?.role === 'staff') return '/staff'
+      return '/client'
     },
     goBack() {
       if (this.navigationStack.length > 1) {

@@ -219,10 +219,14 @@ export default {
       }
     },
     visitStore(sellerId) {
-      // Force fresh authentication before entering any trader storefront.
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      this.$router.push({ path: '/login', query: { redirect: `/sellers/${sellerId}` } })
+      const token = localStorage.getItem('token')
+
+      if (!token) {
+        this.$router.push({ path: '/login', query: { redirect: `/sellers/${sellerId}` } })
+        return
+      }
+
+      this.$router.push(`/sellers/${sellerId}`)
     },
     getImageUrl(imagePath) {
       if (!imagePath) return ''

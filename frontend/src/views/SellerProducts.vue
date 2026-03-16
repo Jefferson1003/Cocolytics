@@ -1,6 +1,6 @@
 <template>
-  <div class="staff-layout">
-    <StaffSidebar />
+  <div :class="isClientUser ? 'client-store-layout' : 'staff-layout'">
+    <StaffSidebar v-if="!isClientUser" />
     
     <div class="store-dashboard-container">
       <!-- Trader Banner -->
@@ -20,7 +20,7 @@
               <span class="meta-item">👤 Available Now</span>
             </div>
             <div class="store-actions">
-              <button @click="messageTrader" class="btn-message-trader-banner">
+              <button v-if="isTraderUser" @click="messageTrader" class="btn-message-trader-banner">
                 💬 Message Trader
               </button>
             </div>
@@ -152,13 +152,11 @@
 
 <script>
 import axios from 'axios'
-import UserNavbar from '../components/UserNavbar.vue'
 import StaffSidebar from '../components/StaffSidebar.vue'
 
 export default {
   name: 'SellerProducts',
   components: {
-    UserNavbar,
     StaffSidebar
   },
   data() {
@@ -169,11 +167,21 @@ export default {
       successMessage: '',
       errorMessage: '',
       token: null,
+      user: null,
       searchQuery: '',
       productQuantities: {}
     }
   },
   computed: {
+    userRole() {
+      return this.user?.role || null
+    },
+    isClientUser() {
+      return this.userRole === 'user'
+    },
+    isTraderUser() {
+      return this.userRole === 'staff' || this.userRole === 'admin'
+    },
     filteredProducts() {
       if (!this.searchQuery) return this.products
       const query = this.searchQuery.toLowerCase()
@@ -191,6 +199,8 @@ export default {
   },
   mounted() {
     this.token = localStorage.getItem('token')
+    const userData = localStorage.getItem('user')
+    this.user = userData ? JSON.parse(userData) : null
     this.fetchSellerProducts()
   },
   methods: {
@@ -447,7 +457,8 @@ export default {
 </script>
 
 <style scoped>
-.staff-layout {
+.staff-layout,
+.client-store-layout {
   min-height: 100vh;
   background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
   background-attachment: fixed;
