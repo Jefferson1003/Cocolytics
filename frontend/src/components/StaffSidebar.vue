@@ -10,9 +10,6 @@
         <span class="brand-name">Trader Portal</span>
       </div>
     </div>
-    <button @click="logout" class="header-logout-btn" aria-label="Logout">
-      🚪 Logout
-    </button>
   </header>
 
   <!-- Mobile Menu Overlay -->
@@ -154,23 +151,6 @@ export default {
 .brand-name {
   font-size: 1.2em;
   font-weight: 700;
-}
-
-.header-logout-btn {
-  background: rgba(231, 76, 60, 0.2);
-  border: 1px solid rgba(231, 76, 60, 0.5);
-  color: white;
-  padding: 8px 10px;
-  border-radius: 8px;
-  font-size: 0.85em;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.header-logout-btn:active {
-  background: rgba(231, 76, 60, 0.35);
-  transform: scale(0.98);
 }
 
 /* Menu Overlay */
