@@ -98,6 +98,8 @@ export default {
 
 <style scoped>
 .admin-layout {
+  --admin-sidebar-width: 280px;
+  --admin-sidebar-collapsed-width: 90px;
   display: flex;
   min-height: 100vh;
   max-width: 100vw;
@@ -267,13 +269,13 @@ export default {
 
 .dashboard-container {
   flex: 1;
-  margin-left: 280px;
+  margin-left: var(--admin-sidebar-width);
   padding: 40px 50px;
   overflow-y: auto;
   overflow-x: hidden;
   transition: margin-left 0.3s ease;
-  width: calc(100% - 280px);
-  max-width: calc(100vw - 280px);
+  width: calc(100% - var(--admin-sidebar-width));
+  max-width: calc(100vw - var(--admin-sidebar-width));
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -282,9 +284,9 @@ export default {
 }
 
 .admin-layout .sidebar.collapsed ~ .dashboard-container {
-  margin-left: 90px;
-  width: calc(100% - 90px);
-  max-width: calc(100vw - 90px);
+  margin-left: var(--admin-sidebar-collapsed-width);
+  width: calc(100% - var(--admin-sidebar-collapsed-width));
+  max-width: calc(100vw - var(--admin-sidebar-collapsed-width));
 }
 
 .dashboard-header {
@@ -971,27 +973,11 @@ export default {
 
 @media (max-width: 768px) {
   .admin-layout {
-    padding-top: 60px;
-  }
-
-  .sidebar {
-    transform: translateX(-100%);
-    width: 280px !important;
-    z-index: 9999;
-  }
-
-  .sidebar.mobile-open {
-    transform: translateX(0);
-  }
-
-  .sidebar-toggle {
-    display: none;
+    --admin-sidebar-width: 240px;
+    --admin-sidebar-collapsed-width: 84px;
   }
 
   .dashboard-container {
-    margin-left: 0 !important;
-    width: 100% !important;
-    max-width: 100vw !important;
     padding: 20px 16px;
   }
   
@@ -1086,6 +1072,17 @@ export default {
 
   .quick-links-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1280px) {
+  .admin-layout {
+    --admin-sidebar-width: 240px;
+    --admin-sidebar-collapsed-width: 84px;
+  }
+
+  .dashboard-container {
+    padding: 30px 32px;
   }
 }
 </style>

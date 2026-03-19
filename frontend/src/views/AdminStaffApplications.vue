@@ -168,6 +168,8 @@ export default {
 
 <style scoped>
 .admin-layout {
+  --admin-sidebar-width: 280px;
+  --admin-sidebar-collapsed-width: 90px;
   display: flex;
   min-height: 100vh;
   background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
@@ -175,8 +177,12 @@ export default {
 
 .dashboard-container {
   flex: 1;
-  margin-left: 280px;
+  margin-left: var(--admin-sidebar-width);
   padding: 36px 44px;
+}
+
+.admin-layout .sidebar.collapsed ~ .dashboard-container {
+  margin-left: var(--admin-sidebar-collapsed-width);
 }
 
 .dashboard-header h1 {
@@ -362,9 +368,13 @@ export default {
 }
 
 @media (max-width: 900px) {
+  .admin-layout {
+    --admin-sidebar-width: 240px;
+    --admin-sidebar-collapsed-width: 84px;
+  }
+
   .dashboard-container {
-    margin-left: 0;
-    padding: 92px 16px 24px;
+    padding: 24px 16px;
   }
 }
 </style>

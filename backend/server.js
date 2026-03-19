@@ -251,6 +251,23 @@ pool.getConnection()
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
     );
 
+    // Create account_removal_notices table so removed users can still see the admin's message on login
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS account_removal_notices (
+        id INT NOT NULL AUTO_INCREMENT,
+        email VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        role ENUM('user', 'staff', 'admin') NOT NULL,
+        removal_reason TEXT,
+        removed_by INT DEFAULT NULL,
+        removed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        UNIQUE KEY uniq_removed_email (email),
+        KEY idx_removed_by (removed_by),
+        CONSTRAINT fk_removed_notice_admin FOREIGN KEY (removed_by) REFERENCES users(id) ON DELETE SET NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+
     // Ensure acceptance columns exist for older staff_applications schemas
     const [appAcceptedCol] = await pool.execute(
       `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS
@@ -711,6 +728,26 @@ app.post('/api/auth/login', async (req, res) => {
     );
     
     if (users.length === 0) {
+      const [removedAccounts] = await pool.execute(
+        'SELECT name, removal_reason, removed_at FROM account_removal_notices WHERE email = ? LIMIT 1',
+        [email]
+      );
+
+      if (removedAccounts.length > 0) {
+        const removedAccount = removedAccounts[0];
+        const adminMessage = removedAccount.removal_reason
+          ? ` Admin message: ${removedAccount.removal_reason}`
+          : '';
+
+        return res.status(403).json({
+          message: `This account was removed by an administrator on ${new Date(removedAccount.removed_at).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          })}.${adminMessage}`
+        });
+      }
+
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
@@ -993,6 +1030,72 @@ app.put('/api/admin/users/:id/role', authenticateToken, authorizeRoles('admin'),
     res.json({ success: true, message: 'User role updated successfully' });
   } catch (error) {
     console.error('Update role error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete user account (admin only)
+app.delete('/api/admin/users/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const userId = Number(req.params.id);
+    const { reason } = req.body || {};
+
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json({ message: 'Invalid user id' });
+    }
+
+    if (userId === req.user.id) {
+      return res.status(400).json({ message: 'You cannot delete your own account' });
+    }
+
+    const [targetUsers] = await pool.execute(
+      'SELECT id, name, email, role FROM users WHERE id = ?',
+      [userId]
+    );
+
+    if (!targetUsers.length) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const targetUser = targetUsers[0];
+
+    if (targetUser.role === 'admin') {
+      return res.status(403).json({ message: 'Admin accounts cannot be deleted from this page' });
+    }
+
+    await pool.execute(
+      `INSERT INTO account_removal_notices (email, name, role, removal_reason, removed_by)
+       VALUES (?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         name = VALUES(name),
+         role = VALUES(role),
+         removal_reason = VALUES(removal_reason),
+         removed_by = VALUES(removed_by),
+         removed_at = CURRENT_TIMESTAMP`,
+      [
+        targetUser.email,
+        targetUser.name,
+        targetUser.role,
+        typeof reason === 'string' && reason.trim() ? reason.trim() : 'Your account has been removed by the administrator.',
+        req.user.id
+      ]
+    );
+
+    const [deleteResult] = await pool.execute(
+      'DELETE FROM users WHERE id = ?',
+      [userId]
+    );
+
+    if (!deleteResult.affectedRows) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({
+      success: true,
+      message: `${targetUser.name} account removed successfully`
+    });
+  } catch (error) {
+    console.error('Delete user error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

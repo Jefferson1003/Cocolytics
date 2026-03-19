@@ -1,52 +1,33 @@
 <template>
-  <!-- Mobile Header -->
-  <header class="mobile-admin-header">
-    <div class="mobile-header-content">
-      <button @click="mobileMenuOpen = !mobileMenuOpen" class="mobile-menu-btn">
-        <span class="hamburger-icon">☰</span>
-      </button>
-      <h1 class="mobile-title">👨‍💼 Admin</h1>
-      <button @click="logout" class="mobile-logout-btn">
-        <span>🚪</span>
-      </button>
-    </div>
-  </header>
-
-  <!-- Sidebar overlay for mobile -->
-  <div v-if="mobileMenuOpen" class="mobile-overlay" @click="mobileMenuOpen = false"></div>
-
-  <aside class="sidebar" :class="{ collapsed: !sidebarOpen, 'mobile-open': mobileMenuOpen }">
+  <aside class="sidebar" :class="{ collapsed: !sidebarOpen }">
     <div class="sidebar-header">
       <h2 v-show="sidebarOpen">👨‍💼 Admin</h2>
-      <button class="sidebar-toggle desktop-only" @click="sidebarOpen = !sidebarOpen" title="Toggle sidebar">
+      <button class="sidebar-toggle" @click="sidebarOpen = !sidebarOpen" title="Toggle sidebar">
         {{ sidebarOpen ? '◄' : '►' }}
-      </button>
-      <button class="mobile-close-btn mobile-only" @click="mobileMenuOpen = false" title="Close menu">
-        &times;
       </button>
     </div>
     <nav class="sidebar-nav">
-      <router-link to="/admin" class="nav-item" :class="{ active: isActive('/admin') }" title="Dashboard" @click="closeMobileMenu">
+      <router-link to="/admin" class="nav-item" :class="{ active: isActive('/admin') }" title="Dashboard">
         <span class="nav-icon">📊</span>
         <span class="nav-label" v-show="sidebarOpen">Dashboard</span>
       </router-link>
-      <router-link to="/admin/users" class="nav-item" :class="{ active: isActive('/admin/users') }" title="Manage Users" @click="closeMobileMenu">
+      <router-link to="/admin/users" class="nav-item" :class="{ active: isActive('/admin/users') }" title="Manage Users">
         <span class="nav-icon">👥</span>
         <span class="nav-label" v-show="sidebarOpen">Manage Users</span>
       </router-link>
-      <router-link to="/admin/staff-applications" class="nav-item" :class="{ active: isActive('/admin/staff-applications') }" title="Staff Applications" @click="closeMobileMenu">
+      <router-link to="/admin/staff-applications" class="nav-item" :class="{ active: isActive('/admin/staff-applications') }" title="Staff Applications">
         <span class="nav-icon">📝</span>
         <span class="nav-label" v-show="sidebarOpen">Staff Applications</span>
       </router-link>
-      <router-link to="/admin/features" class="nav-item" :class="{ active: isActive('/admin/features') }" title="Admin Features" @click="closeMobileMenu">
+      <router-link to="/admin/features" class="nav-item" :class="{ active: isActive('/admin/features') }" title="Admin Features">
         <span class="nav-icon">🔧</span>
         <span class="nav-label" v-show="sidebarOpen">Features</span>
       </router-link>
-      <router-link to="/admin/paper-approvals" class="nav-item" :class="{ active: isActive('/admin/paper-approvals') }" title="Paper Approvals" @click="closeMobileMenu">
+      <router-link to="/admin/paper-approvals" class="nav-item" :class="{ active: isActive('/admin/paper-approvals') }" title="Paper Approvals">
         <span class="nav-icon">📄</span>
         <span class="nav-label" v-show="sidebarOpen">Paper Approvals</span>
       </router-link>
-      <a href="#settings" class="nav-item" title="Settings" @click="closeMobileMenu">
+      <a href="#settings" class="nav-item" title="Settings">
         <span class="nav-icon">⚙️</span>
         <span class="nav-label" v-show="sidebarOpen">Settings</span>
       </a>
@@ -83,14 +64,12 @@ export default {
   data() {
     return {
       sidebarOpen: true,
-      mobileMenuOpen: false,
       showLogoutModal: false
     }
   },
   methods: {
     logout() {
       this.showLogoutModal = true
-      this.mobileMenuOpen = false
     },
     confirmLogout() {
       localStorage.removeItem('token')
@@ -102,9 +81,6 @@ export default {
     },
     isActive(path) {
       return this.$route.path === path
-    },
-    closeMobileMenu() {
-      this.mobileMenuOpen = false
     }
   }
 }
@@ -112,13 +88,13 @@ export default {
 
 <style scoped>
 .sidebar {
-  width: 280px;
+  width: var(--admin-sidebar-width, 280px);
   background: linear-gradient(180deg, #1e1e3f 0%, #2a2a4a 100%);
   color: white;
   display: flex;
   flex-direction: column;
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
-  transition: width 0.3s ease;
+  transition: width 0.3s ease, box-shadow 0.3s ease;
   position: fixed;
   height: 100vh;
   left: 0;
@@ -129,7 +105,7 @@ export default {
 }
 
 .sidebar.collapsed {
-  width: 90px;
+  width: var(--admin-sidebar-collapsed-width, 90px);
 }
 
 .sidebar-header {
@@ -345,127 +321,18 @@ export default {
   background: #c0392b;
 }
 
-/* Mobile Header */
-.mobile-admin-header {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 60px;
-  background: linear-gradient(135deg, #1e1e3f 0%, #2a2a4a 100%);
-  z-index: 9998;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  border-bottom: 1px solid rgba(76, 175, 80, 0.3);
-}
-
-.mobile-header-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  height: 100%;
-}
-
-.mobile-menu-btn,
-.mobile-logout-btn {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.3s;
-  border-radius: 8px;
-}
-
-.mobile-menu-btn:hover,
-.mobile-logout-btn:hover {
-  background: rgba(76, 175, 80, 0.2);
-}
-
-.mobile-title {
-  font-size: 1.3rem;
-  color: #4CAF50;
-  margin: 0;
-  font-weight: 700;
-}
-
-.mobile-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 9998;
-  backdrop-filter: blur(4px);
-}
-
-.mobile-close-btn {
-  display: none;
-  background: none;
-  border: none;
-  color: white;
-  font-size: 2rem;
-  cursor: pointer;
-  padding: 4px 12px;
-  line-height: 1;
-}
-
-.desktop-only {
-  display: block;
-}
-
-.mobile-only {
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .mobile-admin-header {
-    display: flex !important;
+@media (max-width: 1280px) {
+  .sidebar-header {
+    padding: 28px 20px;
   }
 
-  .sidebar {
-    transform: translateX(-100%);
-    width: 280px !important;
-    z-index: 9999;
+  .nav-item {
+    padding: 14px 20px;
+    gap: 14px;
   }
 
-  .sidebar.mobile-open {
-    transform: translateX(0);
-  }
-
-  .sidebar.collapsed {
-    width: 280px !important;
-  }
-
-  .desktop-only {
-    display: none !important;
-  }
-
-  .mobile-only {
-    display: block !important;
-  }
-
-  .sidebar-header h2 {
-    display: block !important;
-  }
-
-  .nav-label {
-    display: block !important;
-  }
-
-  .logout-label {
-    display: block !important;
-  }
-
-  .mobile-overlay {
-    display: block;
+  .logout-btn {
+    padding: 12px 16px;
   }
 }
 </style>

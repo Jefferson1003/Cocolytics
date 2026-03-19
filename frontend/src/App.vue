@@ -15,7 +15,7 @@
       ← Back
     </button>
 
-    <main class="main-content" :class="{ 'no-nav': !isAuthenticated }">
+    <main class="main-content" :class="{ 'no-nav': !isAuthenticated, 'admin-route': isAdminRoute }">
       <router-view />
     </main>
 
@@ -80,6 +80,7 @@ export default {
     showGlobalBackButton() {
       if (this.isLoginPage) return false
       if (this.$route.path === '/') return false
+      if (this.isAdminRoute) return false
       return !this.$route.meta?.hideBackButton
     },
     apiBaseUrl() {
@@ -305,6 +306,13 @@ body::-webkit-scrollbar {
   margin-top: 0;
 }
 
+.main-content.admin-route {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
 .global-back-btn {
   position: fixed;
   right: 20px;
@@ -516,6 +524,15 @@ input, textarea, select {
   
   .toast-message {
     font-size: 12px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .main-content.admin-route {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
   }
 }
 </style>

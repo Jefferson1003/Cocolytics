@@ -37,6 +37,7 @@
                 </td>
                 <td class="date-cell">{{ formatDate(u.created_at) }}</td>
                 <td>
+                  <div class="action-controls">
                   <select 
                     v-model="u.role" 
                     @change="updateUserRole(u.id, u.role)"
@@ -48,6 +49,19 @@
                     <option value="staff">Staff</option>
                     <option value="admin">Admin</option>
                   </select>
+                    <button
+                      v-if="canDeleteUser(u)"
+                      type="button"
+                      class="delete-user-btn"
+                      @click="openDeleteModal(u)"
+                      :disabled="deletingUserId === u.id"
+                    >
+                      {{ deletingUserId === u.id ? 'Removing...' : 'Remove' }}
+                    </button>
+                    <span v-else class="protected-user-label">
+                      {{ u.id === user.id ? 'Current account' : 'Protected' }}
+                    </span>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -79,6 +93,54 @@
     <!-- Error Message -->
     <div class="error-message" v-if="error">{{ error }}</div>
     <div class="success-message" v-if="successMessage">{{ successMessage }}</div>
+
+    <div v-if="showDeleteModal" class="delete-modal-overlay" @click="closeDeleteModal">
+      <div class="delete-modal" @click.stop>
+        <div class="delete-modal-header">
+          <h3>Remove Account</h3>
+          <button type="button" class="delete-modal-close" @click="closeDeleteModal">&times;</button>
+        </div>
+        <p class="delete-modal-text">
+          Remove <strong>{{ userToDelete?.name }}</strong> ({{ userToDelete?.email }})?
+        </p>
+        <p class="delete-modal-warning">
+          This permanently removes the account and may also remove related user records tied to it.
+        </p>
+        <label class="delete-reason-label" for="delete-reason-input">
+          Message for the removed account
+        </label>
+        <textarea
+          id="delete-reason-input"
+          v-model="deleteReason"
+          class="delete-reason-input"
+          rows="3"
+          placeholder="Example: Your account was removed because you are no longer an active staff member."
+        ></textarea>
+        <label class="delete-confirm-label" for="delete-confirm-input">
+          Confirmation keyword
+        </label>
+        <p class="delete-confirm-help">Type <strong>REMOVE</strong> in the field below before deleting the account.</p>
+        <input
+          id="delete-confirm-input"
+          v-model="deleteConfirmationText"
+          type="text"
+          class="delete-confirm-input"
+          placeholder="Type REMOVE"
+        >
+        <p v-if="deleteValidationError" class="delete-validation-error">{{ deleteValidationError }}</p>
+        <div class="delete-modal-actions">
+          <button type="button" class="cancel-delete-btn" @click="closeDeleteModal">Cancel</button>
+          <button
+            type="button"
+            class="confirm-delete-btn"
+            @click="deleteUser"
+            :disabled="!userToDelete || deletingUserId === userToDelete?.id"
+          >
+            {{ deletingUserId === userToDelete?.id ? 'Removing...' : 'Remove Account' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -97,7 +159,13 @@ export default {
       users: [],
       searchQuery: '',
       error: '',
-      successMessage: ''
+      successMessage: '',
+      showDeleteModal: false,
+      userToDelete: null,
+      deletingUserId: null,
+      deleteConfirmationText: '',
+      deleteReason: '',
+      deleteValidationError: ''
     }
   },
   computed: {
@@ -108,6 +176,9 @@ export default {
         u.name.toLowerCase().includes(query) || 
         u.email.toLowerCase().includes(query)
       )
+    },
+    canConfirmDelete() {
+      return this.deleteConfirmationText.trim().toUpperCase() === 'REMOVE' && !!this.userToDelete
     }
   },
   created() {
@@ -143,6 +214,66 @@ export default {
         setTimeout(() => this.error = '', 5000)
       }
     },
+    canDeleteUser(targetUser) {
+      return targetUser.id !== this.user?.id && targetUser.role !== 'admin'
+    },
+    openDeleteModal(targetUser) {
+      if (!this.canDeleteUser(targetUser)) {
+        return
+      }
+
+      this.userToDelete = { ...targetUser }
+      this.deleteConfirmationText = ''
+      this.deleteReason = `Your account was removed because it is no longer active. If you think this was a mistake, please contact the administrator.`
+      this.deleteValidationError = ''
+      this.showDeleteModal = true
+    },
+    closeDeleteModal() {
+      if (this.deletingUserId) {
+        return
+      }
+
+      this.showDeleteModal = false
+      this.userToDelete = null
+      this.deleteConfirmationText = ''
+      this.deleteReason = ''
+      this.deleteValidationError = ''
+    },
+    async deleteUser() {
+      if (!this.canConfirmDelete) {
+        this.deleteValidationError = 'Type REMOVE in the confirmation field before deleting this account.'
+        return
+      }
+
+      try {
+        const token = localStorage.getItem('token')
+        this.deletingUserId = this.userToDelete.id
+        this.deleteValidationError = ''
+
+        const response = await axios.delete(
+          `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/${this.userToDelete.id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            data: { reason: this.deleteReason.trim() }
+          }
+        )
+
+        this.users = this.users.filter(existingUser => existingUser.id !== this.userToDelete.id)
+        this.successMessage = response.data?.message || 'User account removed successfully'
+        this.closeDeleteModal()
+        setTimeout(() => this.successMessage = '', 3000)
+      } catch (err) {
+        this.error = err.response?.data?.message || 'Failed to remove user account'
+        setTimeout(() => this.error = '', 5000)
+      } finally {
+        this.deletingUserId = null
+        this.showDeleteModal = false
+        this.userToDelete = null
+        this.deleteConfirmationText = ''
+        this.deleteReason = ''
+        this.deleteValidationError = ''
+      }
+    },
     formatDate(dateString) {
       if (!dateString) return 'N/A'
       return new Date(dateString).toLocaleDateString('en-US', {
@@ -157,6 +288,8 @@ export default {
 
 <style scoped>
 .admin-layout {
+  --admin-sidebar-width: 280px;
+  --admin-sidebar-collapsed-width: 90px;
   display: flex;
   min-height: 100vh;
   max-width: 100vw;
@@ -168,13 +301,13 @@ export default {
 
 .dashboard-container {
   flex: 1;
-  margin-left: 280px;
+  margin-left: var(--admin-sidebar-width);
   padding: 40px 50px;
   overflow-y: auto;
   overflow-x: hidden;
   transition: margin-left 0.3s ease;
-  width: calc(100% - 280px);
-  max-width: calc(100vw - 280px);
+  width: calc(100% - var(--admin-sidebar-width));
+  max-width: calc(100vw - var(--admin-sidebar-width));
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -369,6 +502,41 @@ export default {
   cursor: not-allowed;
 }
 
+.action-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.delete-user-btn {
+  border: 1px solid rgba(255, 107, 107, 0.35);
+  background: rgba(255, 107, 107, 0.12);
+  color: #ffd2d2;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95em;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.delete-user-btn:hover:not(:disabled) {
+  background: rgba(255, 107, 107, 0.2);
+  border-color: rgba(255, 107, 107, 0.55);
+}
+
+.delete-user-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.protected-user-label {
+  color: #9bb4a0;
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
 .stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -425,6 +593,154 @@ export default {
   animation: slideInUp 0.3s ease-out;
 }
 
+.delete-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 14, 18, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1200;
+}
+
+.delete-modal {
+  width: min(100%, 480px);
+  background: linear-gradient(145deg, rgba(18, 47, 58, 0.98), rgba(22, 56, 68, 0.98));
+  border: 1px solid rgba(255, 107, 107, 0.25);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  padding: 22px;
+}
+
+.delete-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.delete-modal-header h3 {
+  margin: 0;
+  color: #ffe2e2;
+}
+
+.delete-modal-close {
+  background: none;
+  border: none;
+  color: #d7e4df;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.delete-modal-text {
+  color: #e6f4ea;
+  margin: 0 0 10px;
+}
+
+.delete-modal-warning {
+  color: #f5c0c0;
+  margin: 0 0 18px;
+  line-height: 1.5;
+}
+
+.delete-confirm-label {
+  display: block;
+  color: #e6f4ea;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.delete-confirm-help {
+  margin: 0 0 10px;
+  color: #c6dad4;
+  font-size: 0.9rem;
+}
+
+.delete-reason-label {
+  display: block;
+  color: #e6f4ea;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.delete-reason-input {
+  width: 100%;
+  margin-bottom: 16px;
+  background: rgba(10, 27, 33, 0.66);
+  color: #ecfff3;
+  border: 1px solid rgba(255, 107, 107, 0.35);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 0.98rem;
+  resize: vertical;
+  min-height: 88px;
+}
+
+.delete-reason-input:focus {
+  outline: none;
+  border-color: rgba(255, 107, 107, 0.65);
+  box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.15);
+}
+
+.delete-confirm-input {
+  width: 100%;
+  margin-bottom: 18px;
+  background: rgba(10, 27, 33, 0.66);
+  color: #ecfff3;
+  border: 1px solid rgba(255, 107, 107, 0.35);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 1rem;
+}
+
+.delete-confirm-input:focus {
+  outline: none;
+  border-color: rgba(255, 107, 107, 0.65);
+  box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.15);
+}
+
+.delete-validation-error {
+  margin: 0 0 14px;
+  color: #ffb8b3;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.delete-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cancel-delete-btn,
+.confirm-delete-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.cancel-delete-btn {
+  background: rgba(255, 255, 255, 0.12);
+  color: #e6f4ea;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.confirm-delete-btn {
+  background: linear-gradient(135deg, #ff6b6b 0%, #d64545 100%);
+  color: #fff;
+}
+
+.confirm-delete-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 @keyframes slideInUp {
   from {
     transform: translateY(100px);
@@ -451,14 +767,12 @@ export default {
 
 @media (max-width: 768px) {
   .admin-layout {
-    padding-top: 60px;
+    --admin-sidebar-width: 240px;
+    --admin-sidebar-collapsed-width: 84px;
   }
 
   .dashboard-container {
-    margin-left: 0 !important;
     padding: 20px 16px;
-    width: 100% !important;
-    max-width: 100vw !important;
   }
 
   .dashboard-header {
@@ -512,6 +826,11 @@ export default {
     white-space: nowrap;
   }
 
+  .action-controls {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .email-cell {
     font-size: 0.85em;
   }
@@ -544,6 +863,10 @@ export default {
     padding: 12px 16px;
     font-size: 0.95rem;
   }
+
+  .delete-modal {
+    padding: 18px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -561,6 +884,17 @@ export default {
 
   .stats-row {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1280px) {
+  .admin-layout {
+    --admin-sidebar-width: 240px;
+    --admin-sidebar-collapsed-width: 84px;
+  }
+
+  .dashboard-container {
+    padding: 30px 32px;
   }
 }
 </style>
