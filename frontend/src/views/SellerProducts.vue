@@ -9,19 +9,51 @@
         <div class="banner-content">
           <div class="store-logo-large">
             <img v-if="seller.store_logo" :src="getImageUrl(seller.store_logo)" :alt="seller.store_name" />
-            <div v-else class="default-logo-large">🥥</div>
+            <div v-else class="default-logo-large" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M9 10.5h.01M15 10.5h.01M9.5 15c.6.6 1.4 1 2.5 1s1.9-.4 2.5-1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </div>
           </div>
           <div class="store-main-info">
             <h1>{{ seller.store_name }}</h1>
             <p class="store-tagline">{{ seller.store_description }}</p>
             <div class="store-meta">
-              <span v-if="seller.contact_number" class="meta-item">📞 {{ seller.contact_number }}</span>
-              <span class="meta-item">📦 {{ products.length }} Products</span>
-              <span class="meta-item">👤 Available Now</span>
+              <span v-if="seller.contact_number" class="meta-item">
+                <span class="icon small" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 4h3l1.5 4L8.5 9.5a14 14 0 0 0 6 6l1.5-2L20 15v3a2 2 0 0 1-2.2 2A16 16 0 0 1 4 6.2 2 2 0 0 1 6 4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                {{ seller.contact_number }}
+              </span>
+              <span class="meta-item">
+                <span class="icon small" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 10h16v9H4v-9Zm2-5h12l2 5H4l2-5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                {{ products.length }} Products
+              </span>
+              <span class="meta-item">
+                <span class="icon small" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M6 19a6 6 0 0 1 12 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                Available Now
+              </span>
             </div>
             <div class="store-actions">
               <button v-if="isTraderUser" @click="messageTrader" class="btn-message-trader-banner">
-                💬 Message Trader
+                <span class="icon small" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6h16v10H8l-4 4V6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                Message Trader
               </button>
             </div>
           </div>
@@ -32,21 +64,33 @@
       <!-- Trader Stats Cards -->
       <div class="stats-section" v-if="!loading">
         <div class="stat-card">
-          <div class="stat-icon">📦</div>
+          <div class="stat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 10h16v9H4v-9Zm2-5h12l2 5H4l2-5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+          </div>
           <div class="stat-content">
             <h3>{{ products.length }}</h3>
             <p>Total Products</p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon">📊</div>
+          <div class="stat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 19h16M7 15V9m5 6V6m5 9v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
           <div class="stat-content">
             <h3>{{ totalStock }}</h3>
             <p>Items in Stock</p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon">✅</div>
+          <div class="stat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="m6 12 4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
           <div class="stat-content">
             <h3>{{ availableProducts }}</h3>
             <p>Available Now</p>
@@ -57,7 +101,14 @@
       <!-- Products Section -->
       <div class="products-section">
         <div class="section-header">
-          <h2>🛒 Shop Products</h2>
+          <h2>
+            <span class="icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 10h16v9H4v-9Zm2-5h12l2 5H4l2-5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            Shop Products
+          </h2>
           <input 
             v-model="searchQuery" 
             type="text" 
@@ -67,7 +118,7 @@
         </div>
         
         <div v-if="loading" class="loading">
-          <div class="loading-spinner">⏳</div>
+          <div class="loading-spinner" aria-hidden="true"></div>
           <p>Loading trader products...</p>
         </div>
 
@@ -75,11 +126,16 @@
           <div v-for="product in filteredProducts" :key="product.id" class="product-card">
             <div class="product-image">
               <img v-if="product.product_picture" :src="getImageUrl(product.product_picture)" :alt="product.size" />
-              <div v-else class="no-image">🥥</div>
+              <div v-else class="no-image" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/>
+                  <path d="M9 10.5h.01M15 10.5h.01M9.5 15c.6.6 1.4 1 2.5 1s1.9-.4 2.5-1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </div>
               <div class="stock-indicator" :class="getStockClass(product.stock)">
-                <span v-if="product.stock === 0">⛔ Out of Stock</span>
-                <span v-else-if="product.stock < 5">⚠️ Critical</span>
-                <span v-else-if="product.stock < 10">⚠️ Low Stock</span>
+                <span v-if="product.stock === 0">Out of Stock</span>
+                <span v-else-if="product.stock < 5">Critical</span>
+                <span v-else-if="product.stock < 10">Low Stock</span>
               </div>
             </div>
             
@@ -114,21 +170,37 @@
               </div>
               <div class="action-buttons">
                 <button @click="addToCart(product)" class="btn-add-cart">
-                  🛒 Add to Cart
+                  <span class="icon small" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M4 6h2l2 10h9l2-7H7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                      <circle cx="10" cy="19" r="1.4" fill="currentColor"/>
+                      <circle cx="17" cy="19" r="1.4" fill="currentColor"/>
+                    </svg>
+                  </span>
+                  Add to Cart
                 </button>
                 <button @click="buyNow(product)" class="btn-buy-now">
-                  🔥 Buy Now
+                  <span class="icon small" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 3v8m0 0 3-3m-3 3-3-3M5 14h14v6H5v-6Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </span>
+                  Buy Now
                 </button>
               </div>
             </div>
             <button v-else class="btn-add-cart" disabled>
-              ⛔ Out of Stock
+              Out of Stock
             </button>
           </div>
         </div>
 
         <div v-else class="empty-state">
-          <div class="empty-icon">📦</div>
+          <div class="empty-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 10h16v9H4v-9Zm2-5h12l2 5H4l2-5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+          </div>
           <h3>No Products Found</h3>
           <p v-if="searchQuery">Try adjusting your search</p>
           <p v-else>This trader doesn't have any products in stock right now</p>
@@ -138,13 +210,21 @@
 
     <!-- Success Message -->
     <div v-if="successMessage" class="alert alert-success">
-      <span class="alert-icon">✓</span>
+      <span class="alert-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="m6 12 4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
       {{ successMessage }}
     </div>
 
     <!-- Error Message -->
     <div v-if="errorMessage" class="alert alert-error">
-      <span class="alert-icon">✕</span>
+      <span class="alert-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </span>
       {{ errorMessage }}
     </div>
   </div>
@@ -370,7 +450,7 @@ export default {
 
         localStorage.setItem('cartItems', JSON.stringify(cart))
         
-        this.successMessage = `✓ Added ${quantityToAdd} x ${product.size} to cart!`
+        this.successMessage = `Added ${quantityToAdd} x ${product.size} to cart.`
         // Reset quantity to 1 after adding
         this.productQuantities[product.id] = 1
         setTimeout(() => {
@@ -460,7 +540,10 @@ export default {
 .staff-layout,
 .client-store-layout {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+  background:
+    radial-gradient(circle at top left, rgba(102, 126, 234, 0.2), transparent 30%),
+    radial-gradient(circle at right center, rgba(118, 75, 162, 0.16), transparent 28%),
+    linear-gradient(135deg, #121428 0%, #1a1a2e 44%, #242442 100%);
   background-attachment: fixed;
   padding-top: 80px;
 }
@@ -474,11 +557,12 @@ export default {
 /* Trader Banner */
 .store-banner {
   position: relative;
-  background: linear-gradient(135deg, rgba(76, 175, 80, 0.8) 0%, rgba(56, 142, 60, 0.9) 100%);
-  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.96) 0%, rgba(22, 33, 62, 0.98) 100%);
+  border: 1px solid rgba(100, 150, 255, 0.22);
+  border-radius: 18px;
   padding: 50px 40px;
   margin-bottom: 40px;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 18px 40px rgba(5, 8, 20, 0.28);
   overflow: hidden;
 }
 
@@ -504,13 +588,13 @@ export default {
   height: 120px;
   border-radius: 50%;
   overflow: hidden;
-  background: white;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.22) 0%, rgba(118, 75, 162, 0.26) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  border: 4px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .store-logo-large img {
@@ -520,8 +604,14 @@ export default {
 }
 
 .default-logo-large {
-  font-size: 4em;
-  color: #4CAF50;
+  width: 52px;
+  height: 52px;
+  color: rgba(225, 236, 255, 0.88);
+}
+
+.default-logo-large svg {
+  width: 100%;
+  height: 100%;
 }
 
 .store-main-info {
@@ -531,14 +621,14 @@ export default {
 .store-main-info h1 {
   margin: 0 0 10px 0;
   color: white;
-  font-size: 2.8em;
+  font-size: 2.25em;
   font-weight: 700;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .store-tagline {
-  color: rgba(255, 255, 255, 0.95);
-  font-size: 1.2em;
+  color: rgba(214, 224, 255, 0.82);
+  font-size: 1.05em;
   margin: 0 0 15px 0;
 }
 
@@ -550,13 +640,16 @@ export default {
 }
 
 .meta-item {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.82);
   font-weight: 600;
-  font-size: 1.05em;
+  font-size: 0.95em;
   padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .store-actions {
@@ -564,39 +657,41 @@ export default {
 }
 
 .btn-message-trader-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 14px 32px;
-  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  background: rgba(100, 150, 255, 0.18);
   color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 1.1em;
+  border: 1px solid rgba(100, 150, 255, 0.45);
+  border-radius: 12px;
+  font-size: 1em;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4);
+  box-shadow: 0 4px 12px rgba(74, 111, 196, 0.28);
 }
 
 .btn-message-trader-banner:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(33, 150, 243, 0.6);
-  background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+  box-shadow: 0 6px 16px rgba(74, 111, 196, 0.34);
+  background: rgba(100, 150, 255, 0.24);
 }
 
 .btn-back-float {
   padding: 12px 24px;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.5);
-  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #dfe5ff;
+  border: 1px solid rgba(100, 150, 255, 0.35);
+  border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 1.05em;
+  font-size: 0.95em;
   transition: all 0.3s;
-  backdrop-filter: blur(10px);
 }
 
 .btn-back-float:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(100, 150, 255, 0.18);
   transform: translateX(-5px);
 }
 
@@ -609,55 +704,58 @@ export default {
 }
 
 .stat-card {
-  background: linear-gradient(135deg, rgba(36, 68, 66, 0.6) 0%, rgba(30, 30, 63, 0.8) 100%);
-  border: 1px solid rgba(76, 175, 80, 0.3);
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.96) 0%, rgba(22, 33, 62, 0.98) 100%);
+  border: 1px solid rgba(100, 150, 255, 0.22);
   border-radius: 16px;
   padding: 25px;
   display: flex;
   align-items: center;
   gap: 20px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 18px 40px rgba(5, 8, 20, 0.18);
   transition: all 0.3s;
 }
 
 .stat-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 12px 30px rgba(76, 175, 80, 0.3);
+  box-shadow: 0 16px 32px rgba(100, 150, 255, 0.2);
 }
 
 .stat-icon {
-  font-size: 3em;
   width: 70px;
   height: 70px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(76, 175, 80, 0.2);
+  background: rgba(100, 150, 255, 0.16);
+  color: rgba(175, 205, 255, 0.95);
   border-radius: 12px;
+}
+
+.stat-icon svg {
+  width: 30px;
+  height: 30px;
 }
 
 .stat-content h3 {
   margin: 0;
-  color: #4CAF50;
-  font-size: 2.5em;
+  color: #dce8ff;
+  font-size: 2.2em;
   font-weight: 700;
 }
 
 .stat-content p {
   margin: 5px 0 0 0;
-  color: #ddd;
-  font-size: 1.1em;
+  color: rgba(214, 224, 255, 0.82);
+  font-size: 1em;
 }
 
 /* Products Section */
 .products-section {
-  background: linear-gradient(135deg, rgba(36, 68, 66, 0.6) 0%, rgba(30, 30, 63, 0.8) 100%);
-  border: 1px solid rgba(76, 175, 80, 0.2);
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.96) 0%, rgba(22, 33, 62, 0.98) 100%);
+  border: 1px solid rgba(100, 150, 255, 0.22);
   border-radius: 16px;
   padding: 32px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 18px 40px rgba(5, 8, 20, 0.24);
 }
 
 .section-header {
@@ -670,27 +768,30 @@ export default {
 }
 
 .section-header h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   margin: 0;
-  color: #4CAF50;
-  font-size: 2em;
+  color: #dce8ff;
+  font-size: 1.8em;
   font-weight: 700;
 }
 
 .search-input {
-  padding: 12px 20px;
-  border: 1px solid rgba(76, 175, 80, 0.3);
-  border-radius: 10px;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
   width: 300px;
   font-size: 1em;
-  background: rgba(30, 30, 63, 0.7);
+  background: rgba(255, 255, 255, 0.08);
   color: #fff;
   transition: all 0.3s;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #4CAF50;
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+  border-color: rgba(102, 126, 234, 0.72);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.18);
 }
 
 .search-input::placeholder {
@@ -704,25 +805,25 @@ export default {
 }
 
 .product-card {
-  background: linear-gradient(135deg, rgba(45, 78, 76, 0.5) 0%, rgba(30, 30, 63, 0.7) 100%);
-  border: 1px solid rgba(76, 175, 80, 0.2);
+  background: linear-gradient(135deg, rgba(20, 25, 45, 0.95) 0%, rgba(18, 28, 50, 0.98) 100%);
+  border: 1px solid rgba(100, 150, 255, 0.18);
   border-radius: 12px;
   overflow: hidden;
   transition: all 0.3s;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
 }
 
 .product-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3);
-  border-color: rgba(76, 175, 80, 0.5);
+  box-shadow: 0 16px 30px rgba(100, 150, 255, 0.22);
+  border-color: rgba(100, 150, 255, 0.38);
 }
 
 .product-image {
   position: relative;
   width: 100%;
   height: 220px;
-  background: rgba(30, 30, 63, 0.5);
+  background: rgba(20, 27, 46, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -736,8 +837,14 @@ export default {
 }
 
 .no-image {
-  font-size: 4em;
-  color: rgba(76, 175, 80, 0.3);
+  width: 64px;
+  height: 64px;
+  color: rgba(225, 236, 255, 0.5);
+}
+
+.no-image svg {
+  width: 100%;
+  height: 100%;
 }
 
 .stock-indicator {
@@ -772,7 +879,7 @@ export default {
 
 .product-info h3 {
   margin: 0 0 15px 0;
-  color: #4CAF50;
+  color: #dce8ff;
   font-size: 1.4em;
   font-weight: 700;
 }
@@ -800,7 +907,7 @@ export default {
 }
 
 .stock-value {
-  color: #4CAF50;
+  color: #81c784;
 }
 
 .cart-controls {
@@ -823,9 +930,9 @@ export default {
 .qty-btn {
   width: 36px;
   height: 36px;
-  background: #667eea;
+  background: rgba(100, 150, 255, 0.18);
   color: white;
-  border: none;
+  border: 1px solid rgba(100, 150, 255, 0.35);
   border-radius: 6px;
   cursor: pointer;
   font-size: 1.3em;
@@ -837,7 +944,7 @@ export default {
 }
 
 .qty-btn:hover:not(:disabled) {
-  background: #5568d3;
+  background: rgba(100, 150, 255, 0.3);
   transform: scale(1.05);
 }
 
@@ -849,9 +956,9 @@ export default {
 .qty-input {
   width: 60px;
   padding: 8px;
-  background: #1a1a2e;
+  background: rgba(255, 255, 255, 0.08);
   color: #fff;
-  border: 2px solid #667eea;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
   text-align: center;
   font-size: 1.1em;
@@ -860,8 +967,8 @@ export default {
 
 .qty-input:focus {
   outline: none;
-  border-color: #4CAF50;
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+  border-color: rgba(102, 126, 234, 0.72);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.18);
 }
 
 .qty-input::-webkit-outer-spin-button,
@@ -881,6 +988,10 @@ export default {
 }
 
 .btn-add-cart {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   flex: 1;
   padding: 14px;
   background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
@@ -906,9 +1017,13 @@ export default {
 }
 
 .btn-buy-now {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   flex: 1;
   padding: 14px;
-  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+  background: linear-gradient(135deg, #667eea 0%, #5b6fd6 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -919,8 +1034,8 @@ export default {
 }
 
 .btn-buy-now:hover:not(:disabled) {
-  background: linear-gradient(135deg, #F57C00 0%, #E65100 100%);
-  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+  background: linear-gradient(135deg, #5b6fd6 0%, #4f63c4 100%);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
   transform: translateY(-2px);
 }
 
@@ -937,7 +1052,12 @@ export default {
 }
 
 .loading-spinner {
-  font-size: 4em;
+  width: 44px;
+  height: 44px;
+  border: 3px solid rgba(102, 126, 234, 0.2);
+  border-top-color: rgba(175, 205, 255, 0.95);
+  border-radius: 50%;
+  margin: 0 auto;
   margin-bottom: 20px;
   animation: spin 2s linear infinite;
 }
@@ -958,13 +1078,20 @@ export default {
 }
 
 .empty-icon {
-  font-size: 5em;
+  width: 72px;
+  height: 72px;
+  color: rgba(225, 236, 255, 0.52);
+  margin: 0 auto;
   margin-bottom: 20px;
-  opacity: 0.5;
+}
+
+.empty-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .empty-state h3 {
-  color: #4CAF50;
+  color: #dce8ff;
   margin-bottom: 10px;
   font-size: 1.8em;
 }
@@ -1012,7 +1139,32 @@ export default {
 }
 
 .alert-icon {
-  font-size: 1.3em;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.alert-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.icon.small {
+  width: 16px;
+  height: 16px;
+}
+
+.icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 @media (max-width: 768px) {

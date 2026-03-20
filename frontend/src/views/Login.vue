@@ -2,7 +2,10 @@
   <div class="auth-container">
     <div class="auth-card">
       <div class="auth-header">
-        <h1>🌴 Cocolytics</h1>
+        <p class="auth-eyebrow">Staff Portal</p>
+        <h1>
+          Staff Portal
+        </h1>
         <h2>Welcome Back</h2>
         <p>Sign in to your account</p>
       </div>
@@ -35,7 +38,19 @@
               class="toggle-password-btn"
               :title="showPassword ? 'Hide password' : 'Show password'"
             >
-              {{ showPassword ? '☑' : '☐' }}
+              <span v-if="showPassword" class="toggle-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 3l18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M10.6 10.7A3 3 0 0 0 13.3 13.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M9.9 5.2A10.7 10.7 0 0 1 12 5c4.8 0 8.4 3.2 9.7 7-0.5 1.5-1.5 3-2.9 4.1M6.3 6.4C4.6 7.7 3.4 9.6 2.8 12c0.8 2.5 2.3 4.5 4.3 5.7A10.8 10.8 0 0 0 12 19c1 0 2-.1 2.9-.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span v-else class="toggle-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2.8 12c1.2-3.8 4.9-7 9.7-7s8.4 3.2 9.7 7c-1.2 3.8-4.9 7-9.7 7s-8.5-3.2-9.7-7Z" stroke="currentColor" stroke-width="1.8"/>
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/>
+                </svg>
+              </span>
             </button>
           </div>
         </div>
@@ -50,6 +65,7 @@
       </form>
 
       <div class="auth-footer">
+        <router-link to="/" class="btn-home-link">Back to Home</router-link>
         <p>Need access as staff? <router-link to="/apply-staff">Apply here</router-link></p>
         <p>Client/new applicant account? <router-link to="/client/login">Client login</router-link></p>
       </div>
@@ -122,16 +138,21 @@ export default {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background:
+    radial-gradient(circle at top left, rgba(102, 126, 234, 0.2), transparent 30%),
+    radial-gradient(circle at right center, rgba(118, 75, 162, 0.16), transparent 28%),
+    linear-gradient(135deg, #121428 0%, #1a1a2e 44%, #242442 100%);
 }
 
 .auth-card {
-  background: #242442;
+  background: linear-gradient(135deg, rgba(36, 68, 66, 0.6) 0%, rgba(30, 30, 63, 0.8) 100%);
   border-radius: 16px;
-  padding: 40px;
+  padding: 42px;
   width: 100%;
-  max-width: 420px;
+  max-width: 520px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(76, 175, 80, 0.2);
+  backdrop-filter: blur(10px);
 }
 
 .auth-header {
@@ -139,59 +160,69 @@ export default {
   margin-bottom: 30px;
 }
 
+.auth-eyebrow {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9aa8ff;
+}
+
 .auth-header h1 {
+  margin: 0 0 8px;
   font-size: 2rem;
-  margin-bottom: 10px;
-  color: #4CAF50;
+  font-weight: 700;
+  color: #ffffff;
 }
 
 .auth-header h2 {
+  margin: 0 0 8px;
   font-size: 1.5rem;
-  margin-bottom: 5px;
+  font-weight: 650;
   color: #fff;
 }
 
 .auth-header p {
-  color: #888;
-  font-size: 0.95rem;
+  margin: 0;
+  font-size: 0.96rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
 }
 
 .form-group label {
-  color: #ccc;
-  font-size: 0.9rem;
-  font-weight: 500;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.92rem;
 }
 
 .form-group input {
-  padding: 14px 16px;
-  border: 2px solid #333;
-  border-radius: 10px;
-  background: #1a1a2e;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   color: #fff;
-  font-size: 1rem;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  border-radius: 12px;
+  padding: 14px 15px;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #4CAF50;
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+  border-color: rgba(102, 126, 234, 0.72);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.22);
 }
 
 .form-group input::placeholder {
-  color: #666;
+  color: rgba(255, 255, 255, 0.38);
 }
 
 .password-field {
@@ -211,18 +242,28 @@ export default {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 1.2rem;
   padding: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: opacity 0.2s;
-  color: #888;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.toggle-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+}
+
+.toggle-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .toggle-password-btn:hover {
   opacity: 1;
-  color: #4CAF50;
+  color: #9aa8ff;
 }
 
 .toggle-password-btn:active {
@@ -230,25 +271,26 @@ export default {
 }
 
 .error-message {
-  background: rgba(244, 67, 54, 0.1);
-  border: 1px solid #f44336;
-  color: #f44336;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 0.9rem;
+  border: 1px solid rgba(250, 112, 154, 0.35);
+  color: #ffb3d5;
+  background: rgba(250, 112, 154, 0.12);
+  border-radius: 12px;
+  padding: 10px;
   text-align: center;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-  color: white;
   border: none;
-  padding: 14px 24px;
-  border-radius: 10px;
+  border-radius: 8px;
+  padding: 12px 30px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  color: #fff;
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  transition: all 0.3s ease;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
 }
 
 .social-divider {
@@ -303,28 +345,51 @@ export default {
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
 }
 
 .btn-primary:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .auth-footer {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
   text-align: center;
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid #333;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.btn-home-link {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  color: #d3f7d6;
+  background: rgba(76, 175, 80, 0.12);
+  border: 1px solid rgba(76, 175, 80, 0.35);
+}
+
+.btn-home-link:hover {
+  background: rgba(76, 175, 80, 0.2);
 }
 
 .auth-footer p {
-  color: #888;
+  margin: 8px 0;
 }
 
+
+@media (max-width: 600px) {
+  .auth-card {
+    padding: 28px;
+  }
+}
 .auth-footer a {
-  color: #4CAF50;
-  text-decoration: none;
+  color: #81C784;
   font-weight: 600;
 }
 

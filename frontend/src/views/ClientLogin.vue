@@ -3,7 +3,9 @@
     <div class="auth-card">
       <div class="auth-header">
         <p class="auth-eyebrow">Client Portal</p>
-        <h1>Cocolytics Client</h1>
+        <h1>
+          Client Portal
+        </h1>
         <h2>Client Login</h2>
         <p>Sign in to check your staff application and notifications.</p>
       </div>
@@ -27,6 +29,7 @@
       </form>
 
       <div class="auth-footer">
+        <router-link to="/" class="btn-home-link">Back to Home</router-link>
         <p>Want to become staff? <router-link to="/apply-staff">Apply here</router-link></p>
         <p>Staff/Admin account? <router-link to="/login">Go to staff login</router-link></p>
       </div>
@@ -101,18 +104,19 @@ export default {
 }
 
 .auth-card {
-  background: linear-gradient(135deg, rgba(26, 26, 46, 0.96) 0%, rgba(36, 36, 66, 0.98) 100%);
-  border-radius: 20px;
-  padding: 36px;
+  background: linear-gradient(135deg, rgba(36, 68, 66, 0.6) 0%, rgba(30, 30, 63, 0.8) 100%);
+  border-radius: 16px;
+  padding: 42px;
   width: 100%;
-  max-width: 430px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(102, 126, 234, 0.18);
+  max-width: 520px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(76, 175, 80, 0.2);
+  backdrop-filter: blur(10px);
 }
 
 .auth-header {
   text-align: center;
-  margin-bottom: 26px;
+  margin-bottom: 30px;
 }
 
 .auth-eyebrow {
@@ -126,29 +130,35 @@ export default {
 
 .auth-header h1 {
   margin: 0 0 8px;
+  font-size: 2rem;
+  font-weight: 700;
   color: #ffffff;
 }
 
 .auth-header h2 {
   margin: 0 0 8px;
+  font-size: 1.5rem;
+  font-weight: 650;
   color: #fff;
 }
 
 .auth-header p {
   margin: 0;
+  font-size: 0.96rem;
+  line-height: 1.5;
   color: rgba(255, 255, 255, 0.7);
 }
 
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
 }
 
 .form-group label {
@@ -161,7 +171,7 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.16);
   color: #fff;
   border-radius: 12px;
-  padding: 13px 14px;
+  padding: 14px 15px;
 }
 
 .form-group input:focus {
@@ -185,23 +195,51 @@ export default {
 
 .btn-primary {
   border: none;
-  border-radius: 12px;
-  padding: 13px;
-  font-weight: 700;
+  border-radius: 8px;
+  padding: 12px 30px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
   color: #fff;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  transition: all 0.3s ease;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
 }
 
 .btn-primary:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .auth-footer {
-  margin-top: 18px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
   text-align: center;
   color: rgba(255, 255, 255, 0.72);
+}
+
+.btn-home-link {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  color: #d3f7d6;
+  background: rgba(76, 175, 80, 0.12);
+  border: 1px solid rgba(76, 175, 80, 0.35);
+}
+
+.btn-home-link:hover {
+  background: rgba(76, 175, 80, 0.2);
 }
 
 .auth-footer p {
@@ -209,7 +247,13 @@ export default {
 }
 
 .auth-footer a {
-  color: #9aa8ff;
+  color: #81C784;
   font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .auth-card {
+    padding: 28px;
+  }
 }
 </style>

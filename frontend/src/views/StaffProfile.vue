@@ -4,7 +4,17 @@
     
     <div class="main-content">
       <div class="profile-container">
-        <h1>🏪 {{ staffName }} - {{ profile.store_name || 'My Store' }}</h1>
+        <div class="profile-heading">
+          <div class="profile-title-row">
+            <span class="title-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 10h16v9H4v-9Zm2-5h12l2 5H4l2-5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <h1>{{ staffName }}</h1>
+          </div>
+          <p class="profile-subtitle">{{ profile.store_name || 'My Store' }}</p>
+        </div>
         
         <!-- Tab Navigation -->
         <div class="tabs-header">
@@ -14,7 +24,15 @@
             @click="activeTab = tab.value"
             :class="['tab-btn', { active: activeTab === tab.value }]"
           >
-            {{ tab.icon }} {{ tab.label }}
+            <span class="inline-icon" aria-hidden="true">
+              <svg v-if="tab.value === 'profile'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7 4h8l3 3v13H7V4Zm8 0v3h3" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            {{ tab.label }}
           </button>
         </div>
 
@@ -42,7 +60,12 @@
             <label>Trader Logo</label>
             <div class="logo-preview">
               <img v-if="previewLogo" :src="previewLogo" alt="Trader Logo" />
-              <div v-else class="default-logo">🥥</div>
+              <div v-else class="default-logo" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/>
+                  <path d="M9 10.5h.01M15 10.5h.01M9.5 15c.6.6 1.4 1 2.5 1s1.9-.4 2.5-1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </div>
             </div>
             <input 
               type="file" 
@@ -52,7 +75,13 @@
               class="file-input"
             />
             <button type="button" @click="$refs.logoInput.click()" class="btn-upload">
-              📷 Choose Logo
+              <span class="inline-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 8h4l1.5-2h5L16 8h4v10H4V8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  <circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.8"/>
+                </svg>
+              </span>
+              Choose Logo
             </button>
           </div>
 
@@ -108,15 +137,15 @@
                 v-model="profile.is_active" 
                 type="checkbox"
               />
-              <span>🟢 Trader is active (visible to customers)</span>
+              <span>Trader is active (visible to customers)</span>
             </label>
           </div>
 
           <!-- Submit Button -->
           <div class="form-actions">
             <button type="submit" class="btn-submit" :disabled="saving">
-              <span v-if="!saving">💾 Save Profile</span>
-              <span v-else>⏳ Saving...</span>
+              <span v-if="!saving">Save Profile</span>
+              <span v-else>Saving...</span>
             </button>
           </div>
         </form>
@@ -134,7 +163,7 @@
             <div class="upload-grid">
               <!-- TO CUT SECTION -->
               <div class="upload-card">
-                <div class="card-title">✂️ To Cut Papers</div>
+                <div class="card-title">To Cut Papers</div>
                 <div class="card-subtitle">Upload documents for cutting authorization</div>
                 
                 <div class="form-grid">
@@ -155,8 +184,8 @@
 
                 <div class="actions">
                   <button class="btn btn-to-cut" :disabled="uploadingToCut" @click="submitToCut">
-                    <span v-if="!uploadingToCut">🔼 Upload To Cut Paper</span>
-                    <span v-else>⏳ Uploading...</span>
+                    <span v-if="!uploadingToCut">Upload To Cut Paper</span>
+                    <span v-else>Uploading...</span>
                   </button>
                 </div>
 
@@ -166,7 +195,7 @@
 
               <!-- TRANSPORT SECTION -->
               <div class="upload-card">
-                <div class="card-title">🚚 Transport Papers</div>
+                <div class="card-title">Transport Papers</div>
                 <div class="card-subtitle">Upload documents for transport logistics</div>
                 
                 <div class="form-grid">
@@ -187,8 +216,8 @@
 
                 <div class="actions">
                   <button class="btn btn-transport" :disabled="uploadingTransport" @click="submitTransport">
-                    <span v-if="!uploadingTransport">🚛 Upload Transport Paper</span>
-                    <span v-else>⏳ Uploading...</span>
+                    <span v-if="!uploadingTransport">Upload Transport Paper</span>
+                    <span v-else>Uploading...</span>
                   </button>
                 </div>
 
@@ -199,7 +228,7 @@
 
             <!-- MY SUBMISSIONS LIST -->
             <div class="list-card">
-              <h3>📋 My Paper Submissions</h3>
+              <h3>My Paper Submissions</h3>
               
               <div class="filter-tabs">
                 <button 
@@ -208,8 +237,8 @@
                   @click="docsFilter = filter"
                   :class="['tab', { active: docsFilter === filter }]"
                 >
-                  <span v-if="filter === 'to_cut'">✂️ To Cut</span>
-                  <span v-else-if="filter === 'transport'">🚚 Transport</span>
+                  <span v-if="filter === 'to_cut'">To Cut</span>
+                  <span v-else-if="filter === 'transport'">Transport</span>
                 </button>
               </div>
 
@@ -218,15 +247,15 @@
               <div v-else class="list">
                 <div v-for="paper in filteredPapers" :key="paper.id" class="list-item">
                   <div class="paper-type">
-                    <span v-if="paper.paper_type === 'to_cut'" class="badge badge-to-cut">✂️ TO CUT</span>
-                    <span v-else-if="paper.paper_type === 'transport'" class="badge badge-transport">🚚 TRANSPORT</span>
+                    <span v-if="paper.paper_type === 'to_cut'" class="badge badge-to-cut">TO CUT</span>
+                    <span v-else-if="paper.paper_type === 'transport'" class="badge badge-transport">TRANSPORT</span>
                   </div>
                   <div class="info">
                     <h4>{{ paper.title }}</h4>
                     <p v-if="paper.description" class="description">{{ paper.description }}</p>
                     <div class="meta">
-                      <span class="date">📅 {{ formatDate(paper.created_at) }}</span>
-                      <a :href="getFileUrl(paper.file_path)" target="_blank" rel="noopener" class="file-link">📎 View File</a>
+                      <span class="date">{{ formatDate(paper.created_at) }}</span>
+                      <a :href="getFileUrl(paper.file_path)" target="_blank" rel="noopener" class="file-link">View File</a>
                     </div>
                   </div>
                   <div class="status-section">
@@ -256,8 +285,8 @@ export default {
     return {
       activeTab: 'profile',
       tabs: [
-        { label: 'Profile', value: 'profile', icon: '👤' },
-        { label: 'Documents', value: 'documents', icon: '📄' }
+        { label: 'Profile', value: 'profile' },
+        { label: 'Documents', value: 'documents' }
       ],
       // Profile tab data
       profile: {
@@ -501,9 +530,9 @@ export default {
     },
     formatStatus(status) {
       const statusMap = {
-        pending: '⏳ Pending',
-        approved: '✅ Approved',
-        rejected: '❌ Rejected'
+        pending: 'Pending',
+        approved: 'Approved',
+        rejected: 'Rejected'
       }
       return statusMap[status] || status
     },
@@ -529,22 +558,54 @@ export default {
 
 .main-content {
   flex: 1;
-  padding: 40px;
-  margin-left: 250px;
+  display: flex;
+  justify-content: center;
+  padding: 76px 28px 32px;
+  margin-left: 0;
   max-height: 100vh;
   overflow-y: auto;
 }
 
 .profile-container {
-  max-width: 900px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 940px;
 }
 
-.profile-container h1 {
-  color: white;
-  font-size: 2.5em;
-  font-weight: 700;
+.profile-heading {
   margin-bottom: 20px;
+}
+
+.profile-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title-icon {
+  width: 28px;
+  height: 28px;
+  color: rgba(175, 205, 255, 0.95);
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.title-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.profile-title-row h1 {
+  color: white;
+  font-size: 2.25em;
+  font-weight: 700;
+  margin: 0;
+}
+
+.profile-subtitle {
+  margin: 8px 0 0 40px;
+  color: rgba(214, 224, 255, 0.82);
+  font-size: 1.05em;
+  font-weight: 500;
 }
 
 /* Tab Navigation */
@@ -557,15 +618,30 @@ export default {
 }
 
 .tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 12px 24px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.07);
   color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px 12px 0 0;
   cursor: pointer;
   font-size: 1em;
   font-weight: 600;
   transition: all 0.3s;
+}
+
+.inline-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.inline-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .tab-btn:hover {
@@ -574,9 +650,9 @@ export default {
 }
 
 .tab-btn.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgba(100, 150, 255, 0.2);
   color: white;
-  border-color: rgba(102, 126, 234, 0.72);
+  border-color: rgba(100, 150, 255, 0.45);
 }
 
 .tab-content {
@@ -611,8 +687,8 @@ export default {
 }
 
 .profile-form {
-  background: linear-gradient(135deg, rgba(26, 26, 46, 0.96) 0%, rgba(36, 36, 66, 0.98) 100%);
-  border: 1px solid rgba(102, 126, 234, 0.18);
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.96) 0%, rgba(22, 33, 62, 0.98) 100%);
+  border: 1px solid rgba(100, 150, 255, 0.22);
   border-radius: 18px;
   padding: 40px;
   box-shadow: 0 18px 40px rgba(5, 8, 20, 0.28);
@@ -682,8 +758,14 @@ textarea.form-control {
 }
 
 .default-logo {
-  font-size: 4em;
-  color: white;
+  width: 52px;
+  height: 52px;
+  color: rgba(225, 236, 255, 0.88);
+}
+
+.default-logo svg {
+  width: 100%;
+  height: 100%;
 }
 
 .file-input {
@@ -691,10 +773,13 @@ textarea.form-control {
 }
 
 .btn-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 12px 30px;
   background: rgba(255, 255, 255, 0.06);
   color: #dfe5ff;
-  border: 1px solid rgba(102, 126, 234, 0.4);
+  border: 1px solid rgba(100, 150, 255, 0.4);
   border-radius: 12px;
   cursor: pointer;
   font-size: 1em;
@@ -703,7 +788,8 @@ textarea.form-control {
 }
 
 .btn-upload:hover {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgba(100, 150, 255, 0.2);
+  border-color: rgba(100, 150, 255, 0.55);
   color: white;
 }
 
@@ -723,6 +809,23 @@ textarea.form-control {
   color: rgba(255, 255, 255, 0.78);
 }
 
+.checkbox-label span {
+  position: relative;
+  padding-left: 16px;
+}
+
+.checkbox-label span::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #29b47e;
+}
+
 .checkbox-label input[type="checkbox"] {
   width: 20px;
   height: 20px;
@@ -737,7 +840,7 @@ textarea.form-control {
 
 .btn-submit {
   padding: 16px 50px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4f7df7 0%, #5574df 100%);
   color: white;
   border: none;
   border-radius: 12px;
@@ -750,7 +853,7 @@ textarea.form-control {
 
 .btn-submit:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 7px 20px rgba(102, 126, 234, 0.5);
+  box-shadow: 0 7px 20px rgba(79, 125, 247, 0.5);
 }
 
 .btn-submit:disabled {
@@ -794,8 +897,8 @@ textarea.form-control {
 
 .upload-card,
 .list-card {
-  background: linear-gradient(135deg, rgba(26, 26, 46, 0.96) 0%, rgba(36, 36, 66, 0.98) 100%);
-  border: 1px solid rgba(102, 126, 234, 0.18);
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.96) 0%, rgba(22, 33, 62, 0.98) 100%);
+  border: 1px solid rgba(100, 150, 255, 0.2);
   border-radius: 18px;
   padding: 20px;
   box-shadow: 0 18px 40px rgba(5, 8, 20, 0.28);
@@ -845,8 +948,8 @@ textarea.form-control {
 }
 
 .tab.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-color: #667eea;
+  background: rgba(100, 150, 255, 0.2);
+  border-color: rgba(100, 150, 255, 0.45);
   color: white;
 }
 
@@ -927,11 +1030,11 @@ textarea.form-control {
 }
 
 .btn-to-cut {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4f7df7 0%, #5574df 100%);
 }
 
 .btn-transport {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, #208fca 0%, #2b6fd8 100%);
 }
 
 .btn:disabled {
@@ -1034,7 +1137,7 @@ textarea.form-control {
 }
 
 .file-link {
-  color: #9aa8ff;
+  color: #a9c0ff;
   text-decoration: none;
 }
 
@@ -1084,12 +1187,16 @@ textarea.form-control {
 
 @media (max-width: 768px) {
   .main-content {
-    margin-left: 0;
-    padding: 20px;
+    padding: 72px 14px 20px;
   }
 
-  .profile-container h1 {
-    font-size: 2em;
+  .profile-title-row h1 {
+    font-size: 1.7em;
+  }
+
+  .profile-subtitle {
+    margin-left: 34px;
+    font-size: 0.95em;
   }
 
   .profile-form {

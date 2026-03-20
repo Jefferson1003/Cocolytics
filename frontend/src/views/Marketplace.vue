@@ -4,7 +4,14 @@
     <div class="marketplace-main">
       <div class="marketplace-container">
         <div class="header">
-          <h1>🏪 Marketplace Hub</h1>
+          <div class="header-title-row">
+            <span class="header-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 10h16v9H4v-9Zm2-5h12l2 5H4l2-5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <h1>Marketplace Hub</h1>
+          </div>
           <p>Manage inventory, browse traders, shop, and track orders</p>
         </div>
 
@@ -16,7 +23,24 @@
             @click="activeTab = tab.value"
             :class="['tab-btn', { active: activeTab === tab.value }]"
           >
-            {{ tab.icon }} {{ tab.label }}
+            <span class="inline-icon" aria-hidden="true">
+              <svg v-if="tab.value === 'add-product'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <svg v-else-if="tab.value === 'inventory'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 8.5 12 4l8 4.5M4 8.5V17l8 4.5 8-4.5V8.5M12 12l8-3.5M12 12 4 8.5M12 12v9.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+              </svg>
+              <svg v-else-if="tab.value === 'marketplace'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 10h16v9H4v-9Zm2-5h12l2 5H4l2-5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              </svg>
+              <svg v-else-if="tab.value === 'cart'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 6h2l2 10h9l2-7H7M10 20a1 1 0 1 0 0 .01M17 20a1 1 0 1 0 0 .01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7 4h8l3 3v13H7V4Zm8 0v3h3" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            {{ tab.label }}
           </button>
         </div>
 
@@ -378,11 +402,11 @@ export default {
     return {
       activeTab: 'inventory',
       tabs: [
-        { label: 'Add Product', value: 'add-product', icon: '➕' },
-        { label: 'My Inventory', value: 'inventory', icon: '📦' },
-        { label: 'Marketplace', value: 'marketplace', icon: '🏪' },
-        { label: 'My Cart', value: 'cart', icon: '🛒' },
-        { label: 'Orders', value: 'orders', icon: '📋' }
+        { label: 'Add Product', value: 'add-product' },
+        { label: 'My Inventory', value: 'inventory' },
+        { label: 'Marketplace', value: 'marketplace' },
+        { label: 'My Cart', value: 'cart' },
+        { label: 'Orders', value: 'orders' }
       ],
       // Add Product
       newProductForm: {
@@ -1037,39 +1061,60 @@ export default {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
-  background-attachment: fixed;
-  padding-top: 70px;
+  background:
+    radial-gradient(circle at top left, rgba(102, 126, 234, 0.2), transparent 30%),
+    radial-gradient(circle at right center, rgba(118, 75, 162, 0.16), transparent 28%),
+    linear-gradient(135deg, #121428 0%, #1a1a2e 44%, #242442 100%);
 }
 
 .marketplace-main {
   flex: 1;
-  padding: 20px 16px;
+  display: flex;
+  justify-content: center;
+  padding: 76px 28px 32px;
   overflow-y: auto;
-  max-width:1200px;
-  margin: 0 auto;
   width: 100%;
 }
 
 .marketplace-container {
-  max-width: 100%;
+  width: 100%;
+  max-width: 1060px;
 }
 
 .header {
   margin-bottom: 24px;
-  text-align: center;
+}
+
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .header h1 {
-  font-size: 2.5em;
+  font-size: 2.2em;
   color: white;
-  margin-bottom: 8px;
+  margin: 0;
   font-weight: 700;
 }
 
+.header-icon {
+  width: 28px;
+  height: 28px;
+  color: rgba(175, 205, 255, 0.95);
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.header-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
 .header p {
+  margin: 8px 0 0 40px;
   color: rgba(255, 255, 255, 0.8);
-  font-size: 1.1em;
+  font-size: 1.02em;
 }
 
 /* Add Product Styles */
@@ -1265,15 +1310,30 @@ export default {
 }
 
 .tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 12px 24px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.07);
   color: rgba(255, 255, 255, 0.8);
-  border: 2px solid transparent;
-  border-radius: 8px 8px 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px 12px 0 0;
   cursor: pointer;
   font-size: 1em;
   font-weight: 600;
   transition: all 0.3s;
+}
+
+.inline-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.inline-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .tab-btn:hover {
@@ -1282,8 +1342,9 @@ export default {
 }
 
 .tab-btn.active {
-  background: white;
-  color: #667eea;
+  background: rgba(100, 150, 255, 0.2);
+  border-color: rgba(100, 150, 255, 0.45);
+  color: white;
 }
 
 .tab-content {
@@ -2271,6 +2332,19 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .marketplace-main {
+    padding: 72px 14px 20px;
+  }
+
+  .header h1 {
+    font-size: 1.7em;
+  }
+
+  .header p {
+    margin-left: 34px;
+    font-size: 0.95em;
+  }
+
   .products-grid,
   .sellers-grid {
     grid-template-columns: 1fr;

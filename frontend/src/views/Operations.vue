@@ -4,7 +4,15 @@
     <div class="operations-main">
       <div class="operations-container">
         <div class="header">
-          <h1>⚙️ Operations Hub</h1>
+          <div class="header-title-row">
+            <span class="header-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z" stroke="currentColor" stroke-width="2"/>
+                <path d="M19.4 15a7.8 7.8 0 0 0 .1-1 7.8 7.8 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a8 8 0 0 0-1.7-1l-.4-2.6h-4l-.4 2.6a8 8 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a7.8 7.8 0 0 0-.1 1 7.8 7.8 0 0 0 .1 1l-2 1.5 2 3.5 2.4-1a8 8 0 0 0 1.7 1l.4 2.6h4l.4-2.6a8 8 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <h1>Operations Hub</h1>
+          </div>
           <p>Manage inventory, scan cocolumber, and dispatch orders</p>
         </div>
 
@@ -16,7 +24,22 @@
             @click="activeTab = tab.value"
             :class="['tab-btn', { active: activeTab === tab.value }]"
           >
-            {{ tab.icon }} {{ tab.label }}
+            <span class="inline-icon" aria-hidden="true">
+              <svg v-if="tab.value === 'inventory'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 8.5 12 4l8 4.5M4 8.5V17l8 4.5 8-4.5V8.5M12 12l8-3.5M12 12 4 8.5M12 12v9.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+              </svg>
+              <svg v-else-if="tab.value === 'scanner'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 8h4l1.5-2h5L16 8h4v10H4V8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                <circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.8"/>
+              </svg>
+              <svg v-else-if="tab.value === 'dispatch'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 7h11v9H3V7Zm11 2h3l3 3v4h-6V9Zm2.5 8a1.5 1.5 0 1 0 0 .01M7 17a1.5 1.5 0 1 0 0 .01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 19h16M7 15V9m5 6V6m5 9v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </span>
+            {{ tab.label }}
           </button>
         </div>
 
@@ -241,10 +264,10 @@ export default {
     return {
       activeTab: 'inventory',
       tabs: [
-        { label: 'Inventory', value: 'inventory', icon: '📦' },
-        { label: 'Scanner', value: 'scanner', icon: '📹' },
-        { label: 'Dispatch', value: 'dispatch', icon: '🚚' },
-        { label: 'Reports', value: 'reports', icon: '📊' }
+        { label: 'Inventory', value: 'inventory' },
+        { label: 'Scanner', value: 'scanner' },
+        { label: 'Dispatch', value: 'dispatch' },
+        { label: 'Reports', value: 'reports' }
       ],
       // Inventory Data
       inventory: [],
@@ -580,39 +603,60 @@ export default {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
-  background-attachment: fixed;
-  padding-top: 70px;
+  background:
+    radial-gradient(circle at top left, rgba(102, 126, 234, 0.2), transparent 30%),
+    radial-gradient(circle at right center, rgba(118, 75, 162, 0.16), transparent 28%),
+    linear-gradient(135deg, #121428 0%, #1a1a2e 44%, #242442 100%);
 }
 
 .operations-main {
   flex: 1;
-  padding: 20px 16px;
+  display: flex;
+  justify-content: center;
+  padding: 76px 28px 32px;
   overflow-y: auto;
-  max-width: 1200px;
-  margin: 0 auto;
   width: 100%;
 }
 
 .operations-container {
-  max-width: 100%;
+  width: 100%;
+  max-width: 1060px;
 }
 
 .header {
   margin-bottom: 24px;
-  text-align: center;
+}
+
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .header h1 {
-  font-size: 2.5em;
+  font-size: 2.2em;
   color: white;
-  margin-bottom: 8px;
+  margin: 0;
   font-weight: 700;
 }
 
+.header-icon {
+  width: 28px;
+  height: 28px;
+  color: rgba(175, 205, 255, 0.95);
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.header-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
 .header p {
+  margin: 8px 0 0 40px;
   color: rgba(255, 255, 255, 0.8);
-  font-size: 1.1em;
+  font-size: 1.02em;
 }
 
 /* Tab Navigation */
@@ -625,15 +669,30 @@ export default {
 }
 
 .tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 12px 24px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.07);
   color: rgba(255, 255, 255, 0.8);
-  border: 2px solid transparent;
-  border-radius: 8px 8px 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px 12px 0 0;
   cursor: pointer;
   font-size: 1em;
   font-weight: 600;
   transition: all 0.3s;
+}
+
+.inline-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.inline-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .tab-btn:hover {
@@ -642,8 +701,9 @@ export default {
 }
 
 .tab-btn.active {
-  background: white;
-  color: #667eea;
+  background: rgba(100, 150, 255, 0.2);
+  border-color: rgba(100, 150, 255, 0.45);
+  color: white;
 }
 
 .tab-content {
@@ -1263,6 +1323,19 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .operations-main {
+    padding: 72px 14px 20px;
+  }
+
+  .header h1 {
+    font-size: 1.7em;
+  }
+
+  .header p {
+    margin-left: 34px;
+    font-size: 0.95em;
+  }
+
   .inventory-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }

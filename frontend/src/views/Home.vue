@@ -7,7 +7,14 @@
       </div>
 
       <div class="hero-images">
-        <h2>🌴 Premium Quality</h2>
+        <h2>
+          <span class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 21V11M12 11c-2-2-4-2-6-1 1 2 3 3 6 3m0-2c2-2 4-2 6-1-1 2-3 3-6 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          Premium Quality
+        </h2>
         <p>Discover exceptional craftsmanship</p>
         <div class="welcome-images">
           <div class="image-item">
@@ -28,18 +35,33 @@
 
     <section class="install-section" v-if="!isInstalled">
       <div class="card install-card">
-        <h2>📱 Install Cocolytics</h2>
+        <h2>
+          <span class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="7" y="3" width="10" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M11 18h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+          Install Cocolytics
+        </h2>
         <p>Install this app on your device for quick access and offline support!</p>
         <ul class="install-benefits">
-          <li>✓ Works offline</li>
-          <li>✓ Quick launch from home screen</li>
-          <li>✓ Native app experience</li>
+          <li>Works offline</li>
+          <li>Quick launch from home screen</li>
+          <li>Native app experience</li>
         </ul>
       </div>
     </section>
 
     <section class="data-section" v-if="apiData.length">
-      <h2>📊 Data from API</h2>
+      <h2>
+        <span class="section-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 19h16M7 15V9m5 6V6m5 9v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </span>
+        Data from API
+      </h2>
       <div class="grid">
         <div class="card" v-for="item in apiData" :key="item.id">
           <h3>{{ item.name }}</h3>
@@ -52,23 +74,52 @@
       <h2>Features</h2>
       <div class="grid">
         <div class="card analytics-card" @click="showHistoricalData = !showHistoricalData">
-          <h3>📈 Real-time Analytics</h3>
+          <h3>
+            <span class="section-icon small" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 18h16M6 14l4-4 3 3 5-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            Real-time Analytics
+          </h3>
           <p>Track your metrics in real-time with beautiful visualizations and access historical data for comprehensive insights.</p>
           <button class="btn-analytics">View Historical Data</button>
         </div>
         <div class="card">
-          <h3>🔒 Secure Data</h3>
+          <h3>
+            <span class="section-icon small" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6v-9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            Secure Data
+          </h3>
           <p>Your data is encrypted and securely stored.</p>
         </div>
         <div class="card">
-          <h3>📱 Mobile Ready</h3>
+          <h3>
+            <span class="section-icon small" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="7" y="3" width="10" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M11 18h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </span>
+            Mobile Ready
+          </h3>
           <p>Install the app on any device for the best experience.</p>
         </div>
       </div>
     </section>
 
     <section class="historical-data" v-if="showHistoricalData">
-      <h2>📊 Historical Data Analytics</h2>
+      <h2>
+        <span class="section-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 19h16M7 15V9m5 6V6m5 9v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </span>
+        Historical Data Analytics
+      </h2>
       <div class="chart-container">
         <Line :data="chartData" :options="chartOptions" />
       </div>
@@ -83,11 +134,18 @@
     </section>
 
     <section class="shop-section">
-      <h2>🛒 Our Traders</h2>
+      <h2>
+        <span class="section-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 10h16v9H4v-9Zm2-5h12l2 5H4l2-5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        Our Traders
+      </h2>
       <p class="section-subtitle">Browse products from our trusted traders</p>
       
       <div v-if="loadingSellers" class="loading-sellers">
-        <div class="spinner">⏳</div>
+        <div class="spinner"></div>
         <p>Loading traders...</p>
       </div>
 
@@ -95,23 +153,27 @@
         <div v-for="seller in sellers" :key="seller.staff_id" class="shop-card" @click="visitStore(seller.staff_id)">
           <div class="shop-logo">
             <img v-if="seller.store_logo" :src="getImageUrl(seller.store_logo)" :alt="seller.store_name" />
-            <div v-else class="default-shop-icon">🥥</div>
+            <div v-else class="default-shop-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M9 10.5h.01M15 10.5h.01M9.5 15c.6.6 1.4 1 2.5 1s1.9-.4 2.5-1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </div>
           </div>
           <h3>{{ seller.store_name || seller.staff_name + "'s Trader" }}</h3>
           <p class="shop-description">{{ seller.store_description || 'Quality coconut products' }}</p>
           <div class="shop-stats">
-            <span class="stat-item">📦 {{ seller.product_count }} products</span>
-            <span class="stat-item">📊 {{ seller.total_stock }} in stock</span>
+            <span class="stat-item">{{ seller.product_count }} products</span>
+            <span class="stat-item">{{ seller.total_stock }} in stock</span>
           </div>
           <div class="shop-contact" v-if="seller.contact_number">
-            <span>📞 {{ seller.contact_number }}</span>
+            <span>{{ seller.contact_number }}</span>
           </div>
           <button class="btn btn-visit">Visit Trader</button>
         </div>
       </div>
 
       <div v-else class="empty-sellers">
-        <div class="empty-icon">🏪</div>
         <h3>No Traders Available</h3>
         <p>Check back later for new traders!</p>
       </div>
@@ -262,9 +324,31 @@ export default {
   flex-direction: column;
   gap: 3rem;
   min-height: 100vh;
+  width: 100%;
+  max-width: 1060px;
+  margin: 0 auto;
   background: transparent;
   color: #fff;
-  padding: 20px;
+  padding: 76px 20px 32px;
+}
+
+.section-icon {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  vertical-align: middle;
+  margin-right: 8px;
+  color: rgba(175, 205, 255, 0.95);
+}
+
+.section-icon.small {
+  width: 18px;
+  height: 18px;
+}
+
+.section-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .hero {
@@ -623,7 +707,12 @@ export default {
 }
 
 .spinner {
-  font-size: 3em;
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(76, 175, 80, 0.2);
+  border-top-color: #4CAF50;
+  border-radius: 50%;
+  margin: 0 auto 15px;
   margin-bottom: 15px;
   animation: spin 2s linear infinite;
 }
@@ -677,8 +766,14 @@ export default {
 }
 
 .default-shop-icon {
-  font-size: 3em;
+  width: 48px;
+  height: 48px;
   color: white;
+}
+
+.default-shop-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .shop-card h3 {
@@ -744,12 +839,6 @@ export default {
   border: 2px dashed rgba(76, 175, 80, 0.3);
 }
 
-.empty-icon {
-  font-size: 5em;
-  margin-bottom: 20px;
-  opacity: 0.6;
-}
-
 .empty-sellers h3 {
   color: #4CAF50;
   margin-bottom: 10px;
@@ -793,5 +882,11 @@ export default {
   color: #fff;
   margin: 0.5rem 0;
   font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+  .home {
+    padding: 72px 14px 24px;
+  }
 }
 </style>

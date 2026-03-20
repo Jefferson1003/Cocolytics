@@ -2,7 +2,10 @@
   <div class="auth-container">
     <div class="auth-card">
       <div class="auth-header">
-        <h1>Cocolytics</h1>
+        <p class="auth-eyebrow">Application Portal</p>
+        <h1>
+          Staff Application
+        </h1>
         <h2>Apply as Staff</h2>
         <p>Create your account and submit your staff application.</p>
       </div>
@@ -65,6 +68,7 @@
       </form>
 
       <div class="auth-footer">
+        <router-link to="/" class="btn-home-link">Back to Home</router-link>
         <p>Already have an account? <router-link to="/client/login">Client sign in</router-link></p>
       </div>
     </div>
@@ -144,73 +148,89 @@ export default {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: linear-gradient(135deg, #102418 0%, #1f3b2d 50%, #2a4f3d 100%);
+  background:
+    radial-gradient(circle at top left, rgba(102, 126, 234, 0.2), transparent 30%),
+    radial-gradient(circle at right center, rgba(118, 75, 162, 0.16), transparent 28%),
+    linear-gradient(135deg, #121428 0%, #1a1a2e 44%, #242442 100%);
 }
 
 .auth-card {
-  background: #16213e;
+  background: linear-gradient(135deg, rgba(36, 68, 66, 0.6) 0%, rgba(30, 30, 63, 0.8) 100%);
   border-radius: 16px;
-  padding: 34px;
+  padding: 42px;
   width: 100%;
   max-width: 520px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(76, 175, 80, 0.2);
+  backdrop-filter: blur(10px);
 }
 
 .auth-header {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 30px;
+}
+
+.auth-eyebrow {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9aa8ff;
 }
 
 .auth-header h1 {
-  font-size: 1.9rem;
-  margin-bottom: 8px;
-  color: #8bc34a;
+  margin: 0 0 8px;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffffff;
 }
 
 .auth-header h2 {
-  font-size: 1.45rem;
-  margin-bottom: 8px;
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+  font-weight: 650;
   color: #fff;
 }
 
 .auth-header p {
-  color: #b7c4d8;
-  font-size: 0.95rem;
+  margin: 0;
+  font-size: 0.96rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
 }
 
 .form-group label {
-  color: #d7dfef;
+  color: rgba(255, 255, 255, 0.82);
   font-size: 0.92rem;
-  font-weight: 600;
 }
 
 .form-group input,
 .form-group textarea {
-  padding: 12px 14px;
-  border: 2px solid #2c3459;
-  border-radius: 10px;
-  background: #101a33;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   color: #fff;
-  font-size: 1rem;
+  border-radius: 12px;
+  padding: 14px 15px;
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #8bc34a;
-  box-shadow: 0 0 0 3px rgba(139, 195, 74, 0.2);
+  border-color: rgba(102, 126, 234, 0.72);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.22);
 }
 
 .form-group textarea {
@@ -219,54 +239,84 @@ export default {
 }
 
 .error-message {
-  background: rgba(244, 67, 54, 0.12);
-  border: 1px solid #f44336;
-  color: #f99797;
-  padding: 12px;
-  border-radius: 8px;
+  border: 1px solid rgba(250, 112, 154, 0.35);
+  color: #ffb3d5;
+  background: rgba(250, 112, 154, 0.12);
+  border-radius: 12px;
+  padding: 10px;
   text-align: center;
 }
 
 .success-message {
-  background: rgba(139, 195, 74, 0.12);
-  border: 1px solid #8bc34a;
-  color: #c7ef88;
-  padding: 12px;
-  border-radius: 8px;
+  border: 1px solid rgba(17, 153, 142, 0.35);
+  color: #93ffd0;
+  background: rgba(17, 153, 142, 0.16);
+  border-radius: 12px;
+  padding: 10px;
   text-align: center;
 }
 
 .btn-primary {
-  margin-top: 4px;
-  background: linear-gradient(135deg, #8bc34a 0%, #5d8d2d 100%);
-  color: #102418;
   border: none;
-  padding: 13px 20px;
-  border-radius: 10px;
+  border-radius: 8px;
+  padding: 12px 30px;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
+  color: #fff;
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  transition: all 0.3s ease;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
 }
 
 .btn-primary:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .auth-footer {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
   text-align: center;
-  margin-top: 20px;
-  color: #c9d3ea;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.btn-home-link {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  color: #d3f7d6;
+  background: rgba(76, 175, 80, 0.12);
+  border: 1px solid rgba(76, 175, 80, 0.35);
+}
+
+.btn-home-link:hover {
+  background: rgba(76, 175, 80, 0.2);
+}
+
+.auth-footer p {
+  margin: 8px 0;
 }
 
 .auth-footer a {
-  color: #8bc34a;
+  color: #81C784;
   font-weight: 600;
 }
 
 @media (max-width: 600px) {
   .auth-card {
-    padding: 24px;
+    padding: 28px;
   }
 }
 </style>
