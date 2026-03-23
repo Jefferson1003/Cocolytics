@@ -315,17 +315,23 @@ class NotificationService {
    */
   async getUserNotifications(userId, role, limit = 50, offset = 0) {
     try {
-      const [notifications] = await this.pool.execute(
+      // Using .query instead of .execute because some MySQL/MariaDB versions do not support
+      // prepared statement parameters (placeholders) in LIMIT and OFFSET clauses properly.
+      // Cast limit and offset to integers as a final safety check.
+      const safeLimit = parseInt(limit) || 50;
+      const safeOffset = parseInt(offset) || 0;
+
+      const [notifications] = await this.pool.query(
         `SELECT n.* FROM notifications n
          JOIN users u ON n.user_id = u.id
          WHERE n.user_id = ? 
          AND (n.role_target = 'all' OR n.role_target = ?)
          ORDER BY n.created_at DESC
          LIMIT ? OFFSET ?`,
-        [userId, role, limit, offset]
+        [userId, role, safeLimit, safeOffset]
       );
 
-      const [total] = await this.pool.execute(
+      const [total] = await this.pool.query(
         `SELECT COUNT(*) as total FROM notifications n
          WHERE n.user_id = ? 
          AND (n.role_target = 'all' OR n.role_target = ?)`,

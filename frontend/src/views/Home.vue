@@ -204,10 +204,11 @@ export default {
         const userData = localStorage.getItem('user')
         const currentUser = userData ? JSON.parse(userData) : null
         const currentUserId = currentUser?.id
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/sellers`)
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
+        const response = await fetch(`${apiBaseUrl}/api/sellers`)
         if (response.ok) {
           const data = await response.json()
-          this.sellers = data.filter(seller => {
+          this.sellers = (data || []).filter(seller => {
             const isNotCurrentUser = currentUserId ? String(seller.staff_id) !== String(currentUserId) : true
             return isNotCurrentUser
           })
@@ -231,8 +232,9 @@ export default {
     getImageUrl(imagePath) {
       if (!imagePath) return ''
       if (imagePath.startsWith('http')) return imagePath
-      if (imagePath.startsWith('/')) return `${import.meta.env.VITE_API_BASE_URL}${imagePath}`
-      return `${import.meta.env.VITE_API_BASE_URL}/uploads/${imagePath}`
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
+      if (imagePath.startsWith('/')) return `${apiBaseUrl}${imagePath}`
+      return `${apiBaseUrl}/uploads/${imagePath}`
     },
     async fetchData() {
       try {
